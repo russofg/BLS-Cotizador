@@ -1,0 +1,2205 @@
+---
+import Dashboard from "../../layouts/Dashboard.astro";
+import WizardStep from "../../components/ui/WizardStep.astro";
+import Card from "../../components/ui/Card.astro";
+import Button from "../../components/ui/Button.astro";
+import Input from "../../components/ui/Input.astro";
+import Select from "../../components/ui/Select.astro";
+import Textarea from "../../components/ui/Textarea.astro";
+import { DEFAULT_QUOTE_TEXTS } from "../../config/company";
+import { DateHelper } from "../../utils/dateHelpers";
+import { QuoteHelper } from "../../utils/quoteHelpers";
+import { ValidationHelper } from "../../utils/validationHelpers";
+
+// Valores por defecto para los campos de texto
+const defaultObservaciones = DEFAULT_QUOTE_TEXTS.observaciones;
+const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
+---
+
+<Dashboard
+  title="Nueva Cotización (Wizard) - BLS Cotizador"
+  activeSection="quotes"
+>
+  <div class="max-w-7xl mx-auto space-y-6">
+    <!-- Header -->
+    <Card>
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+            Nueva Cotización
+          </h1>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Crea una cotización paso a paso con validaciones y diseño mejorado
+          </p>
+        </div>
+        <div class="flex space-x-3">
+          <Button href="/quotes" variant="secondary" size="sm">
+            Volver a Cotizaciones
+          </Button>
+        </div>
+      </div>
+    </Card>
+
+    <!-- Progress Steps -->
+    <Card>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="wizard-progress">
+        <div id="step-indicator-1" class="step-indicator" data-step="1">
+          <div
+            class="flex items-center space-x-3 p-4 rounded-lg transition-all bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-200 dark:border-primary-700"
+          >
+            <div
+              class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium bg-primary-500 dark:bg-primary-600 text-white"
+            >
+              1
+            </div>
+            <div class="flex-1">
+              <h4 class="text-sm font-medium text-gray-900 dark:text-white">
+                Información Básica
+              </h4>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Datos del evento
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div id="step-indicator-2" class="step-indicator" data-step="2">
+          <div
+            class="flex items-center space-x-3 p-4 rounded-lg transition-all bg-gray-50 dark:bg-gray-700/30 border-2 border-gray-200 dark:border-gray-700"
+          >
+            <div
+              class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
+            >
+              2
+            </div>
+            <div class="flex-1">
+              <h4 class="text-sm font-medium text-gray-900 dark:text-white">
+                Seleccionar Items
+              </h4>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Servicios y productos
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div id="step-indicator-3" class="step-indicator" data-step="3">
+          <div
+            class="flex items-center space-x-3 p-4 rounded-lg transition-all bg-gray-50 dark:bg-gray-700/30 border-2 border-gray-200 dark:border-gray-700"
+          >
+            <div
+              class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
+            >
+              3
+            </div>
+            <div class="flex-1">
+              <h4 class="text-sm font-medium text-gray-900 dark:text-white">
+                Configurar Precios
+              </h4>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Ajustar cantidades
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div id="step-indicator-4" class="step-indicator" data-step="4">
+          <div
+            class="flex items-center space-x-3 p-4 rounded-lg transition-all bg-gray-50 dark:bg-gray-700/30 border-2 border-gray-200 dark:border-gray-700"
+          >
+            <div
+              class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
+            >
+              4
+            </div>
+            <div class="flex-1">
+              <h4 class="text-sm font-medium text-gray-900 dark:text-white">
+                Revisar y Crear
+              </h4>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Finalizar cotización
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Card>
+
+    <!-- Wizard Content -->
+    <div id="wizard-container" class="min-h-96">
+      <!-- Step 1: Información Básica -->
+      <div id="step-1" class="wizard-step">
+        <Card>
+          <div class="space-y-6">
+            <div>
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-white mb-4"
+              >
+                Información Básica de la Cotización
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
+                Comencemos con los datos principales del evento o proyecto.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Cliente -->
+              <Select
+                id="wizard-cliente_id"
+                name="cliente_id"
+                required
+                label="Cliente"
+                placeholder="Seleccionar cliente..."
+                options={[]}
+              />
+
+              <!-- Título -->
+              <Input
+                id="wizard-titulo"
+                name="titulo"
+                required
+                label="Título del Evento"
+                placeholder="Ej: Evento corporativo anual"
+              />
+
+              <!-- Fecha de inicio -->
+              <Input
+                id="wizard-fecha_evento"
+                name="fecha_evento"
+                type="date"
+                label="Fecha de inicio del evento"
+              />
+
+              <!-- Fecha de fin -->
+              <Input
+                id="wizard-fecha_evento_fin"
+                name="fecha_evento_fin"
+                type="date"
+                label="Fecha de fin del evento"
+              />
+
+              <!-- Lugar del evento -->
+              <Input
+                id="wizard-lugar_evento"
+                name="lugar_evento"
+                type="text"
+                label="Lugar del evento"
+                placeholder="ej. Hotel Hilton, Centro de Convenciones..."
+              />
+
+              <!-- Duración -->
+              <Input
+                id="wizard-duracion_dias"
+                name="duracion_dias"
+                type="number"
+                min={1}
+                step={1}
+                value="1"
+                label="Duración (días)"
+                placeholder="Se calcula automáticamente"
+              />
+
+              <!-- Estado -->
+              <Select
+                id="wizard-estado"
+                name="estado"
+                label="Estado"
+                value="borrador"
+                options={[
+                  { value: "borrador", label: "Borrador" },
+                  { value: "enviado", label: "Enviado" },
+                  { value: "aprobado", label: "Aprobado" },
+                  { value: "rechazado", label: "Rechazado" },
+                ]}
+              />
+            </div>
+
+            <!-- Descripción completa -->
+            <Textarea
+              id="wizard-descripcion"
+              name="descripcion"
+              rows={3}
+              placeholder="Describe el evento o proyecto en detalle..."
+              label="Descripción del Evento"
+            />
+
+            <!-- Armado previo -->
+            <div class="flex items-center space-x-3">
+              <input
+                id="wizard-requiere_armado"
+                name="requiere_armado"
+                type="checkbox"
+                class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
+              />
+              <div>
+                <label
+                  for="wizard-requiere_armado"
+                  class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Requiere día de armado previo
+                </label>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  El evento necesita montaje/armado el día anterior
+                </p>
+              </div>
+            </div>
+
+            <!-- Navegación -->
+            <div
+              class="flex justify-end pt-6 border-t border-gray-200 dark:border-gray-700"
+            >
+              <Button
+                id="next-to-step-2"
+                variant="primary"
+                size="md"
+                disabled={false}
+              >
+                Siguiente: Seleccionar Items
+                <svg
+                  class="ml-2 w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5l7 7-7 7"></path>
+                </svg>
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <!-- Step 2: Seleccionar Items (Hidden initially) -->
+      <div id="step-2" class="wizard-step hidden">
+        <Card>
+          <div class="space-y-6">
+            <div>
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-white mb-4"
+              >
+                Seleccionar Items y Servicios
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
+                Elige los equipos y servicios necesarios para el evento.
+              </p>
+            </div>
+
+            <!-- Filtros de búsqueda -->
+            <div
+              class="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+            >
+              <Input
+                id="wizard-search-items"
+                placeholder="Buscar items..."
+                label="Buscar"
+              />
+              <Select
+                id="wizard-category-filter"
+                label="Categoría"
+                options={[{ value: "", label: "Todas las categorías" }]}
+              />
+              <div class="flex items-end">
+                <Button
+                  id="clear-filters-wizard"
+                  variant="secondary"
+                  size="sm"
+                  class="w-full"
+                >
+                  Limpiar Filtros
+                </Button>
+              </div>
+              <div class="flex items-end">
+                <Button
+                  id="create-custom-item-wizard"
+                  variant="primary"
+                  size="sm"
+                  class="w-full"
+                >
+                  <svg
+                    class="mr-1 w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  </svg>
+                  Item Personalizado
+                </Button>
+              </div>
+            </div>
+
+            <!-- Items disponibles y seleccionados en dos columnas -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <!-- Items Disponibles -->
+              <div>
+                <h4
+                  class="text-md font-medium text-gray-900 dark:text-white mb-4"
+                >
+                  Items Disponibles
+                </h4>
+                <div
+                  id="wizard-available-items"
+                  class="space-y-2 max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-700/50"
+                >
+                  <!-- Loading state -->
+                  <div class="text-center py-8">
+                    <svg
+                      class="animate-spin h-6 w-6 mx-auto mb-2 text-primary-600 dark:text-primary-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        class="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        stroke-width="4"></circle>
+                      <path
+                        class="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                      Cargando items...
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Items Seleccionados -->
+              <div>
+                <h4
+                  class="text-md font-medium text-gray-900 dark:text-white mb-4"
+                >
+                  Items Seleccionados <span
+                    id="wizard-selected-count"
+                    class="text-sm text-gray-500 dark:text-gray-400">(0)</span
+                  >
+                </h4>
+                <div
+                  id="wizard-selected-items"
+                  class="space-y-2 max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-green-50 dark:bg-green-900/20"
+                >
+                  <div
+                    class="text-center py-8 text-gray-500 dark:text-gray-400"
+                  >
+                    <svg
+                      class="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-6.1M4 13h6.1"
+                      ></path>
+                    </svg>
+                    <p class="text-sm">No hay items seleccionados</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Navegación -->
+            <div
+              class="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700"
+            >
+              <Button id="back-to-step-1" variant="secondary" size="md">
+                <svg
+                  class="mr-2 w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Anterior
+              </Button>
+              <Button
+                id="next-to-step-3"
+                variant="primary"
+                size="md"
+                disabled={false}
+              >
+                Siguiente: Configurar Precios
+                <svg
+                  class="ml-2 w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5l7 7-7 7"></path>
+                </svg>
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <!-- Step 3: Configurar Precios (Hidden initially) -->
+      <div id="step-3" class="wizard-step hidden">
+        <Card>
+          <div class="space-y-6">
+            <div>
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-white mb-4"
+              >
+                Configurar Precios y Totales
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
+                Ajusta cantidades, precios y descuentos.
+              </p>
+            </div>
+
+            <!-- Items con precios editables -->
+            <div id="wizard-price-items" class="space-y-4">
+              <!-- Los items se cargarán aquí -->
+            </div>
+
+            <!-- Descuentos y totales -->
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Input
+                    id="wizard-descuento"
+                    name="descuento"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value="0"
+                    label="Descuento (%)"
+                  />
+                </div>
+                <div class="space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-700 dark:text-gray-300"
+                      >Subtotal:</span
+                    >
+                    <span
+                      id="wizard-subtotal-display"
+                      class="font-medium text-gray-900 dark:text-white">$0</span
+                    >
+                  </div>
+                  <div
+                    class="flex justify-between text-sm text-red-600 dark:text-red-400"
+                  >
+                    <span>Descuento:</span>
+                    <span id="wizard-descuento-display">-$0</span>
+                  </div>
+                  <div
+                    class="flex justify-between text-lg font-semibold pt-2 border-t border-gray-300 dark:border-gray-600"
+                  >
+                    <span class="text-gray-900 dark:text-white">Total:</span>
+                    <span
+                      id="wizard-total-display"
+                      class="text-primary-600 dark:text-primary-400">$0</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Navegación -->
+            <div
+              class="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700"
+            >
+              <Button id="back-to-step-2" variant="secondary" size="md">
+                <svg
+                  class="mr-2 w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Anterior
+              </Button>
+              <Button id="next-to-step-4" variant="primary" size="md">
+                Siguiente: Revisar
+                <svg
+                  class="ml-2 w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5l7 7-7 7"></path>
+                </svg>
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <!-- Step 4: Revisar y Crear (Hidden initially) -->
+      <div id="step-4" class="wizard-step hidden">
+        <Card>
+          <div class="space-y-6">
+            <div>
+              <h3
+                class="text-lg font-semibold text-gray-900 dark:text-white mb-4"
+              >
+                Revisar y Crear Cotización
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
+                Revisa todos los datos antes de crear la cotización.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <!-- Resumen de información básica -->
+              <div class="space-y-4">
+                <h4 class="font-medium text-gray-900 dark:text-white">
+                  Información del Evento
+                </h4>
+                <div
+                  id="wizard-summary-basic"
+                  class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-2"
+                >
+                  <!-- Se completará con JavaScript -->
+                </div>
+              </div>
+
+              <!-- Resumen de items y totales -->
+              <div class="space-y-4">
+                <h4 class="font-medium text-gray-900 dark:text-white">
+                  Items y Totales
+                </h4>
+                <div
+                  id="wizard-summary-items"
+                  class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4"
+                >
+                  <!-- Se completará con JavaScript -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Observaciones finales -->
+            <div>
+              <Textarea
+                id="wizard-observaciones"
+                name="observaciones"
+                rows={4}
+                value={defaultObservaciones}
+                placeholder="Términos y condiciones, notas especiales..."
+                label="Observaciones y Términos"
+              />
+            </div>
+
+            <!-- Condiciones Comerciales -->
+            <div>
+              <Textarea
+                id="wizard-condiciones"
+                name="condiciones"
+                rows={15}
+                value={defaultCondiciones}
+                placeholder="Edita las condiciones comerciales..."
+                label="Condiciones Comerciales"
+              />
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Estas condiciones aparecerán en el PDF de la cotización. Puedes
+                editarlas según el cliente o tipo de evento.
+              </p>
+            </div>
+
+            <!-- Navegación final -->
+            <div
+              class="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700"
+            >
+              <Button id="back-to-step-3" variant="secondary" size="md">
+                <svg
+                  class="mr-2 w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Anterior
+              </Button>
+              <div class="space-x-2">
+                <!-- Botón de test directo -->
+                <button
+                  id="test-create-quote"
+                  type="button"
+                  class="inline-flex items-center justify-center font-medium rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 shadow-sm px-4 py-2 text-sm"
+                >
+                  🧪 Test
+                </button>
+                <Button id="create-quote-wizard" variant="primary" size="lg">
+                  <svg
+                    class="mr-2 w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  </svg>
+                  Crear Cotización
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para crear item personalizado -->
+  <div
+    id="custom-item-modal"
+    class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50"
+  >
+    <div
+      class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
+    >
+      <div class="mt-3">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-medium text-gray-900">
+            Crear Item Personalizado
+          </h3>
+          <button
+            id="close-custom-modal"
+            class="text-gray-400 hover:text-gray-600"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <form id="custom-item-form" class="space-y-4">
+          <Input
+            id="custom-item-nombre"
+            name="nombre"
+            required
+            label="Nombre del Item"
+            placeholder="Ej: Servicio especial de audio"
+          />
+
+          <Select
+            id="custom-item-categoria"
+            name="categoria"
+            label="Categoría"
+            options={[]}
+          />
+
+          <Input
+            id="custom-item-precio"
+            name="precio"
+            type="number"
+            min="0"
+            step="0.01"
+            required
+            label="Precio Base"
+            placeholder="0.00"
+          />
+
+          <Textarea
+            id="custom-item-descripcion"
+            name="descripcion"
+            rows={3}
+            label="Descripción"
+            placeholder="Describe el servicio o producto personalizado..."
+          />
+
+          <div class="flex justify-end space-x-3 pt-4">
+            <Button
+              id="cancel-custom-item"
+              type="button"
+              variant="secondary"
+              size="sm"
+            >
+              Cancelar
+            </Button>
+            <Button
+              id="save-custom-item"
+              type="submit"
+              variant="primary"
+              size="sm"
+            >
+              Agregar Item
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</Dashboard>
+
+<script>
+  import { notifications } from "../../utils/notifications.js";
+  import { DateHelper } from "../../utils/dateHelpers";
+  import { QuoteHelper } from "../../utils/quoteHelpers";
+  import { ValidationHelper } from "../../utils/validationHelpers";
+
+  // Types for wizard data
+  interface WizardData {
+    basicInfo: any;
+    selectedItems: any[];
+    pricing: any;
+    observations: string;
+  }
+
+  // Global functions declaration
+  declare global {
+    interface Window {
+      addWizardItem: (itemId: string) => void;
+      removeWizardItem: (itemId: string) => void;
+      updateItemPricing: (index: number) => void;
+      updateItemDescription: (itemId: any, newDescription: string) => void;
+      openCustomItemModal: () => void;
+      closeCustomItemModal: () => void;
+      saveCustomItem: () => void;
+    }
+  }
+
+  // Wizard state
+  let currentStep = 1;
+  let wizardData: WizardData = {
+    basicInfo: {},
+    selectedItems: [],
+    pricing: {},
+    observations: "",
+  };
+
+  let allClients: any[] = [];
+  let allItems: any[] = [];
+  let allCategories: any[] = [];
+
+  // Helper function to get category name
+  function getCategoryName(categoriaId: string): string {
+    // First try to find in loaded categories from Firebase
+    const categoria = allCategories.find((cat: any) => cat.id === categoriaId);
+    if (categoria) {
+      return categoria.nombre;
+    }
+
+    // Fallback to manual mapping if not found
+    const categoryMap: Record<string, string> = {
+      cat_1: "Audio y Personal", // Sonido + Asistentes
+      cat_2: "DJ y Entretenimiento", // Mesa DJ, Shows
+      cat_3: "Proyección y Pantallas", // Proyección básica
+      cat_4: "Video y Monitores", // Monitores LED, Video 4K
+      cat_5: "Armado y Pantallas LED", // Armado + Pantallas LED
+      cat_6: "Estructuras y Rigging", // Soportes, estructuras
+      cat_7: "Decoración y Ambientación",
+      cat_8: "Catering y Gastronomía",
+      cat_9: "Iluminación", // Toda la iluminación + algunos equipos
+      cat_10: "Transporte",
+      cat_11: "Seguridad",
+      cat_12: "Otros Servicios",
+    };
+
+    return categoryMap[categoriaId] || "Sin categoría";
+  }
+
+  // Initialize wizard
+  document.addEventListener("DOMContentLoaded", async () => {
+    console.log("🎯 Inicializando Wizard de Cotización");
+
+    await loadWizardData();
+    initializeStepNavigation();
+    initializeBasicInfoValidation();
+
+    // Update visual progress for current step
+    updateStepProgress(currentStep);
+
+    // Load data for the current step (step 1 by default)
+    loadStepData(currentStep);
+
+    // For debugging: Add a quick way to test step 2
+    // Check if URL has a hash for step
+    const hash = window.location.hash;
+    if (hash === "#step2") {
+      console.log("🔧 Debug: Navegando al paso 2 directamente");
+      setTimeout(() => goToStep(2), 1000); // Wait for data to load
+    } else if (hash === "#step3") {
+      console.log("🔧 Debug: Navegando al paso 3 directamente");
+      // Add some mock selected items for testing
+      setTimeout(() => {
+        if (allItems.length > 0) {
+          wizardData.selectedItems = [
+            {
+              ...allItems[0],
+              cantidad: 2,
+              total: (allItems[0].precioBase || 0) * 2,
+            },
+            { ...allItems[1], cantidad: 1, total: allItems[1].precioBase || 0 },
+          ];
+          goToStep(3);
+        }
+      }, 1000);
+    } else if (hash === "#step4") {
+      console.log("🔧 Debug: Navegando al paso 4 directamente");
+      // Add mock data for testing
+      setTimeout(() => {
+        if (allItems.length > 0 && allClients.length > 0) {
+          wizardData.basicInfo = {
+            cliente_id: allClients[0].id,
+            titulo: "Cotización de prueba",
+            fecha_evento: "2025-06-20",
+            fecha_evento_fin: "2025-06-20",
+            lugar_evento: "Hotel Hilton Buenos Aires",
+            duracion_dias: 1,
+            estado: "borrador",
+            descripcion: "Cotización creada desde wizard de prueba",
+            requiere_armado: false,
+          };
+          wizardData.selectedItems = [
+            {
+              ...allItems[0],
+              cantidad: 2,
+              total: (allItems[0].precioBase || 0) * 2,
+            },
+            { ...allItems[1], cantidad: 1, total: allItems[1].precioBase || 0 },
+          ];
+          goToStep(4);
+        }
+      }, 1000);
+    }
+
+    console.log("✅ Wizard inicializado correctamente");
+  });
+
+  // Load data for wizard
+  async function loadWizardData() {
+    try {
+      console.log("🔄 Iniciando carga de datos...");
+
+      // Load clients
+      const clientsResponse = await fetch("/api/clients");
+      if (clientsResponse.ok) {
+        allClients = await clientsResponse.json();
+        console.log("👥 Clientes cargados:", allClients.length);
+        renderClientOptions();
+      } else {
+        console.error("❌ Error cargando clientes:", clientsResponse.status);
+      }
+
+      // Load items
+      const itemsResponse = await fetch("/api/items");
+      if (itemsResponse.ok) {
+        const itemsData = await itemsResponse.json();
+        console.log("📦 Respuesta de items API:", itemsData);
+
+        // The API returns { success: true, items: [...] }
+        allItems = itemsData.items || [];
+        console.log("📦 Items procesados:", allItems.length, allItems);
+
+        // If we're on step 2, render the items immediately
+        if (currentStep === 2) {
+          console.log("🔄 Renderizando items porque estamos en paso 2");
+          renderAvailableItems();
+        }
+      } else {
+        console.error("❌ Error cargando items:", itemsResponse.status);
+      }
+
+      // Load categories from Firebase (same as items.astro)
+      try {
+        console.log("🏷️ Cargando categorías desde Firebase...");
+        const { getDocs, collection } = await import("firebase/firestore");
+        const { db } = await import("../../utils/firebase.ts");
+
+        const categoriesSnapshot = await getDocs(collection(db, "categorias"));
+        allCategories = [];
+
+        categoriesSnapshot.forEach((doc) => {
+          const categoria = { id: doc.id, ...doc.data() } as any;
+          allCategories.push(categoria);
+        });
+
+        console.log(
+          "🏷️ Categorías cargadas desde Firebase:",
+          allCategories.length
+        );
+        renderCategoryOptions();
+      } catch (error) {
+        console.warn(
+          "⚠️ No se pudieron cargar categorías desde Firebase, usando mapeo manual"
+        );
+
+        // Fallback to manual mapping if Firebase fails
+        const uniqueCategories = new Set();
+        allItems.forEach((item: any) => {
+          if (item.categoriaId) {
+            uniqueCategories.add(item.categoriaId);
+          }
+        });
+
+        allCategories = Array.from(uniqueCategories).map((catId: any) => ({
+          id: catId,
+          nombre: getCategoryName(catId),
+        }));
+
+        console.log(
+          "🏷️ Categorías extraídas como fallback:",
+          allCategories.length
+        );
+        renderCategoryOptions();
+      }
+
+      console.log("✅ Datos del wizard cargados correctamente");
+    } catch (error) {
+      console.error("❌ Error cargando datos:", error);
+    }
+  }
+
+  // Render client options
+  function renderClientOptions() {
+    const clientSelect = document.getElementById("wizard-cliente_id");
+    if (!clientSelect) return;
+
+    // Clear existing options
+    clientSelect.innerHTML = '<option value="">Seleccionar cliente...</option>';
+
+    allClients.forEach((client: any) => {
+      const option = document.createElement("option");
+      option.value = client.id;
+      option.textContent = `${client.nombre}${client.empresa ? ` - ${client.empresa}` : ""}`;
+      clientSelect.appendChild(option);
+    });
+  }
+
+  // Render category options
+  function renderCategoryOptions() {
+    const categorySelect = document.getElementById("wizard-category-filter");
+    if (!categorySelect) return;
+
+    // Clear existing options except default
+    categorySelect.innerHTML = '<option value="">Todas las categorías</option>';
+
+    allCategories.forEach((category: any) => {
+      const option = document.createElement("option");
+      option.value = category.id;
+      option.textContent = category.nombre;
+      categorySelect.appendChild(option);
+    });
+  }
+
+  // Render available items
+  function renderAvailableItems(itemsToShow = allItems) {
+    const availableContainer = document.getElementById(
+      "wizard-available-items"
+    );
+    if (!availableContainer) {
+      console.warn("⚠️ Contenedor de items disponibles no encontrado");
+      return;
+    }
+
+    // Ensure itemsToShow is an array
+    if (!Array.isArray(itemsToShow)) {
+      console.error(
+        "❌ itemsToShow no es un array:",
+        typeof itemsToShow,
+        itemsToShow
+      );
+      itemsToShow = [];
+    }
+
+    console.log("📦 Renderizando items disponibles:", itemsToShow.length);
+
+    if (itemsToShow.length === 0) {
+      availableContainer.innerHTML = `
+        <div class="text-center py-8 text-gray-500">
+          <p class="text-sm">No se encontraron items disponibles</p>
+          ${allItems.length === 0 ? '<p class="text-xs">Los items aún se están cargando...</p>' : ""}
+        </div>
+      `;
+      return;
+    }
+
+    availableContainer.innerHTML = itemsToShow
+      .map((item: any) => {
+        const precio = item.precioBase || 0;
+        const descripcion = Array.isArray(item.descripcion)
+          ? item.descripcion.slice(0, 2).join(" • ") +
+            (item.descripcion.length > 2 ? "..." : "")
+          : item.descripcion || "";
+
+        const isSelected = wizardData.selectedItems.some(
+          (selected: any) => selected.id === item.id
+        );
+
+        return `
+        <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-3 hover:border-primary-300 dark:hover:border-primary-500 transition-colors ${
+          isSelected
+            ? "bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-600"
+            : "bg-white dark:bg-gray-800"
+        }">
+          <div class="flex items-center justify-between">
+            <div class="flex-1 min-w-0">
+              <h5 class="text-sm font-medium text-gray-900 dark:text-white truncate">${item.nombre}</h5>
+              <p class="text-xs text-gray-500 dark:text-gray-400">${getCategoryName(item.categoriaId)}</p>
+              ${descripcion ? `<p class="text-xs text-gray-600 dark:text-gray-300 mt-1">${descripcion}</p>` : ""}
+              <p class="text-sm font-semibold text-primary-600 dark:text-primary-400 mt-1">$${precio.toLocaleString("es-AR")}</p>
+            </div>
+            <div class="flex items-center space-x-2 ml-3">
+              ${
+                !isSelected
+                  ? `
+                <input
+                  type="number"
+                  id="cantidad-${item.id}"
+                  min="1"
+                  step="0.5"
+                  value="1"
+                  class="w-16 text-xs rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-1"
+                />
+              `
+                  : ""
+              }
+              <button
+                onclick="${isSelected ? `removeWizardItem('${item.id}')` : `addWizardItem('${item.id}')`}"
+                class="text-xs px-3 py-1 rounded transition-colors ${
+                  isSelected
+                    ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50"
+                    : "bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/50"
+                }"
+              >
+                ${isSelected ? "Quitar" : "Agregar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      })
+      .join("");
+  }
+
+  // Render selected items
+  function renderSelectedItems() {
+    const selectedContainer = document.getElementById("wizard-selected-items");
+    const countSpan = document.getElementById("wizard-selected-count");
+
+    if (!selectedContainer || !countSpan) return;
+
+    countSpan.textContent = `(${wizardData.selectedItems.length})`;
+
+    if (wizardData.selectedItems.length === 0) {
+      selectedContainer.innerHTML = `
+        <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+          <svg class="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-6.1M4 13h6.1"></path>
+          </svg>
+          <p class="text-sm">No hay items seleccionados</p>
+        </div>
+      `;
+      return;
+    }
+
+    selectedContainer.innerHTML = wizardData.selectedItems
+      .map(
+        (item: any) => `
+      <div class="bg-white dark:bg-gray-800 border border-green-300 dark:border-green-600 rounded-lg p-3">
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <h5 class="text-sm font-medium text-gray-900 dark:text-white">${item.nombre}</h5>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Cantidad: ${item.cantidad} x $${(item.precioBase || 0).toLocaleString("es-AR")}</p>
+            <p class="text-sm font-semibold text-green-600 dark:text-green-400">Total: $${(item.cantidad * (item.precioBase || 0)).toLocaleString("es-AR")}</p>
+          </div>
+          <button
+            onclick="removeWizardItem('${item.id}')"
+            class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    `
+      )
+      .join("");
+  }
+
+  // Add item to wizard selection
+  window.addWizardItem = function (itemId: string) {
+    const item = allItems.find((i: any) => i.id === itemId);
+    if (!item) return;
+
+    const cantidadInput = document.getElementById(
+      `cantidad-${itemId}`
+    ) as HTMLInputElement;
+    const cantidad = parseFloat(cantidadInput?.value || "1");
+
+    const selectedItem = {
+      ...item,
+      cantidad: cantidad,
+      total: cantidad * (item.precioBase || 0),
+    };
+
+    wizardData.selectedItems.push(selectedItem);
+    renderAvailableItems();
+    renderSelectedItems();
+    updateStep2Navigation();
+
+    console.log("✅ Item agregado:", item.nombre);
+  };
+
+  // Remove item from wizard selection
+  window.removeWizardItem = function (itemId: string) {
+    wizardData.selectedItems = wizardData.selectedItems.filter(
+      (item: any) => item.id !== itemId
+    );
+    renderAvailableItems();
+    renderSelectedItems();
+    updateStep2Navigation();
+
+    console.log("🗑️ Item removido");
+  };
+
+  // Update step 2 navigation
+  function updateStep2Navigation() {
+    const nextButton = document.getElementById(
+      "next-to-step-3"
+    ) as HTMLButtonElement;
+    if (nextButton) {
+      nextButton.disabled = wizardData.selectedItems.length === 0;
+    }
+  }
+
+  // Filter items
+  function filterWizardItems() {
+    const searchTerm =
+      (
+        document.getElementById("wizard-search-items") as HTMLInputElement
+      )?.value.toLowerCase() || "";
+    const categoryId =
+      (document.getElementById("wizard-category-filter") as HTMLSelectElement)
+        ?.value || "";
+
+    let filteredItems = Array.isArray(allItems) ? allItems : [];
+
+    if (searchTerm) {
+      filteredItems = filteredItems.filter(
+        (item: any) =>
+          item.nombre.toLowerCase().includes(searchTerm) ||
+          (item.descripcion &&
+            item.descripcion.toString().toLowerCase().includes(searchTerm))
+      );
+    }
+
+    if (categoryId) {
+      filteredItems = filteredItems.filter(
+        (item: any) => item.categoriaId === categoryId
+      );
+    }
+
+    renderAvailableItems(filteredItems);
+  }
+
+  // Clear filters
+  function clearWizardFilters() {
+    const searchInput = document.getElementById(
+      "wizard-search-items"
+    ) as HTMLInputElement;
+    const categoryFilter = document.getElementById(
+      "wizard-category-filter"
+    ) as HTMLSelectElement;
+
+    if (searchInput) searchInput.value = "";
+    if (categoryFilter) categoryFilter.value = "";
+
+    renderAvailableItems(Array.isArray(allItems) ? allItems : []);
+  }
+
+  // Render pricing items (Step 3)
+  function renderPricingItems() {
+    const container = document.getElementById("wizard-price-items");
+    if (!container) return;
+
+    if (wizardData.selectedItems.length === 0) {
+      container.innerHTML =
+        '<p class="text-center text-gray-500 py-8">No hay items seleccionados</p>';
+      return;
+    }
+
+    container.innerHTML = wizardData.selectedItems
+      .map((item: any, index: number) => {
+        // Use helper function for category name
+        const categoriaNombre = getCategoryName(item.categoriaId);
+
+        // Format description like in step 2
+        const descripcion = Array.isArray(item.descripcion)
+          ? item.descripcion.join(" • ")
+          : item.descripcion || "";
+
+        return `
+            <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-6 bg-white dark:bg-gray-800 shadow-sm">
+              <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Item Info -->
+                <div class="lg:col-span-1">
+                  <h5 class="font-semibold text-gray-900 dark:text-white mb-2 text-lg">${item.nombre}</h5>
+                  <p class="text-sm text-primary-600 dark:text-primary-400 font-medium mb-3">${categoriaNombre}</p>
+                  
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Descripción personalizada</label>
+                    <textarea
+                      id="pricing-descripcion-${index}"
+                      rows="4"
+                      class="w-full text-sm rounded-lg border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500 resize-none font-mono leading-relaxed dark:bg-gray-700 dark:text-white"
+                      onchange="updateItemDescription('${item.id}', this.value)"
+                      placeholder="Agrega detalles específicos para este item:&#10;• Especificaciones técnicas&#10;• Ubicación o montaje&#10;• Horarios especiales&#10;• Observaciones importantes"
+                      style="white-space: pre-wrap; line-height: 1.6;"
+                    >${descripcion}</textarea>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <span class="font-medium">💡 Tip:</span> Usa viñetas (•) o guiones (-) para organizar la información
+                    </p>
+                  </div>
+                </div>
+                
+                <!-- Pricing Controls -->
+                <div class="lg:col-span-2">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cantidad</label>
+                      <input
+                        type="number"
+                        id="pricing-cantidad-${index}"
+                        value="${item.cantidad}"
+                        min="0.5"
+                        step="0.5"
+                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500 text-lg py-2 dark:bg-gray-700 dark:text-white"
+                        onchange="updateItemPricing(${index})"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Precio Unitario</label>
+                      <input
+                        type="number"
+                        id="pricing-precio-${index}"
+                        value="${item.precioBase || 0}"
+                        min="0"
+                        step="0.01"
+                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500 text-lg py-2 dark:bg-gray-700 dark:text-white"
+                        onchange="updateItemPricing(${index})"
+                      />
+                    </div>
+                    <div class="text-right">
+                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subtotal</label>
+                      <div class="bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 rounded-lg p-3 border border-primary-200 dark:border-primary-700">
+                        <span class="text-xl font-bold text-primary-700 dark:text-primary-300">
+                          $<span id="item-total-${index}">${(item.cantidad * (item.precioBase || 0)).toLocaleString("es-AR")}</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+      })
+      .join("");
+  }
+
+  // Setup pricing listeners (Step 3)
+  function setupPricingListeners() {
+    const descuentoInput = document.getElementById("wizard-descuento");
+    if (descuentoInput) {
+      descuentoInput.addEventListener("input", calculateTotals);
+    }
+  }
+
+  // Update item pricing
+  window.updateItemPricing = function (index: number) {
+    const cantidadInput = document.getElementById(
+      `pricing-cantidad-${index}`
+    ) as HTMLInputElement;
+    const precioInput = document.getElementById(
+      `pricing-precio-${index}`
+    ) as HTMLInputElement;
+    const totalSpan = document.getElementById(`item-total-${index}`);
+
+    if (cantidadInput && precioInput && totalSpan) {
+      const cantidad = parseFloat(cantidadInput.value) || 0;
+      const precio = parseFloat(precioInput.value) || 0;
+      const total = cantidad * precio;
+
+      // Update wizard data
+      if (wizardData.selectedItems[index]) {
+        wizardData.selectedItems[index].cantidad = cantidad;
+        wizardData.selectedItems[index].precioBase = precio;
+        wizardData.selectedItems[index].total = total;
+      }
+
+      // Update display
+      totalSpan.textContent = total.toLocaleString("es-AR");
+
+      // Recalculate totals
+      calculateTotals();
+    }
+  };
+
+  // Update item description
+  window.updateItemDescription = function (
+    itemId: any,
+    newDescription: string
+  ) {
+    // Find item in selected items and update description
+    const itemIndex = wizardData.selectedItems.findIndex(
+      (item: any) => item.id === itemId
+    );
+    if (itemIndex !== -1) {
+      wizardData.selectedItems[itemIndex].descripcion = newDescription;
+      console.log("📝 Descripción actualizada para item:", itemId);
+    }
+  };
+
+  // Custom item modal functions
+  window.openCustomItemModal = function () {
+    const modal = document.getElementById("custom-item-modal");
+    if (modal) {
+      modal.classList.remove("hidden");
+
+      // Populate category select
+      const categorySelect = document.getElementById(
+        "custom-item-categoria"
+      ) as HTMLSelectElement;
+      if (categorySelect) {
+        categorySelect.innerHTML =
+          '<option value="">Seleccionar categoría...</option>';
+        allCategories.forEach((cat: any) => {
+          const option = document.createElement("option");
+          option.value = cat.id;
+          option.textContent = cat.nombre;
+          categorySelect.appendChild(option);
+        });
+      }
+    }
+  };
+
+  window.closeCustomItemModal = function () {
+    const modal = document.getElementById("custom-item-modal");
+    if (modal) {
+      modal.classList.add("hidden");
+
+      // Reset form
+      const form = document.getElementById(
+        "custom-item-form"
+      ) as HTMLFormElement;
+      if (form) form.reset();
+    }
+  };
+
+  window.saveCustomItem = function () {
+    const nombre = (
+      document.getElementById("custom-item-nombre") as HTMLInputElement
+    )?.value;
+    const categoriaId = (
+      document.getElementById("custom-item-categoria") as HTMLSelectElement
+    )?.value;
+    const precio = parseFloat(
+      (document.getElementById("custom-item-precio") as HTMLInputElement)
+        ?.value || "0"
+    );
+    const descripcion = (
+      document.getElementById("custom-item-descripcion") as HTMLTextAreaElement
+    )?.value;
+
+    if (!nombre || !categoriaId || precio <= 0) {
+      notifications.warning(
+        "Campos requeridos",
+        "Por favor completa todos los campos requeridos para el item personalizado"
+      );
+      return;
+    }
+
+    // Create custom item
+    const customItem = {
+      id: `custom_${Date.now()}`,
+      nombre: nombre,
+      categoriaId: categoriaId,
+      precioBase: precio,
+      descripcion: descripcion,
+      codigo: `CUSTOM_${Date.now()}`,
+      unidad: "servicio",
+      activo: true,
+      isCustom: true,
+    };
+
+    // Add to allItems for display
+    allItems.push(customItem);
+
+    // Add to selected items immediately
+    const selectedItem = {
+      ...customItem,
+      cantidad: 1,
+      total: precio,
+    };
+    wizardData.selectedItems.push(selectedItem);
+
+    // Update displays
+    renderAvailableItems();
+    renderSelectedItems();
+    updateStep2Navigation();
+
+    // Close modal
+    window.closeCustomItemModal();
+
+    console.log("✅ Item personalizado creado y agregado:", customItem.nombre);
+  };
+
+  // Calculate totals (Step 3) using centralized helper
+  function calculateTotals() {
+    const descuentoInput = document.getElementById(
+      "wizard-descuento"
+    ) as HTMLInputElement;
+    const descuentoPorcentaje = parseFloat(descuentoInput?.value || "0");
+
+    // Use centralized helper for calculations
+    const totals = QuoteHelper.calculateTotals(
+      wizardData.selectedItems,
+      descuentoPorcentaje
+    );
+
+    // Update displays
+    const subtotalDisplay = document.getElementById("wizard-subtotal-display");
+    const descuentoDisplay = document.getElementById(
+      "wizard-descuento-display"
+    );
+    const totalDisplay = document.getElementById("wizard-total-display");
+
+    if (subtotalDisplay)
+      subtotalDisplay.textContent = `$${totals.subtotal.toLocaleString("es-AR")}`;
+    if (descuentoDisplay)
+      descuentoDisplay.textContent = `-$${totals.descuentoMonto.toLocaleString("es-AR")}`;
+    if (totalDisplay)
+      totalDisplay.textContent = `$${totals.total.toLocaleString("es-AR")}`;
+
+    // Save pricing data
+    wizardData.pricing = {
+      subtotal: totals.subtotal,
+      descuentoPorcentaje,
+      descuentoMonto: totals.descuentoMonto,
+      total: totals.total,
+    };
+  }
+
+  // Render summary (Step 4)
+  function renderSummary() {
+    renderBasicInfoSummary();
+    renderItemsSummary();
+  }
+
+  // Render basic info summary
+  function renderBasicInfoSummary() {
+    const container = document.getElementById("wizard-summary-basic");
+    if (!container) return;
+
+    const cliente = allClients.find(
+      (c: any) => c.id === wizardData.basicInfo.cliente_id
+    );
+    const clienteNombre = cliente
+      ? `${cliente.nombre}${cliente.empresa ? ` - ${cliente.empresa}` : ""}`
+      : "No seleccionado";
+
+    container.innerHTML = `
+      <div class="space-y-2 text-sm">
+        <div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Cliente:</strong> ${clienteNombre}</div>
+        <div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Título:</strong> ${wizardData.basicInfo.titulo || "Sin título"}</div>
+        <div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Fecha inicio:</strong> ${wizardData.basicInfo.fecha_evento || "No especificada"}</div>
+        <div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Fecha fin:</strong> ${wizardData.basicInfo.fecha_evento_fin || "No especificada"}</div>
+        <div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Lugar:</strong> ${wizardData.basicInfo.lugar_evento || "No especificado"}</div>
+        <div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Duración:</strong> ${wizardData.basicInfo.duracion_dias || 1} día(s)</div>
+        <div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Estado:</strong> ${wizardData.basicInfo.estado || "borrador"}</div>
+        <div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Requiere armado:</strong> ${wizardData.basicInfo.requiere_armado ? "Sí" : "No"}</div>
+        ${wizardData.basicInfo.descripcion ? `<div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Descripción:</strong> ${wizardData.basicInfo.descripcion}</div>` : ""}
+      </div>
+    `;
+  }
+
+  // Render items summary
+  function renderItemsSummary() {
+    const container = document.getElementById("wizard-summary-items");
+    if (!container) return;
+
+    const itemsHtml = wizardData.selectedItems
+      .map(
+        (item: any) => `
+      <div class="flex justify-between py-2 border-b border-gray-200 dark:border-gray-600">
+        <div class="flex-1">
+          <div class="font-medium text-gray-900 dark:text-white">${item.nombre}</div>
+          <div class="text-sm text-gray-500 dark:text-gray-400">${item.cantidad} x $${(item.precioBase || 0).toLocaleString("es-AR")}</div>
+        </div>
+        <div class="font-medium text-gray-900 dark:text-white">$${((item.cantidad || 0) * (item.precioBase || 0)).toLocaleString("es-AR")}</div>
+      </div>
+    `
+      )
+      .join("");
+
+    const pricing = wizardData.pricing || {
+      subtotal: 0,
+      descuentoPorcentaje: 0,
+      descuentoMonto: 0,
+      total: 0,
+    };
+
+    container.innerHTML = `
+      <div class="space-y-2">
+        ${itemsHtml}
+        <div class="pt-2 mt-4 border-t border-gray-300 dark:border-gray-600">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-700 dark:text-gray-300">Subtotal:</span>
+            <span class="text-gray-900 dark:text-white">$${pricing.subtotal.toLocaleString("es-AR")}</span>
+          </div>
+          ${
+            pricing.descuentoPorcentaje > 0
+              ? `
+            <div class="flex justify-between text-sm text-red-600 dark:text-red-400">
+              <span>Descuento (${pricing.descuentoPorcentaje}%):</span>
+              <span>-$${pricing.descuentoMonto.toLocaleString("es-AR")}</span>
+            </div>
+          `
+              : ""
+          }
+          <div class="flex justify-between text-lg font-semibold pt-2 border-t border-gray-200 dark:border-gray-600">
+            <span class="text-gray-900 dark:text-white">Total:</span>
+            <span class="text-primary-600 dark:text-primary-400">$${pricing.total.toLocaleString("es-AR")}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Navigate to specific step
+  function goToStep(step: number) {
+    // Save current step data
+    saveCurrentStepData();
+
+    // Hide all steps
+    for (let i = 1; i <= 4; i++) {
+      const stepElement = document.getElementById(`step-${i}`);
+      if (stepElement) {
+        stepElement.classList.add("hidden");
+      }
+    }
+
+    // Show target step
+    const targetStep = document.getElementById(`step-${step}`);
+    if (targetStep) {
+      targetStep.classList.remove("hidden");
+      currentStep = step;
+    }
+
+    // Update progress indicators
+    updateStepProgress(step);
+
+    // Load step-specific data
+    loadStepData(step);
+
+    // If we're going to step 4, make sure the create button is set up
+    if (step === 4) {
+      setTimeout(() => {
+        setupCreateButton();
+      }, 100);
+    }
+
+    console.log(`📍 Navegando al paso ${step}`);
+  }
+
+  // Save current step data
+  function saveCurrentStepData() {
+    if (currentStep === 1) {
+      wizardData.basicInfo = {
+        cliente_id:
+          (document.getElementById("wizard-cliente_id") as HTMLSelectElement)
+            ?.value || "",
+        titulo:
+          (document.getElementById("wizard-titulo") as HTMLInputElement)
+            ?.value || "",
+        fecha_evento:
+          (document.getElementById("wizard-fecha_evento") as HTMLInputElement)
+            ?.value || "",
+        fecha_evento_fin:
+          (
+            document.getElementById(
+              "wizard-fecha_evento_fin"
+            ) as HTMLInputElement
+          )?.value || "",
+        lugar_evento:
+          (document.getElementById("wizard-lugar_evento") as HTMLInputElement)
+            ?.value || "",
+        duracion_dias: parseInt(
+          (document.getElementById("wizard-duracion_dias") as HTMLInputElement)
+            ?.value || "1"
+        ),
+        estado:
+          (document.getElementById("wizard-estado") as HTMLSelectElement)
+            ?.value || "borrador",
+        descripcion:
+          (document.getElementById("wizard-descripcion") as HTMLTextAreaElement)
+            ?.value || "",
+        requiere_armado:
+          (
+            document.getElementById(
+              "wizard-requiere_armado"
+            ) as HTMLInputElement
+          )?.checked || false,
+      };
+    }
+    // TODO: Add saving for other steps
+  }
+
+  // Load step-specific data
+  function loadStepData(step: number) {
+    if (step === 2) {
+      // Load items for selection
+      console.log("📦 Cargando items para selección");
+      console.log("📦 Items disponibles en allItems:", allItems.length);
+
+      // Wait for items to be loaded if they're not ready
+      if (allItems.length === 0) {
+        console.log("⏳ Esperando a que se carguen los items...");
+        const checkItems = setInterval(() => {
+          if (allItems.length > 0) {
+            console.log("✅ Items cargados, renderizando...");
+            clearInterval(checkItems);
+            renderAvailableItems();
+            renderSelectedItems();
+            updateStep2Navigation();
+          }
+        }, 100);
+
+        // Timeout after 5 seconds
+        setTimeout(() => {
+          clearInterval(checkItems);
+          if (allItems.length === 0) {
+            console.error("❌ Timeout: No se pudieron cargar los items");
+          }
+        }, 5000);
+      } else {
+        renderAvailableItems();
+        renderSelectedItems();
+        updateStep2Navigation();
+      }
+
+      // Setup search and filter listeners
+      const searchInput = document.getElementById("wizard-search-items");
+      const categoryFilter = document.getElementById("wizard-category-filter");
+      const clearButton = document.getElementById("clear-filters-wizard");
+      const customItemButton = document.getElementById(
+        "create-custom-item-wizard"
+      );
+
+      if (searchInput) {
+        searchInput.addEventListener("input", filterWizardItems);
+      }
+      if (categoryFilter) {
+        categoryFilter.addEventListener("change", filterWizardItems);
+      }
+      if (clearButton) {
+        clearButton.addEventListener("click", clearWizardFilters);
+      }
+      if (customItemButton) {
+        customItemButton.addEventListener("click", () =>
+          window.openCustomItemModal()
+        );
+      }
+
+      // Setup modal listeners
+      const closeModalButton = document.getElementById("close-custom-modal");
+      const cancelButton = document.getElementById("cancel-custom-item");
+      const customForm = document.getElementById("custom-item-form");
+
+      if (closeModalButton) {
+        closeModalButton.addEventListener("click", () =>
+          window.closeCustomItemModal()
+        );
+      }
+      if (cancelButton) {
+        cancelButton.addEventListener("click", () =>
+          window.closeCustomItemModal()
+        );
+      }
+      if (customForm) {
+        customForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          window.saveCustomItem();
+        });
+      }
+    } else if (step === 3) {
+      // Load pricing configuration
+      console.log("💰 Cargando configuración de precios");
+      renderPricingItems();
+      setupPricingListeners();
+      calculateTotals();
+    } else if (step === 4) {
+      // Load summary
+      console.log("📋 Generando resumen");
+      renderSummary();
+    }
+  }
+
+  // Initialize step navigation
+  function initializeStepNavigation() {
+    console.log("🔧 Inicializando navegación de pasos...");
+
+    // Next buttons
+    const nextToStep2 = document.getElementById("next-to-step-2");
+    const nextToStep3 = document.getElementById("next-to-step-3");
+    const nextToStep4 = document.getElementById("next-to-step-4");
+
+    // Back buttons
+    const backToStep1 = document.getElementById("back-to-step-1");
+    const backToStep2 = document.getElementById("back-to-step-2");
+    const backToStep3 = document.getElementById("back-to-step-3");
+
+    // Create button - intentar múltiples veces para asegurar que se encuentre
+    const createButton = document.getElementById("create-quote-wizard");
+    console.log("🔍 Buscando botón create-quote-wizard:", createButton);
+
+    if (nextToStep2) {
+      nextToStep2.addEventListener("click", () => goToStep(2));
+      console.log("✅ Event listener agregado a next-to-step-2");
+    }
+    if (nextToStep3) {
+      nextToStep3.addEventListener("click", () => goToStep(3));
+      console.log("✅ Event listener agregado a next-to-step-3");
+    }
+    if (nextToStep4) {
+      nextToStep4.addEventListener("click", () => goToStep(4));
+      console.log("✅ Event listener agregado a next-to-step-4");
+    }
+
+    if (backToStep1) {
+      backToStep1.addEventListener("click", () => goToStep(1));
+      console.log("✅ Event listener agregado a back-to-step-1");
+    }
+    if (backToStep2) {
+      backToStep2.addEventListener("click", () => goToStep(2));
+      console.log("✅ Event listener agregado a back-to-step-2");
+    }
+    if (backToStep3) {
+      backToStep3.addEventListener("click", () => goToStep(3));
+      console.log("✅ Event listener agregado a back-to-step-3");
+    }
+
+    // Setup create button - try immediately and also after a short delay
+    setupCreateButton();
+    setTimeout(setupCreateButton, 100);
+    setTimeout(setupCreateButton, 500);
+  }
+
+  // Setup create button with retry logic
+  function setupCreateButton() {
+    const createButton = document.getElementById("create-quote-wizard");
+    const testButton = document.getElementById("test-create-quote");
+
+    if (createButton && !createButton.dataset.listenerAdded) {
+      createButton.addEventListener("click", createWizardQuote);
+      createButton.dataset.listenerAdded = "true";
+      console.log("✅ Event listener agregado al botón de crear cotización");
+    } else if (!createButton) {
+      console.warn("⚠️ No se encontró el botón create-quote-wizard aún");
+    } else {
+      console.log(
+        "ℹ️ Event listener ya existe en el botón create-quote-wizard"
+      );
+    }
+
+    if (testButton && !testButton.dataset.listenerAdded) {
+      testButton.addEventListener("click", () => {
+        console.log("🧪 Botón de test clickeado");
+        console.log("🧪 wizardData:", wizardData);
+        notifications.info(
+          "Modo Debug",
+          "Test button funcionando! Revisa la consola para ver los datos."
+        );
+      });
+      testButton.dataset.listenerAdded = "true";
+      console.log("✅ Event listener agregado al botón de test");
+    }
+  }
+
+  // Initialize basic info validation
+  function initializeBasicInfoValidation() {
+    const fields = [
+      "wizard-cliente_id",
+      "wizard-titulo",
+      "wizard-fecha_evento",
+      "wizard-fecha_evento_fin",
+      "wizard-duracion_dias",
+    ];
+
+    fields.forEach((fieldId) => {
+      const field = document.getElementById(fieldId);
+      if (field) {
+        field.addEventListener("change", validateBasicInfo);
+        field.addEventListener("input", validateBasicInfo);
+
+        // Special handling for date fields
+        if (fieldId.includes("fecha_evento")) {
+          field.addEventListener("change", calculateEventDuration);
+        }
+      }
+    });
+
+    // Initial validation
+    validateBasicInfo();
+  }
+
+  // Calculate event duration based on start and end dates using centralized helpers
+  function calculateEventDuration() {
+    const startDateField = document.getElementById(
+      "wizard-fecha_evento"
+    ) as HTMLInputElement;
+    const endDateField = document.getElementById(
+      "wizard-fecha_evento_fin"
+    ) as HTMLInputElement;
+    const durationField = document.getElementById(
+      "wizard-duracion_dias"
+    ) as HTMLInputElement;
+
+    if (startDateField?.value && endDateField?.value) {
+      const startDate = DateHelper.safeParseDate(startDateField.value);
+      const endDate = DateHelper.safeParseDate(endDateField.value);
+
+      if (!startDate || !endDate) {
+        console.warn("Invalid dates for calculation");
+        return;
+      }
+
+      // Validate that end date is not before start date using centralized helper
+      if (!DateHelper.validateDateRange(startDate, endDate)) {
+        endDateField.setCustomValidity(
+          "La fecha de fin no puede ser anterior a la fecha de inicio"
+        );
+        endDateField.reportValidity();
+        return;
+      } else {
+        endDateField.setCustomValidity("");
+      }
+
+      // Calculate duration using centralized helper
+      const daysDiff = DateHelper.calculateDurationInDays(startDate, endDate);
+
+      if (daysDiff > 0) {
+        durationField.value = daysDiff.toString();
+        console.log(
+          `📅 Duración calculada: ${daysDiff} días (del ${startDateField.value} al ${endDateField.value})`
+        );
+      }
+    } else if (startDateField?.value && durationField?.value) {
+      // If we have start date and duration, calculate end date using centralized helper
+      const startDate = DateHelper.safeParseDate(startDateField.value);
+      const duration = parseInt(durationField.value) || 1;
+
+      if (startDate) {
+        const endDate = DateHelper.calculateEndDate(startDate, duration);
+        endDateField.value = DateHelper.safeFormatDateForInput(endDate);
+        console.log(
+          `📅 Fecha fin calculada: ${endDateField.value} (${duration} días desde ${startDateField.value})`
+        );
+      }
+    }
+
+    // Revalidate after changes
+    validateBasicInfo();
+  }
+
+  // Validate basic info step using centralized validation
+  function validateBasicInfo() {
+    const clienteId = (
+      document.getElementById("wizard-cliente_id") as HTMLSelectElement
+    )?.value;
+    const titulo = (
+      document.getElementById("wizard-titulo") as HTMLInputElement
+    )?.value;
+    const fechaEvento = (
+      document.getElementById("wizard-fecha_evento") as HTMLInputElement
+    )?.value;
+    const fechaEventoFin = (
+      document.getElementById("wizard-fecha_evento_fin") as HTMLInputElement
+    )?.value;
+
+    // Use centralized validation
+    const validation = ValidationHelper.validateQuote({
+      cliente_id: clienteId,
+      titulo: titulo,
+      fecha_evento: fechaEvento,
+      fecha_evento_fin: fechaEventoFin,
+    });
+
+    const nextButton = document.getElementById(
+      "next-to-step-2"
+    ) as HTMLButtonElement;
+    if (nextButton) {
+      nextButton.disabled = !validation.isValid;
+    }
+
+    return validation.isValid;
+  }
+
+  // Create quote from wizard
+  async function createWizardQuote() {
+    try {
+      console.log("🚀 Función createWizardQuote iniciada");
+      console.log("🚀 Creando cotización desde wizard...");
+      console.log("📋 Datos del wizard:", wizardData);
+
+      // Validate required data
+      if (!wizardData.basicInfo.cliente_id) {
+        console.error("❌ Validación falló: No hay cliente_id");
+        notifications.warning(
+          "Cliente requerido",
+          "Por favor selecciona un cliente antes de crear la cotización"
+        );
+        return;
+      }
+
+      if (!wizardData.basicInfo.titulo) {
+        console.error("❌ Validación falló: No hay título");
+        notifications.warning(
+          "Título requerido",
+          "Por favor ingresa un título para la cotización"
+        );
+        return;
+      }
+
+      if (wizardData.selectedItems.length === 0) {
+        console.error("❌ Validación falló: No hay items seleccionados");
+        notifications.warning(
+          "Items requeridos",
+          "Por favor selecciona al menos un item para la cotización"
+        );
+        return;
+      }
+
+      console.log("✅ Validaciones pasadas");
+
+      // Mostrar loading
+      notifications.loading(
+        "Creando cotización",
+        "Por favor espera mientras procesamos tu cotización..."
+      );
+
+      // Calculate totals before sending
+      calculateTotals();
+
+      // Prepare quote data
+      const quoteData = {
+        ...wizardData.basicInfo,
+        items: wizardData.selectedItems.map((item: any) => {
+          console.log("🔍 Procesando item para envío:", item);
+          return {
+            item_id: item.id,
+            nombre: item.nombre, // Incluir el nombre del item
+            cantidad: item.cantidad,
+            precio_unitario: item.precioBase,
+            descuento: 0,
+            descripcion: item.descripcion || item.nombre || "", // Usar el nombre como descripción si no hay descripción personalizada
+          };
+        }),
+        descuento_general: parseFloat(
+          (document.getElementById("wizard-descuento") as HTMLInputElement)
+            ?.value || "0"
+        ),
+        // Include calculated totals
+        subtotal: wizardData.pricing?.subtotal || 0,
+        total: wizardData.pricing?.total || 0,
+        descuento: wizardData.pricing?.descuentoMonto || 0,
+        observaciones:
+          (
+            document.getElementById(
+              "wizard-observaciones"
+            ) as HTMLTextAreaElement
+          )?.value || "",
+        condiciones:
+          (document.getElementById("wizard-condiciones") as HTMLTextAreaElement)
+            ?.value ||
+          "Los precios NO incluyen IVA. Validez: 30 días. Forma de pago: 50% al confirmar, 50% día del evento.",
+      };
+
+      console.log("📤 Enviando datos:", quoteData);
+
+      // Show loading state
+      const createButton = document.getElementById(
+        "create-quote-wizard"
+      ) as HTMLButtonElement;
+      if (createButton) {
+        createButton.disabled = true;
+        createButton.textContent = "Creando...";
+      }
+
+      const response = await fetch("/api/quotes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(quoteData),
+      });
+
+      console.log("📥 Respuesta del servidor:", response.status);
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("✅ Cotización creada exitosamente:", result);
+
+        await notifications.success(
+          "¡Cotización creada!",
+          "La cotización se ha creado exitosamente"
+        );
+
+        // Redirect to quotes list or view
+        if (result.id) {
+          window.location.href = `/quotes/view/${result.id}`;
+        } else {
+          window.location.href = "/quotes";
+        }
+      } else {
+        const error = await response.text();
+        console.error("❌ Error del servidor:", error);
+        notifications.error(
+          "Error al crear cotización",
+          `${response.status} - ${error}`
+        );
+      }
+    } catch (error) {
+      console.error("❌ Error en createWizardQuote:", error);
+      notifications.error(
+        "Error inesperado",
+        `${error instanceof Error ? error.message : String(error)}`
+      );
+    } finally {
+      // Restore button state
+      const createButton = document.getElementById(
+        "create-quote-wizard"
+      ) as HTMLButtonElement;
+      if (createButton) {
+        createButton.disabled = false;
+        createButton.textContent = "Crear Cotización";
+      }
+    }
+  }
+
+  // Update step progress indicators
+  function updateStepProgress(activeStep: number) {
+    console.log(`🔄 Actualizando progreso - Paso activo: ${activeStep}`);
+
+    // Actualizar todos los indicadores de paso
+    for (let i = 1; i <= 4; i++) {
+      const stepIndicator = document.getElementById(`step-indicator-${i}`);
+      const stepContainer = stepIndicator?.querySelector("div");
+      const stepCircle = stepIndicator?.querySelector(".w-8.h-8");
+
+      if (stepIndicator && stepContainer && stepCircle) {
+        // Resetear clases
+        stepContainer.className =
+          "flex items-center space-x-3 p-4 rounded-lg transition-all";
+        stepCircle.className =
+          "flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium";
+
+        if (i < activeStep) {
+          // Paso completado
+          stepContainer.classList.add(
+            "bg-green-50",
+            "dark:bg-green-900/20",
+            "border-2",
+            "border-green-200",
+            "dark:border-green-700"
+          );
+          stepCircle.classList.add(
+            "bg-green-500",
+            "dark:bg-green-600",
+            "text-white"
+          );
+          stepCircle.innerHTML = `
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          `;
+        } else if (i === activeStep) {
+          // Paso activo
+          stepContainer.classList.add(
+            "bg-primary-50",
+            "dark:bg-primary-900/20",
+            "border-2",
+            "border-primary-200",
+            "dark:border-primary-700"
+          );
+          stepCircle.classList.add(
+            "bg-primary-500",
+            "dark:bg-primary-600",
+            "text-white"
+          );
+          stepCircle.textContent = i.toString();
+        } else {
+          // Paso futuro
+          stepContainer.classList.add(
+            "bg-gray-50",
+            "dark:bg-gray-700/30",
+            "border-2",
+            "border-gray-200",
+            "dark:border-gray-700"
+          );
+          stepCircle.classList.add(
+            "bg-gray-300",
+            "dark:bg-gray-600",
+            "text-gray-600",
+            "dark:text-gray-300"
+          );
+          stepCircle.textContent = i.toString();
+        }
+      }
+    }
+  }
+
+  console.log("🎯 Wizard de Cotización - Sistema experimental listo");
+</script>
+
+<style>
+  .wizard-step {
+    transition: opacity 0.3s ease-in-out;
+  }
+
+  .wizard-step.hidden {
+    display: none;
+  }
+</style>

@@ -1,0 +1,56 @@
+---
+interface Props {
+  title?: string;
+  subtitle?: string;
+  padding?: "none" | "sm" | "md" | "lg";
+  shadow?: "none" | "sm" | "md" | "lg";
+  hover?: boolean;
+  class?: string;
+}
+
+const {
+  title,
+  subtitle,
+  padding = "md",
+  shadow = "md",
+  hover = false,
+  class: className = "",
+} = Astro.props;
+
+const paddingClasses = {
+  none: "",
+  sm: "p-3",
+  md: "p-4 sm:p-6",
+  lg: "p-6 sm:p-8",
+};
+
+const shadowClasses = {
+  none: "",
+  sm: "shadow-sm",
+  md: "shadow",
+  lg: "shadow-lg",
+};
+---
+
+<div
+  class={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 ${shadowClasses[shadow]} ${paddingClasses[padding]} ${hover ? "hover:shadow-lg transition-shadow duration-200" : ""} ${className}`}
+>
+  {
+    (title || subtitle) && (
+      <div class="mb-4">
+        {title && (
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+            {title}
+          </h3>
+        )}
+        {subtitle && (
+          <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+            {subtitle}
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  <slot />
+</div>

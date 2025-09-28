@@ -1,0 +1,89 @@
+---
+interface Props {
+  currentSize: "small" | "medium" | "large";
+  id?: string;
+}
+
+const { currentSize, id } = Astro.props;
+
+const sizes = [
+  { name: "small", label: "Pequeño", description: "14px - Compacto" },
+  { name: "medium", label: "Normal", description: "16px - Por defecto" },
+  { name: "large", label: "Grande", description: "18px - Cómodo" },
+];
+---
+
+<div class="space-y-3">
+  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+    Tamaño de Fuente
+  </label>
+  <div class="space-y-2">
+    {
+      sizes.map((size) => (
+        <button
+          type="button"
+          id={`size-${size.name}`}
+          class={`w-full p-3 border-2 rounded-lg text-left transition-all duration-200 ${
+            currentSize === size.name
+              ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
+              : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+          }`}
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <div
+                class={`font-medium text-gray-900 dark:text-gray-100 ${
+                  size.name === "small"
+                    ? "text-sm"
+                    : size.name === "medium"
+                      ? "text-base"
+                      : "text-lg"
+                }`}
+              >
+                {size.label}
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                {size.description}
+              </div>
+            </div>
+            {currentSize === size.name && (
+              <svg
+                class="w-5 h-5 text-primary-500"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            )}
+          </div>
+        </button>
+      ))
+    }
+  </div>
+  <p class="text-xs text-gray-500 dark:text-gray-400">
+    El tamaño se aplicará a todo el texto de la aplicación
+  </p>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const sizes = ["small", "medium", "large"];
+
+    sizes.forEach((size) => {
+      const btn = document.getElementById(`size-${size}`);
+      if (btn) {
+        btn.addEventListener("click", () => {
+          window.dispatchEvent(
+            new CustomEvent("themeChange", {
+              detail: { fontSize: size },
+            })
+          );
+        });
+      }
+    });
+  });
+</script>

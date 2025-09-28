@@ -1,0 +1,80 @@
+---
+// Redirect to wizard - the new and improved way to create quotes
+---
+
+<script>
+  // Immediate redirect to wizard
+  if (typeof window !== "undefined") {
+    window.location.href = "/quotes/wizard";
+  }
+</script>
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirigiendo... - BLS Cotizador</title>
+    <meta http-equiv="refresh" content="0; url=/quotes/wizard" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <div
+      style="text-align: center; padding: 50px; font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;"
+    >
+      <h1 style="color: #1f2937; margin-bottom: 16px;">
+        🚀 Redirigiendo al Nuevo Sistema
+      </h1>
+      <h2 style="color: #4b5563; font-weight: normal; margin-bottom: 24px;">
+        Creando cotización con diseño mejorado...
+      </h2>
+
+      <div
+        style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 24px 0;"
+      >
+        <p style="color: #6b7280; margin: 0;">
+          ✨ Ahora utilizamos un wizard paso a paso con mejor diseño y
+          validaciones mejoradas
+        </p>
+      </div>
+
+      <p style="color: #6b7280; margin-bottom: 24px;">
+        Si no se redirecciona automáticamente,
+        <a
+          href="/quotes/wizard"
+          style="color: #3b82f6; text-decoration: none; font-weight: 500;"
+          >haga clic aquí</a
+        >.
+      </p>
+
+      <div style="margin-top: 32px;">
+        <div
+          style="display: inline-block; width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top: 4px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite;"
+        >
+        </div>
+      </div>
+
+      <style>
+        @keyframes spin {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+
+        body {
+          margin: 0;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        a:hover {
+          text-decoration: underline !important;
+        }
+      </style>
+    </div>
+  </body>
+</html>

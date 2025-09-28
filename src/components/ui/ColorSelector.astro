@@ -1,0 +1,77 @@
+---
+interface Props {
+  currentColor: string;
+  id?: string;
+}
+
+const { currentColor, id } = Astro.props;
+
+const colors = [
+  { name: "blue", label: "Azul", class: "bg-blue-500" },
+  { name: "green", label: "Verde", class: "bg-green-500" },
+  { name: "purple", label: "Púrpura", class: "bg-purple-500" },
+  { name: "red", label: "Rojo", class: "bg-red-500" },
+  { name: "orange", label: "Naranja", class: "bg-orange-500" },
+];
+---
+
+<div class="space-y-3">
+  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+    Color Principal
+  </label>
+  <div class="grid grid-cols-5 gap-3">
+    {
+      colors.map((color) => (
+        <button
+          type="button"
+          id={`color-${color.name}`}
+          class={`relative p-2 border-2 rounded-lg transition-all duration-200 ${
+            currentColor === color.name
+              ? "border-gray-400 ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-gray-900"
+              : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+          }`}
+          title={color.label}
+        >
+          <div class={`w-8 h-8 ${color.class} rounded-full mx-auto`} />
+          {currentColor === color.name && (
+            <div class="absolute inset-0 flex items-center justify-center">
+              <svg
+                class="w-4 h-4 text-white drop-shadow-lg"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
+          )}
+        </button>
+      ))
+    }
+  </div>
+  <p class="text-xs text-gray-500 dark:text-gray-400">
+    El color se aplicará a botones, enlaces y elementos destacados
+  </p>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const colors = ["blue", "green", "purple", "red", "orange"];
+
+    colors.forEach((color) => {
+      const btn = document.getElementById(`color-${color}`);
+      if (btn) {
+        btn.addEventListener("click", () => {
+          window.dispatchEvent(
+            new CustomEvent("themeChange", {
+              detail: { primaryColor: color },
+            })
+          );
+        });
+      }
+    });
+  });
+</script>

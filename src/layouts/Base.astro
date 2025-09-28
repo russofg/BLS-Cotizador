@@ -1,0 +1,153 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = "Cotizador de servicios audiovisuales para eventos",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- SweetAlert2 CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
+    />
+
+    <!-- SweetAlert2 JS -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"
+    ></script>
+  </head>
+  <body
+    class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200"
+  >
+    <slot />
+
+    <!-- Theme initialization script -->
+    <script>
+      // Initialize theme as early as possible to prevent flash
+      (function () {
+        try {
+          const stored = localStorage.getItem("user-theme");
+          if (stored) {
+            const theme = JSON.parse(stored);
+            const root = document.documentElement;
+
+            // Apply dark mode immediately
+            if (theme.mode === "dark") {
+              root.classList.add("dark");
+            } else if (theme.mode === "auto") {
+              const prefersDark = window.matchMedia(
+                "(prefers-color-scheme: dark)"
+              ).matches;
+              if (prefersDark) root.classList.add("dark");
+            }
+
+            // Apply font size
+            if (
+              theme.fontSize &&
+              ["small", "medium", "large"].includes(theme.fontSize)
+            ) {
+              const fontSizes = {
+                small: "14px",
+                medium: "16px",
+                large: "18px",
+              };
+              const scales = {
+                small: "0.875",
+                medium: "1",
+                large: "1.125",
+              };
+              const size = theme.fontSize as keyof typeof fontSizes;
+              root.style.setProperty("--font-size-base", fontSizes[size]);
+              root.style.setProperty("--font-scale", scales[size]);
+              document.body.style.fontSize = fontSizes[size];
+            }
+          }
+        } catch (e) {
+          console.warn("Error loading theme:", e);
+        }
+      })();
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  html {
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Line clamp utilities */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Tooltip styling */
+  .tooltip {
+    position: relative;
+    display: inline-block;
+  }
+
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 6px;
+    position: absolute;
+    z-index: 10;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.75rem;
+  }
+
+  .tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+  }
+
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }
+</style>

@@ -1,0 +1,1112 @@
+---
+import Dashboard from "../layouts/Dashboard.astro";
+import PageHeader from "../components/ui/PageHeader.astro";
+import StatCard from "../components/ui/StatCard.astro";
+import Button from "../components/ui/Button.astro";
+import Input from "../components/ui/Input.astro";
+import Select from "../components/ui/Select.astro";
+import Textarea from "../components/ui/Textarea.astro";
+import ScrollbarStyles from "../components/ScrollbarStyles.astro";
+---
+
+<Dashboard title="Gestión de Items - BLS Cotizador" activeSection="items">
+  <ScrollbarStyles />
+  <div class="space-y-6">
+    <!-- Header -->
+    <PageHeader
+      title="Gestión de Items"
+      subtitle="Administra los servicios y productos disponibles para cotizar"
+    >
+      <div slot="actions" class="flex space-x-3">
+        <Button id="refresh-btn" variant="secondary" size="md">
+          <svg
+            class="-ml-1 mr-2 h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            ></path>
+          </svg>
+          Actualizar
+        </Button>
+        <Button id="add-item-btn" variant="primary" size="md">
+          <svg
+            class="-ml-1 mr-2 h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 6v6m0 0v6m-6h6m-6 0H6"></path>
+          </svg>
+          Nuevo Item
+        </Button>
+      </div>
+    </PageHeader>
+
+    <!-- Status and Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <StatCard
+        title="Total Items"
+        value="0"
+        valueId="total-items"
+        icon="cubes"
+        color="blue"
+      />
+
+      <StatCard
+        title="Items Activos"
+        value="0"
+        valueId="active-items"
+        icon="check-circle"
+        color="green"
+      />
+
+      <StatCard
+        title="Categorías"
+        value="0"
+        valueId="total-categories"
+        icon="collection"
+        color="purple"
+      />
+
+      <StatCard
+        title="Precio Promedio"
+        value="$0"
+        valueId="avg-price"
+        icon="currency-dollar"
+        color="yellow"
+      />
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
+      <div class="px-4 py-4 sm:px-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <Input id="search" placeholder="Buscar items..." label="Buscar" />
+          <Select
+            id="category"
+            label="Categoría"
+            options={[{ value: "", label: "Todas las categorías" }]}
+          />
+          <Select
+            id="status"
+            label="Estado"
+            options={[
+              { value: "", label: "Todos" },
+              { value: "active", label: "Activo" },
+              { value: "inactive", label: "Inactivo" },
+            ]}
+          />
+          <div class="flex items-end">
+            <button
+              type="button"
+              id="clear-filters"
+              class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-3 sm:py-2 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 touch-scroll-item"
+            >
+              Limpiar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Items Table/Cards Container -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <!-- Desktop Table View (hidden on mobile) -->
+        <div class="hidden sm:block">
+          <div class="flow-root">
+            <div
+              class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8 custom-scrollbar"
+            >
+              <div
+                class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
+              >
+                <table
+                  class="min-w-full divide-y divide-gray-300 dark:divide-gray-600"
+                >
+                  <thead>
+                    <tr>
+                      <th
+                        scope="col"
+                        class="py-3.5 pl-4 pr-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-300 sm:pl-0"
+                      >
+                        Item
+                      </th>
+                      <th
+                        scope="col"
+                        class="px-3 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-300"
+                      >
+                        Categoría
+                      </th>
+                      <th
+                        scope="col"
+                        class="px-3 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-300"
+                      >
+                        Precio Base
+                      </th>
+                      <th
+                        scope="col"
+                        class="px-3 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-300"
+                      >
+                        Unidad
+                      </th>
+                      <th
+                        scope="col"
+                        class="px-3 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-300"
+                      >
+                        Estado
+                      </th>
+                      <th
+                        scope="col"
+                        class="px-3 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-300"
+                      >
+                        Acciones
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    class="divide-y divide-gray-200 dark:divide-gray-600"
+                    id="items-tbody-desktop"
+                  >
+                    <tr>
+                      <td
+                        colspan="6"
+                        class="text-center py-8 text-gray-500 dark:text-gray-400"
+                      >
+                        <svg
+                          class="animate-spin h-8 w-8 mx-auto mb-2"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            class="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            stroke-width="4"></circle>
+                          <path
+                            class="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Cargando items...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile Card View (visible only on mobile) -->
+        <div class="sm:hidden">
+          <div id="items-cards-mobile" class="space-y-4">
+            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+              <svg
+                class="animate-spin h-8 w-8 mx-auto mb-2"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Cargando items...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div
+      id="loading-overlay"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-sm w-full mx-4"
+      >
+        <div class="text-center">
+          <svg
+            class="animate-spin h-12 w-12 mx-auto mb-4 text-primary-600"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            Cargando datos...
+          </h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Conectando con Firebase
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Nuevo Item -->
+  <div
+    id="item-modal"
+    class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-title"
+  >
+    <div
+      class="relative top-5 sm:top-20 mx-auto p-4 sm:p-5 border dark:border-gray-700 w-11/12 max-w-2xl shadow-lg rounded-md bg-white dark:bg-gray-800 custom-scrollbar"
+      role="document"
+    >
+      <!-- Close button for mobile -->
+      <button
+        type="button"
+        id="modal-close-btn"
+        class="absolute top-2 right-2 text-gray-400 hover:text-gray-500 sm:hidden"
+        aria-label="Cerrar"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+
+      <div class="mt-3">
+        <h3
+          class="text-xl font-semibold text-gray-900 dark:text-white mb-4 pr-8 sm:pr-0"
+          id="modal-title"
+        >
+          Nuevo Item
+        </h3>
+
+        <form id="item-form" class="space-y-6" novalidate>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <!-- Nombre -->
+            <Input
+              id="item-nombre"
+              name="nombre"
+              required
+              label="Nombre del Item"
+              placeholder="Ej: Sistema de Sonido para Cocktail"
+            />
+
+            <!-- Categoría -->
+            <Select
+              id="item-categoria"
+              name="categoria"
+              required
+              label="Categoría"
+              placeholder="Seleccionar categoría..."
+              options={[]}
+            />
+
+            <!-- Precio Base -->
+            <Input
+              id="item-precio"
+              name="precioBase"
+              type="number"
+              required
+              label="Precio Base"
+              placeholder="0"
+              min="0"
+              step="0.01"
+            />
+
+            <!-- Unidad -->
+            <Select
+              id="item-unidad"
+              name="unidad"
+              required
+              label="Unidad"
+              options={[
+                { value: "servicio", label: "Servicio" },
+                { value: "evento", label: "Evento" },
+                { value: "jornada", label: "Jornada" },
+                { value: "metro", label: "Metro" },
+                { value: "m²", label: "Metro cuadrado" },
+                { value: "hora", label: "Hora" },
+                { value: "día", label: "Día" },
+                { value: "unidad", label: "Unidad" },
+              ]}
+            />
+          </div>
+
+          <!-- Descripción -->
+          <div class="w-full">
+            <label
+              for="item-descripcion"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Descripción
+            </label>
+            <textarea
+              id="item-descripcion"
+              name="descripcion"
+              rows="4"
+              class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+              placeholder="Describe los detalles técnicos del item..."
+              aria-describedby="descripcion-help"></textarea>
+            <p
+              id="descripcion-help"
+              class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+            >
+              Opcional: Información adicional sobre el item
+            </p>
+          </div>
+
+          <!-- Estado Activo -->
+          <div class="flex items-center space-x-3 py-2 touch-scroll-item">
+            <input
+              id="item-activo"
+              name="activo"
+              type="checkbox"
+              checked
+              class="h-5 w-5 sm:h-4 sm:w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              aria-describedby="activo-help"
+            />
+            <label
+              for="item-activo"
+              class="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Item activo
+            </label>
+            <p
+              id="activo-help"
+              class="text-sm text-gray-500 dark:text-gray-400"
+            >
+              Los items inactivos no aparecerán en las cotizaciones
+            </p>
+          </div>
+        </form>
+
+        <div
+          class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 gap-3 sm:gap-0 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700"
+        >
+          <Button
+            id="cancel-item-btn"
+            variant="secondary"
+            size="md"
+            class="w-full sm:w-auto touch-scroll-item"
+          >
+            Cancelar
+          </Button>
+          <Button
+            id="save-item-btn"
+            variant="primary"
+            size="md"
+            class="w-full sm:w-auto touch-scroll-item"
+          >
+            Guardar Item
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import { notifications } from "../utils/notifications.js";
+    import { initializeApp } from "firebase/app";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      addDoc,
+      doc,
+      updateDoc,
+      deleteDoc,
+    } from "firebase/firestore";
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: import.meta.env.PUBLIC_FIREBASE_API_KEY,
+      authDomain: import.meta.env.PUBLIC_FIREBASE_AUTH_DOMAIN,
+      projectId: import.meta.env.PUBLIC_FIREBASE_PROJECT_ID,
+      storageBucket: import.meta.env.PUBLIC_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: import.meta.env.PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      appId: import.meta.env.PUBLIC_FIREBASE_APP_ID,
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let allItems: any[] = [];
+    let allCategories: any[] = [];
+    let categoryMap: { [key: string]: string } = {};
+
+    // Show/Hide loading overlay
+    function showLoading() {
+      const overlay = document.getElementById("loading-overlay");
+      if (overlay) {
+        overlay.classList.remove("hidden");
+        overlay.classList.add("flex");
+      }
+    }
+
+    function hideLoading() {
+      const overlay = document.getElementById("loading-overlay");
+      if (overlay) {
+        overlay.classList.add("hidden");
+        overlay.classList.remove("flex");
+      }
+    }
+
+    // Load categories from Firebase
+    async function loadCategories() {
+      try {
+        const categoriesSnapshot = await getDocs(collection(db, "categorias"));
+        allCategories = [];
+        categoryMap = {};
+
+        categoriesSnapshot.forEach((doc) => {
+          const categoria = { id: doc.id, ...doc.data() } as any;
+          allCategories.push(categoria);
+          categoryMap[doc.id] = categoria.nombre;
+        });
+
+        // Update category select
+        const categorySelect = document.getElementById("category");
+        if (categorySelect) {
+          // Clear existing options except "All"
+          categorySelect.innerHTML =
+            '<option value="">Todas las categorías</option>';
+
+          allCategories.forEach((categoria) => {
+            const option = document.createElement("option");
+            option.value = categoria.id;
+            option.textContent = categoria.nombre;
+            categorySelect.appendChild(option);
+          });
+        }
+
+        console.log("Categorías cargadas:", allCategories.length);
+      } catch (error) {
+        console.error("Error loading categories:", error);
+      }
+    }
+
+    // Load items from Firebase
+    async function loadItems() {
+      try {
+        showLoading();
+
+        const itemsSnapshot = await getDocs(collection(db, "items"));
+        allItems = [];
+
+        itemsSnapshot.forEach((doc) => {
+          const item = { id: doc.id, ...doc.data() };
+          allItems.push(item);
+        });
+
+        console.log("Items cargados:", allItems.length);
+        renderItems(allItems);
+        updateStats();
+        hideLoading();
+      } catch (error) {
+        console.error("Error loading items:", error);
+        showError(
+          "Error al cargar los items: " +
+            (error instanceof Error ? error.message : String(error))
+        );
+        hideLoading();
+      }
+    }
+
+    // Render items in table and mobile cards
+    function renderItems(items: any[]) {
+      // Get both containers
+      const tbodyDesktop = document.getElementById("items-tbody-desktop");
+      const mobileCards = document.getElementById("items-cards-mobile");
+
+      if (!tbodyDesktop || !mobileCards) return;
+
+      if (items.length === 0) {
+        // Empty state for desktop
+        tbodyDesktop.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center py-8 text-gray-500 dark:text-gray-400">
+            <svg class="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-6.1M4 13h6.1" />
+            </svg>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No se encontraron items</h3>
+            <p class="text-gray-500 dark:text-gray-400">Intenta ajustar los filtros o importa algunos datos.</p>
+          </td>
+        </tr>
+        `;
+
+        // Empty state for mobile
+        mobileCards.innerHTML = `
+        <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+          <svg class="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-6.1M4 13h6.1" />
+          </svg>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No se encontraron items</h3>
+          <p class="text-gray-500 dark:text-gray-400">Intenta ajustar los filtros o importa algunos datos.</p>
+        </div>
+        `;
+        return;
+      }
+
+      // Render desktop view
+      tbodyDesktop.innerHTML = items
+        .map((item) => {
+          const categoria =
+            categoryMap[item.categoriaId] ||
+            item.categoriaId ||
+            "Sin categoría";
+          const precio = item.precioBase || 0;
+          const descripcion = Array.isArray(item.descripcion)
+            ? item.descripcion.slice(0, 2).join(" • ") +
+              (item.descripcion.length > 2 ? "..." : "")
+            : item.descripcion || "";
+
+          return `
+          <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+            <td class="py-4 pl-4 pr-3 text-sm sm:pl-0">
+              <div class="flex flex-col">
+                <div class="font-medium text-gray-900 dark:text-white">${item.nombre || "Sin nombre"}</div>
+                <div class="text-gray-500 dark:text-gray-400 text-xs mt-1">${descripcion}</div>
+              </div>
+            </td>
+            <td class="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                ${categoria}
+              </span>
+            </td>
+            <td class="px-3 py-4 text-sm text-gray-900 dark:text-white font-medium">
+              $${precio.toLocaleString("es-AR")}
+            </td>
+            <td class="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+              ${item.unidad || "servicio"}
+            </td>
+            <td class="px-3 py-4 text-sm">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                item.activo
+                  ? "bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200"
+                  : "bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200"
+              }">
+                ${item.activo ? "Activo" : "Inactivo"}
+              </span>
+            </td>
+            <td class="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+              <div class="flex space-x-2">
+                <button class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 edit-item" data-id="${item.id}">
+                  Editar
+                </button>
+                <button class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 delete-item" data-id="${item.id}">
+                  Eliminar
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+        })
+        .join("");
+
+      // Render mobile cards
+      mobileCards.innerHTML = items
+        .map((item) => {
+          const categoria =
+            categoryMap[item.categoriaId] ||
+            item.categoriaId ||
+            "Sin categoría";
+          const precio = item.precioBase || 0;
+          const descripcion = Array.isArray(item.descripcion)
+            ? item.descripcion.slice(0, 2).join(" • ") +
+              (item.descripcion.length > 2 ? "..." : "")
+            : item.descripcion || "";
+
+          return `
+          <div class="bg-white dark:bg-gray-700 rounded-lg shadow p-4 touch-scroll-item">
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <h3 class="text-base font-medium text-gray-900 dark:text-white">${item.nombre || "Sin nombre"}</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${descripcion}</p>
+              </div>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                item.activo
+                  ? "bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200"
+                  : "bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200"
+              }">
+                ${item.activo ? "Activo" : "Inactivo"}
+              </span>
+            </div>
+            
+            <div class="mt-4 grid grid-cols-2 gap-2">
+              <div>
+                <span class="block text-xs text-gray-500 dark:text-gray-400">Categoría</span>
+                <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                  ${categoria}
+                </span>
+              </div>
+              <div>
+                <span class="block text-xs text-gray-500 dark:text-gray-400">Precio Base</span>
+                <span class="text-sm font-medium text-gray-900 dark:text-white">$${precio.toLocaleString("es-AR")}</span>
+              </div>
+              <div>
+                <span class="block text-xs text-gray-500 dark:text-gray-400">Unidad</span>
+                <span class="text-sm text-gray-700 dark:text-gray-300">${item.unidad || "servicio"}</span>
+              </div>
+            </div>
+            
+            <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600 flex justify-end space-x-3">
+              <button class="py-2 px-3 text-sm font-medium text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 edit-item" data-id="${item.id}">
+                Editar
+              </button>
+              <button class="py-2 px-3 text-sm font-medium text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 delete-item" data-id="${item.id}">
+                Eliminar
+              </button>
+            </div>
+          </div>
+          `;
+        })
+        .join("");
+    }
+
+    // Update statistics
+    function updateStats() {
+      const totalItems = allItems.length;
+      const activeItems = allItems.filter((item) => item.activo).length;
+      const totalCategories = allCategories.length;
+      const avgPrice =
+        totalItems > 0
+          ? allItems.reduce((sum, item) => sum + (item.precioBase || 0), 0) /
+            totalItems
+          : 0;
+
+      document.getElementById("total-items")!.textContent =
+        totalItems.toString();
+      document.getElementById("active-items")!.textContent =
+        activeItems.toString();
+      document.getElementById("total-categories")!.textContent =
+        totalCategories.toString();
+      document.getElementById("avg-price")!.textContent =
+        `$${Math.round(avgPrice).toLocaleString("es-AR")}`;
+    }
+
+    // Show error message
+    function showError(message: string) {
+      // For desktop view
+      const tbodyDesktop = document.getElementById("items-tbody-desktop");
+      if (tbodyDesktop) {
+        tbodyDesktop.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center py-8 text-red-500">
+            <svg class="w-12 h-12 mx-auto mb-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <h3 class="text-lg font-medium text-red-900 mb-2">Error</h3>
+            <p class="text-red-700">${message}</p>
+            <div class="mt-4">
+              <a href="/quick-fix-firestore" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-bold">
+                🔒 Arreglar Firebase
+              </a>
+            </div>
+          </td>
+        </tr>
+      `;
+      }
+
+      // For mobile view
+      const mobileCards = document.getElementById("items-cards-mobile");
+      if (mobileCards) {
+        mobileCards.innerHTML = `
+        <div class="text-center py-8 text-red-500">
+          <svg class="w-12 h-12 mx-auto mb-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          <h3 class="text-lg font-medium text-red-900 mb-2">Error</h3>
+          <p class="text-red-700">${message}</p>
+          <div class="mt-4">
+            <a href="/quick-fix-firestore" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-bold">
+              🔒 Arreglar Firebase
+            </a>
+          </div>
+        </div>
+      `;
+      }
+    }
+
+    let currentEditingItemId: string | null = null;
+
+    // Modal functionality
+    function showModal(title = "Nuevo Item", item: any = null) {
+      const modal = document.getElementById("item-modal");
+      const modalTitle = document.getElementById("modal-title");
+
+      if (modal && modalTitle) {
+        modalTitle.textContent = title;
+        modal.classList.remove("hidden");
+
+        // Prevent body scroll
+        document.body.style.overflow = "hidden";
+
+        // Focus first input for accessibility
+        setTimeout(() => {
+          const firstInput = modal.querySelector(
+            "input, select, textarea"
+          ) as HTMLElement;
+          firstInput?.focus();
+        }, 100);
+
+        // Reset form
+        const form = document.getElementById("item-form") as HTMLFormElement;
+        if (form) {
+          form.reset();
+
+          // Load categories in modal select
+          updateModalCategorySelect();
+
+          // If editing, populate form
+          if (item) {
+            currentEditingItemId = item.id;
+            (document.getElementById("item-nombre") as HTMLInputElement).value =
+              item.nombre || "";
+            (
+              document.getElementById("item-categoria") as HTMLSelectElement
+            ).value = item.categoriaId || "";
+            (document.getElementById("item-precio") as HTMLInputElement).value =
+              item.precioBase || "";
+            (
+              document.getElementById("item-unidad") as HTMLSelectElement
+            ).value = item.unidad || "servicio";
+            (
+              document.getElementById("item-descripcion") as HTMLTextAreaElement
+            ).value = item.descripcion || "";
+            (
+              document.getElementById("item-activo") as HTMLInputElement
+            ).checked = item.activo !== false;
+          } else {
+            currentEditingItemId = null;
+          }
+        }
+      }
+    }
+
+    function hideModal() {
+      const modal = document.getElementById("item-modal");
+      if (modal) {
+        modal.classList.add("hidden");
+        currentEditingItemId = null;
+
+        // Restore body scroll
+        document.body.style.overflow = "";
+
+        // Return focus to the button that opened the modal
+        const addButton = document.getElementById("add-item-btn");
+        addButton?.focus();
+      }
+    }
+
+    function updateModalCategorySelect() {
+      const categorySelect = document.getElementById(
+        "item-categoria"
+      ) as HTMLSelectElement;
+      if (categorySelect && allCategories.length > 0) {
+        // Clear existing options
+        categorySelect.innerHTML =
+          '<option value="">Seleccionar categoría...</option>';
+
+        allCategories.forEach((categoria) => {
+          const option = document.createElement("option");
+          option.value = categoria.id;
+          option.textContent = categoria.nombre;
+          categorySelect.appendChild(option);
+        });
+      }
+    }
+
+    async function saveItem() {
+      const form = document.getElementById("item-form") as HTMLFormElement;
+      if (!form) return;
+
+      // Get form data
+      const formData = new FormData(form);
+      const nombre = formData.get("nombre") as string;
+      const categoriaId = formData.get("categoria") as string;
+      const precioBaseStr = formData.get("precioBase") as string;
+      const unidad = formData.get("unidad") as string;
+      const descripcion = formData.get("descripcion") as string;
+
+      // Enhanced validation
+      const errors: string[] = [];
+
+      if (!nombre?.trim()) {
+        errors.push("El nombre es requerido");
+      } else if (nombre.trim().length < 3) {
+        errors.push("El nombre debe tener al menos 3 caracteres");
+      }
+
+      if (!categoriaId) {
+        errors.push("La categoría es requerida");
+      }
+
+      if (!precioBaseStr) {
+        errors.push("El precio base es requerido");
+      } else {
+        const precio = parseFloat(precioBaseStr);
+        if (isNaN(precio) || precio < 0) {
+          errors.push("El precio base debe ser un número mayor o igual a 0");
+        }
+      }
+
+      if (!unidad) {
+        errors.push("La unidad es requerida");
+      }
+
+      if (errors.length > 0) {
+        notifications.error("Errores de validación", errors.join("\n"));
+        return;
+      }
+
+      const itemData = {
+        nombre: nombre.trim(),
+        categoriaId,
+        precioBase: parseFloat(precioBaseStr),
+        unidad,
+        descripcion: descripcion?.trim() || "",
+        activo: formData.has("activo"),
+        fechaModificacion: new Date(),
+      };
+
+      // Add creation date only for new items
+      if (!currentEditingItemId) {
+        (itemData as any).fechaCreacion = new Date();
+      }
+
+      try {
+        if (currentEditingItemId) {
+          // Update existing item
+          notifications.loading("Actualizando", "Guardando cambios...");
+          await updateDoc(doc(db, "items", currentEditingItemId), itemData);
+          notifications.success(
+            "¡Actualizado!",
+            "Item actualizado exitosamente"
+          );
+        } else {
+          // Create new item
+          notifications.loading("Guardando", "Creando nuevo item...");
+          await addDoc(collection(db, "items"), itemData);
+          notifications.success("¡Éxito!", "Item creado exitosamente");
+        }
+
+        hideModal();
+
+        // Reload items
+        await loadItems();
+      } catch (error) {
+        console.error("Error saving item:", error);
+        const action = currentEditingItemId ? "actualizar" : "guardar";
+        let errorMessage = `No se pudo ${action} el item`;
+
+        if (error instanceof Error) {
+          if (error.message.includes("permission-denied")) {
+            errorMessage += ": Sin permisos suficientes";
+          } else if (error.message.includes("network")) {
+            errorMessage += ": Error de conexión";
+          } else {
+            errorMessage += `: ${error.message}`;
+          }
+        }
+
+        notifications.error("Error", errorMessage);
+      }
+    }
+
+    async function deleteItem(itemId: string) {
+      const result = await notifications.confirm(
+        "¿Eliminar item?",
+        "Esta acción no se puede deshacer",
+        "Sí, eliminar",
+        "Cancelar"
+      );
+
+      if (result.isConfirmed) {
+        try {
+          notifications.loading("Eliminando", "Eliminando item...");
+          await deleteDoc(doc(db, "items", itemId));
+          notifications.success("¡Eliminado!", "Item eliminado exitosamente");
+          await loadItems();
+        } catch (error) {
+          console.error("Error deleting item:", error);
+          notifications.error("Error", "No se pudo eliminar el item");
+        }
+      }
+    }
+
+    // Filter functionality
+    function filterItems() {
+      const search =
+        (
+          document.getElementById("search") as HTMLInputElement
+        )?.value.toLowerCase() || "";
+      const categoryId =
+        (document.getElementById("category") as HTMLSelectElement)?.value || "";
+      const status =
+        (document.getElementById("status") as HTMLSelectElement)?.value || "";
+
+      let filtered = allItems.filter((item) => {
+        const matchesSearch =
+          !search ||
+          item.nombre?.toLowerCase().includes(search) ||
+          (Array.isArray(item.descripcion) &&
+            item.descripcion.some((desc: any) =>
+              desc.toLowerCase().includes(search)
+            )) ||
+          (typeof item.descripcion === "string" &&
+            item.descripcion.toLowerCase().includes(search));
+
+        const matchesCategory = !categoryId || item.categoriaId === categoryId;
+
+        const matchesStatus =
+          !status ||
+          (status === "active" && item.activo) ||
+          (status === "inactive" && !item.activo);
+
+        return matchesSearch && matchesCategory && matchesStatus;
+      });
+
+      renderItems(filtered);
+    }
+
+    // Event listeners
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Load data
+      await loadCategories();
+      await loadItems();
+
+      // Set up event listeners
+      document.getElementById("search")?.addEventListener("input", filterItems);
+      document
+        .getElementById("category")
+        ?.addEventListener("change", filterItems);
+      document
+        .getElementById("status")
+        ?.addEventListener("change", filterItems);
+
+      document
+        .getElementById("clear-filters")
+        ?.addEventListener("click", () => {
+          (document.getElementById("search") as HTMLInputElement).value = "";
+          (document.getElementById("category") as HTMLSelectElement).value = "";
+          (document.getElementById("status") as HTMLSelectElement).value = "";
+          filterItems();
+        });
+
+      document
+        .getElementById("refresh-btn")
+        ?.addEventListener("click", async () => {
+          notifications.loading("Actualizando", "Cargando items...");
+          await loadCategories();
+          await loadItems();
+          notifications.toast("success", "Items actualizados exitosamente");
+        });
+
+      // Modal event listeners
+      document.getElementById("add-item-btn")?.addEventListener("click", () => {
+        showModal("Nuevo Item");
+      });
+
+      document
+        .getElementById("cancel-item-btn")
+        ?.addEventListener("click", hideModal);
+
+      document
+        .getElementById("modal-close-btn")
+        ?.addEventListener("click", hideModal);
+
+      document
+        .getElementById("save-item-btn")
+        ?.addEventListener("click", saveItem);
+
+      // Close modal when clicking outside
+      document.getElementById("item-modal")?.addEventListener("click", (e) => {
+        if (e.target === e.currentTarget) {
+          hideModal();
+        }
+      });
+
+      // Keyboard event listeners for modal
+      document.addEventListener("keydown", (e) => {
+        const modal = document.getElementById("item-modal");
+        const isModalOpen = modal && !modal.classList.contains("hidden");
+
+        if (isModalOpen) {
+          // Close modal with Escape key
+          if (e.key === "Escape") {
+            e.preventDefault();
+            hideModal();
+          }
+
+          // Save with Ctrl/Cmd + Enter
+          if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+            e.preventDefault();
+            saveItem();
+          }
+        }
+      });
+
+      // Item action event listeners (delegated)
+      document.addEventListener("click", async (e) => {
+        const target = e.target as HTMLElement;
+
+        if (target.classList.contains("delete-item")) {
+          const itemId = target.getAttribute("data-id");
+          if (itemId) {
+            await deleteItem(itemId);
+          }
+        }
+
+        if (target.classList.contains("edit-item")) {
+          const itemId = target.getAttribute("data-id");
+          if (itemId) {
+            const item = allItems.find((i) => i.id === itemId);
+            if (item) {
+              showModal("Editar Item", item);
+            }
+          }
+        }
+      });
+    });
+  </script>
+</Dashboard>

@@ -1,0 +1,534 @@
+---
+import Dashboard from "../layouts/Dashboard.astro";
+import PageHeader from "../components/ui/PageHeader.astro";
+import Card from "../components/ui/Card.astro";
+import Button from "../components/ui/Button.astro";
+import Input from "../components/ui/Input.astro";
+import Select from "../components/ui/Select.astro";
+import ScrollbarStyles from "../components/ScrollbarStyles.astro";
+---
+
+<Dashboard title="Configuración - BLS Cotizador" activeSection="config">
+  <ScrollbarStyles />
+  <div class="space-y-6">
+    <!-- Header -->
+    <PageHeader
+      title="Configuración"
+      subtitle="Ajusta las preferencias del sistema y personaliza tu experiencia"
+    />
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Configuración General -->
+      <Card title="Configuración General">
+        <form id="config-form" class="space-y-6">
+          <!-- Idioma -->
+          <Select
+            id="config-language"
+            name="language"
+            label="Idioma"
+            options={[
+              { value: "es", label: "Español" },
+              { value: "en", label: "English" },
+              { value: "pt", label: "Português" },
+            ]}
+          />
+
+          <!-- Zona horaria -->
+          <Select
+            id="config-timezone"
+            name="timezone"
+            label="Zona horaria"
+            options={[
+              {
+                value: "America/Argentina/Buenos_Aires",
+                label: "Buenos Aires (GMT-3)",
+              },
+              { value: "America/Sao_Paulo", label: "São Paulo (GMT-3)" },
+              { value: "America/Santiago", label: "Santiago (GMT-3)" },
+              { value: "America/Montevideo", label: "Montevideo (GMT-3)" },
+            ]}
+          />
+
+          <!-- Formato de fecha -->
+          <Select
+            id="config-date-format"
+            name="dateFormat"
+            label="Formato de fecha"
+            options={[
+              { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
+              { value: "MM/DD/YYYY", label: "MM/DD/YYYY" },
+              { value: "YYYY-MM-DD", label: "YYYY-MM-DD" },
+            ]}
+          />
+
+          <!-- Moneda -->
+          <Select
+            id="config-currency"
+            name="currency"
+            label="Moneda"
+            options={[
+              { value: "ARS", label: "Peso Argentino (ARS)" },
+              { value: "USD", label: "Dólar Estadounidense (USD)" },
+              { value: "EUR", label: "Euro (EUR)" },
+              { value: "BRL", label: "Real Brasileño (BRL)" },
+            ]}
+          />
+
+          <div
+            class="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700"
+          >
+            <Button id="reset-config-btn" variant="secondary" size="md">
+              Restablecer
+            </Button>
+            <Button id="save-config-btn" variant="primary" size="md">
+              Guardar Configuración
+            </Button>
+          </div>
+        </form>
+      </Card>
+
+      <!-- Notificaciones -->
+      <Card title="Notificaciones">
+        <form id="notifications-form" class="space-y-6">
+          <div class="space-y-4">
+            <!-- Email notifications -->
+            <div class="flex items-center justify-between">
+              <div>
+                <label
+                  class="text-sm font-medium text-gray-900 dark:text-gray-100"
+                >
+                  Notificaciones por email
+                </label>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  Recibe emails sobre cotizaciones y cambios importantes
+                </p>
+              </div>
+              <div class="flex items-center">
+                <input
+                  id="email-notifications"
+                  name="emailNotifications"
+                  type="checkbox"
+                  checked
+                  class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded"
+                />
+              </div>
+            </div>
+
+            <!-- Push notifications -->
+            <div class="flex items-center justify-between">
+              <div>
+                <label
+                  class="text-sm font-medium text-gray-900 dark:text-gray-100"
+                >
+                  Notificaciones push
+                </label>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  Notificaciones en tiempo real en el navegador
+                </p>
+              </div>
+              <div class="flex items-center">
+                <input
+                  id="push-notifications"
+                  name="pushNotifications"
+                  type="checkbox"
+                  class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded"
+                />
+              </div>
+            </div>
+
+            <!-- Weekly reports -->
+            <div class="flex items-center justify-between">
+              <div>
+                <label
+                  class="text-sm font-medium text-gray-900 dark:text-gray-100"
+                >
+                  Reportes semanales
+                </label>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  Resumen semanal de actividad y estadísticas
+                </p>
+              </div>
+              <div class="flex items-center">
+                <input
+                  id="weekly-reports"
+                  name="weeklyReports"
+                  type="checkbox"
+                  checked
+                  class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="flex justify-end pt-6 border-t border-gray-200 dark:border-gray-700"
+          >
+            <Button id="save-notifications-btn" variant="primary" size="md">
+              Guardar Notificaciones
+            </Button>
+          </div>
+        </form>
+      </Card>
+
+      <!-- Apariencia -->
+      <Card title="Apariencia">
+        <div class="space-y-6">
+          <!-- Tema -->
+          <div>
+            <label
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3"
+            >
+              Tema
+            </label>
+            <div class="grid grid-cols-3 gap-3">
+              <button
+                id="theme-light"
+                class="theme-option p-3 border border-gray-300 dark:border-gray-600 rounded-lg text-center hover:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-200"
+                data-theme="light"
+              >
+                <div
+                  class="w-full h-6 bg-white border border-gray-200 dark:border-gray-600 rounded mb-2"
+                >
+                </div>
+                <span class="text-sm">Claro</span>
+              </button>
+              <button
+                id="theme-dark"
+                class="theme-option p-3 border border-gray-300 dark:border-gray-600 rounded-lg text-center hover:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-200"
+                data-theme="dark"
+              >
+                <div class="w-full h-6 bg-gray-800 rounded mb-2"></div>
+                <span class="text-sm">Oscuro</span>
+              </button>
+              <button
+                id="theme-auto"
+                class="theme-option p-3 border border-primary-500 rounded-lg text-center bg-primary-50 dark:bg-primary-900/20"
+                data-theme="auto"
+              >
+                <div
+                  class="w-full h-6 bg-gradient-to-r from-white to-gray-800 rounded mb-2"
+                >
+                </div>
+                <span
+                  class="text-sm font-medium text-primary-700 dark:text-primary-300"
+                  >Auto</span
+                >
+              </button>
+            </div>
+          </div>
+
+          <!-- Densidad -->
+          <Select
+            id="config-density"
+            name="density"
+            label="Densidad de la interfaz"
+            options={[
+              { value: "compact", label: "Compacta" },
+              { value: "normal", label: "Normal" },
+              { value: "comfortable", label: "Cómoda" },
+            ]}
+          />
+        </div>
+      </Card>
+
+      <!-- Información del Sistema -->
+      <Card title="Información del Sistema">
+        <div class="space-y-4">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600 dark:text-gray-400">Versión:</span>
+            <span class="text-gray-900 dark:text-gray-100">1.0.0</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600 dark:text-gray-400"
+              >Última actualización:</span
+            >
+            <span class="text-gray-900 dark:text-gray-100"
+              >16 de junio, 2025</span
+            >
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600 dark:text-gray-400">Servidor:</span>
+            <span class="text-gray-900 dark:text-gray-100">En línea</span>
+          </div>
+          <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <Button
+              id="check-updates-btn"
+              variant="secondary"
+              size="sm"
+              class="w-full"
+            >
+              Buscar Actualizaciones
+            </Button>
+          </div>
+        </div>
+      </Card>
+    </div>
+  </div>
+</Dashboard>
+
+<script>
+  import { notifications } from "../utils/notifications.js";
+  import { themeManager } from "../utils/theme";
+
+  document.addEventListener("DOMContentLoaded", () => {
+    // Load saved configuration
+    loadConfiguration();
+
+    // Set up event listeners
+    document
+      .getElementById("save-config-btn")
+      ?.addEventListener("click", saveConfiguration);
+    document
+      .getElementById("reset-config-btn")
+      ?.addEventListener("click", resetConfiguration);
+    document
+      .getElementById("save-notifications-btn")
+      ?.addEventListener("click", saveNotifications);
+    document
+      .getElementById("check-updates-btn")
+      ?.addEventListener("click", checkUpdates);
+
+    // Theme selection
+    document.querySelectorAll(".theme-option").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        const target = e.currentTarget as HTMLElement;
+        const theme = target.dataset.theme;
+
+        // Update selected theme visual state
+        document.querySelectorAll(".theme-option").forEach((btn) => {
+          btn.classList.remove(
+            "border-primary-500",
+            "bg-primary-50",
+            "dark:bg-primary-900/20"
+          );
+          btn.classList.add("border-gray-300", "dark:border-gray-600");
+          const span = btn.querySelector("span");
+          if (span) {
+            span.classList.remove(
+              "font-medium",
+              "text-primary-700",
+              "dark:text-primary-300"
+            );
+          }
+        });
+
+        target.classList.remove("border-gray-300", "dark:border-gray-600");
+        target.classList.add(
+          "border-primary-500",
+          "bg-primary-50",
+          "dark:bg-primary-900/20"
+        );
+        const span = target.querySelector("span");
+        if (span) {
+          span.classList.add(
+            "font-medium",
+            "text-primary-700",
+            "dark:text-primary-300"
+          );
+        }
+
+        // Save theme preference
+        localStorage.setItem("theme", theme || "auto");
+        applyTheme(theme || "auto");
+      });
+    });
+  });
+
+  function loadConfiguration() {
+    // Cargar el tema desde ThemeManager para asegurar consistencia
+    const currentTheme = themeManager.getTheme();
+    const savedTheme = currentTheme.mode || "auto";
+
+    // Seleccionar el botón correspondiente sin hacer clic
+    // (para evitar loops y notificaciones innecesarias)
+    const themeButton = document.querySelector(`[data-theme="${savedTheme}"]`);
+    if (themeButton) {
+      // Actualizar visualmente todos los botones
+      document.querySelectorAll(".theme-option").forEach((btn) => {
+        btn.classList.remove(
+          "border-primary-500",
+          "bg-primary-50",
+          "dark:bg-primary-900/20"
+        );
+        btn.classList.add("border-gray-300", "dark:border-gray-600");
+        const span = btn.querySelector("span");
+        if (span) {
+          span.classList.remove(
+            "font-medium",
+            "text-primary-700",
+            "dark:text-primary-300"
+          );
+        }
+      });
+
+      // Marcar el botón actualmente seleccionado
+      themeButton.classList.remove("border-gray-300", "dark:border-gray-600");
+      themeButton.classList.add(
+        "border-primary-500",
+        "bg-primary-50",
+        "dark:bg-primary-900/20"
+      );
+      const span = themeButton.querySelector("span");
+      if (span) {
+        span.classList.add(
+          "font-medium",
+          "text-primary-700",
+          "dark:text-primary-300"
+        );
+      }
+    }
+
+    // Load other saved configurations from localStorage
+    const savedConfig = JSON.parse(localStorage.getItem("userConfig") || "{}");
+
+    // Set form values
+    if (savedConfig.language) {
+      (document.getElementById("config-language") as HTMLSelectElement).value =
+        savedConfig.language;
+    } else {
+      (document.getElementById("config-language") as HTMLSelectElement).value =
+        "es";
+    }
+
+    if (savedConfig.timezone) {
+      (document.getElementById("config-timezone") as HTMLSelectElement).value =
+        savedConfig.timezone;
+    } else {
+      (document.getElementById("config-timezone") as HTMLSelectElement).value =
+        "America/Argentina/Buenos_Aires";
+    }
+
+    if (savedConfig.dateFormat) {
+      (
+        document.getElementById("config-date-format") as HTMLSelectElement
+      ).value = savedConfig.dateFormat;
+    } else {
+      (
+        document.getElementById("config-date-format") as HTMLSelectElement
+      ).value = "DD/MM/YYYY";
+    }
+
+    if (savedConfig.currency) {
+      (document.getElementById("config-currency") as HTMLSelectElement).value =
+        savedConfig.currency;
+    } else {
+      (document.getElementById("config-currency") as HTMLSelectElement).value =
+        "ARS";
+    }
+
+    // Load notification preferences
+    const notificationConfig = JSON.parse(
+      localStorage.getItem("notificationConfig") || "{}"
+    );
+    (
+      document.getElementById("email-notifications") as HTMLInputElement
+    ).checked = notificationConfig.email !== false;
+    (
+      document.getElementById("push-notifications") as HTMLInputElement
+    ).checked = notificationConfig.push === true;
+    (document.getElementById("weekly-reports") as HTMLInputElement).checked =
+      notificationConfig.weekly !== false;
+  }
+
+  function saveConfiguration() {
+    const config = {
+      language: (
+        document.getElementById("config-language") as HTMLSelectElement
+      ).value,
+      timezone: (
+        document.getElementById("config-timezone") as HTMLSelectElement
+      ).value,
+      dateFormat: (
+        document.getElementById("config-date-format") as HTMLSelectElement
+      ).value,
+      currency: (
+        document.getElementById("config-currency") as HTMLSelectElement
+      ).value,
+      density: (document.getElementById("config-density") as HTMLSelectElement)
+        .value,
+      savedAt: new Date().toISOString(),
+    };
+
+    localStorage.setItem("userConfig", JSON.stringify(config));
+    notifications.success(
+      "¡Configuración guardada!",
+      "Los cambios se han aplicado exitosamente"
+    );
+  }
+
+  function resetConfiguration() {
+    if (
+      confirm("¿Estás seguro de que quieres restablecer toda la configuración?")
+    ) {
+      localStorage.removeItem("userConfig");
+      localStorage.removeItem("notificationConfig");
+      localStorage.removeItem("theme");
+      loadConfiguration();
+      notifications.success(
+        "Configuración restablecida",
+        "Se han restaurado los valores por defecto"
+      );
+    }
+  }
+
+  function saveNotifications() {
+    const config = {
+      email: (
+        document.getElementById("email-notifications") as HTMLInputElement
+      ).checked,
+      push: (document.getElementById("push-notifications") as HTMLInputElement)
+        .checked,
+      weekly: (document.getElementById("weekly-reports") as HTMLInputElement)
+        .checked,
+      savedAt: new Date().toISOString(),
+    };
+
+    localStorage.setItem("notificationConfig", JSON.stringify(config));
+    notifications.success(
+      "¡Notificaciones guardadas!",
+      "Las preferencias se han actualizado"
+    );
+  }
+
+  function checkUpdates() {
+    notifications.loading(
+      "Buscando actualizaciones",
+      "Verificando versiones..."
+    );
+
+    // Simulate update check
+    setTimeout(() => {
+      notifications.success(
+        "Sistema actualizado",
+        "Estás usando la versión más reciente"
+      );
+    }, 2000);
+  }
+
+  function applyTheme(theme: string) {
+    // Aplicar el tema usando ThemeManager
+    const themeNames = {
+      light: "Tema claro",
+      dark: "Tema oscuro",
+      auto: "Tema automático",
+    };
+
+    // Cambiar el modo del tema usando el ThemeManager
+    themeManager.setMode(theme as "light" | "dark" | "auto");
+
+    notifications.toast(
+      "info",
+      `Aplicado: ${themeNames[theme as keyof typeof themeNames]}`
+    );
+  }
+</script>
+
+<style>
+  .theme-option {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .theme-option:hover {
+    transform: translateY(-1px);
+  }
+</style>

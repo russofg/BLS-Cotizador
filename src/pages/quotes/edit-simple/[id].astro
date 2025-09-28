@@ -1,0 +1,733 @@
+---
+import Dashboard from "../../../layouts/Dashboard.astro";
+import { cotizacionService, clienteService } from "../../../utils/database";
+import DescriptionNote from "../../../components/DescriptionNote.astro";
+import { DEFAULT_QUOTE_TEXTS } from "../../../config/company";
+
+const { id } = Astro.params;
+
+// Texto por defecto para observaciones
+const defaultObservaciones = DEFAULT_QUOTE_TEXTS.observaciones;
+
+let cotizacion: any = null;
+let clientes: any[] = [];
+let error = "";
+let allMasterItems: any[] = [];
+
+try {
+  if (id) {
+    const cotizaciones = await cotizacionService.getAll();
+    cotizacion = cotizaciones.find((c: any) => c.id === id);
+    
+    if (!cotizacion) {
+      error = "Cotización no encontrada";
+    } else {
+      clientes = await clienteService.getAll();
+      
+      if (!cotizacion.numero || cotizacion.numero.includes('mvG2cFN4sBXIfjxxnYAL')) {
+        try {
+          const fechaCreacion = cotizacion.created_at ? new Date(cotizacion.created_at) : new Date(cotizacion.createdAt);
+          const fechaFormateada = fechaCreacion.toISOString().slice(0, 10).replace(/-/g, "");
+          const cliente = clientes.find((c: any) => c.id === cotizacion.cliente_id);
+          const clienteNombre = (cliente?.nombre || "CLIENTE").replace(/\s+/g, "").substring(0, 10).toUpperCase();
+          const eventoNombre = (cotizacion.titulo || "EVENTO").replace(/\s+/g, "").substring(0, 10).toUpperCase();
+          const numeroSecuencial = "001";
+          cotizacion.numeroMejorado = `COT-${numeroSecuencial}-${fechaFormateada}-${clienteNombre}-${eventoNombre}`;
+        } catch (numberError) {
+          console.error('Error generating quote number:', numberError);
+          cotizacion.numeroMejorado = `COT-001-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-CLIENTE-EVENTO`;
+        }
+      } else {
+        cotizacion.numeroMejorado = cotizacion.numero;
+      }
+      
+      // Asegurar que items sea un array
+      if (cotizacion.items && typeof cotizacion.items === 'object' && !Array.isArray(cotizacion.items)) {
+        cotizacion.items = Object.values(cotizacion.items);
+      } else if (!Array.isArray(cotizacion.items)) {
+        cotizacion.items = [];
+      }
+    }
+  } else {
+    error = "ID de cotización no proporcionado";
+  }
+} catch (err) {
+  console.error('Error loading cotizacion:', err);
+  error = `Error al cargar la cotización: ${err}`;
+}
+
+// Cargar TODOS los items del maestro para el modal de selección
+try {
+  const { itemService } = await import("../../../utils/database");
+  allMasterItems = await itemService.getAll();
+  console.log('🛍️ Master items cargados:', allMasterItems.length);
+} catch (itemErr) {
+  console.error('❌ Error loading master items:', itemErr);
+  allMasterItems = [];
+}
+
+// Helper function to safely format a date value
+function safeFormatDate(dateValue: any): string {
+  if (!dateValue) return '';
+  
+  // If it's already a string in YYYY-MM-DD format, return it
+  if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    return dateValue;
+  }
+  
+  // If it's a string but not in the correct format, try to parse it
+  if (typeof dateValue === 'string') {
+    try {
+      const date = new Date(dateValue);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date value:', dateValue);
+        return '';
+      }
+      return date.toISOString().split('T')[0];
+    } catch (error) {
+      console.warn('Error formatting date string:', dateValue, error);
+      return '';
+    }
+  }
+  
+  // If it's a Date object, format it directly
+  if (dateValue instanceof Date) {
+    if (isNaN(dateValue.getTime())) {
+      console.warn('Invalid Date object:', dateValue);
+      return '';
+    }
+    return dateValue.toISOString().split('T')[0];
+  }
+  
+  // For any other type, try to create a Date object
+  try {
+    const date = new Date(dateValue);
+    if (isNaN(date.getTime())) {
+      console.warn('Cannot convert to valid date:', dateValue);
+      return '';
+    }
+    return date.toISOString().split('T')[0];
+  } catch (error) {
+    console.warn('Error formatting date value:', dateValue, error);
+    return '';
+  }
+}
+---
+
+<Dashboard title="Editar Cotización - BLS Cotizador" activeSection="quotes">
+  {error ? (
+    <div class="bg-red-50 border border-red-200 rounded-md p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-red-800">Error</h3>
+          <div class="mt-2 text-sm text-red-700">
+            <p>{error}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : cotizacion ? (
+    <div class="max-w-4xl mx-auto space-y-6">
+      <!-- Header -->
+      <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:px-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-2xl font-bold text-gray-900">Editar Cotización</h1>
+              <p class="mt-1 text-sm text-gray-500">
+                {cotizacion.numeroMejorado || cotizacion.numero || `COT-${new Date(cotizacion.created_at).getFullYear()}-${String(cotizacion.id).padStart(3, '0')}`}
+              </p>
+            </div>
+            <div>
+              <a
+                href="/quotes"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              >
+                <svg class="-ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                </svg>
+                Volver a Cotizaciones
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulario Principal -->
+      <form id="quote-form" class="space-y-6">
+        <input type="hidden" id="quote-id" name="quote-id" value={cotizacion.id} />
+        
+        <!-- Información General -->
+        <div class="bg-white shadow rounded-lg">
+          <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Información General</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Cliente -->
+              <div>
+                <label for="cliente_id" class="block text-sm font-medium text-gray-700">
+                  Cliente *
+                </label>
+                <select
+                  id="cliente_id"
+                  name="cliente_id"
+                  required
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                >
+                  <option value="">Seleccionar cliente...</option>
+                  {clientes.map((cliente: any) => {
+                    const isSelected = cliente.id === cotizacion.cliente_id || cliente.id === cotizacion.clienteId;
+                    return (
+                      <option value={cliente.id} selected={isSelected}>
+                        {cliente.nombre}{cliente.empresa ? ` - ${cliente.empresa}` : ''}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              <!-- Título -->
+              <div>
+                <label for="titulo" class="block text-sm font-medium text-gray-700">
+                  Título de la cotización *
+                </label>
+                <input
+                  type="text"
+                  id="titulo"
+                  name="titulo"
+                  required
+                  value={cotizacion.titulo || ''}
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                />
+              </div>
+
+              <!-- Fecha de Inicio -->
+              <div>
+                <label for="fecha_evento" class="block text-sm font-medium text-gray-700">
+                  Fecha de inicio del evento
+                </label>
+                <input
+                  type="date"
+                  id="fecha_evento"
+                  name="fecha_evento"
+                  value={safeFormatDate(cotizacion.fecha_evento || cotizacion.fechaEvento)}
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                />
+              </div>
+
+              <!-- Fecha de Fin -->
+              <div>
+                <label for="fecha_evento_fin" class="block text-sm font-medium text-gray-700">
+                  Fecha de fin del evento
+                </label>
+                <input
+                  type="date"
+                  id="fecha_evento_fin"
+                  name="fecha_evento_fin"
+                  value={safeFormatDate(cotizacion.fecha_evento_fin || cotizacion.fechaEventoFin || cotizacion.fecha_evento || cotizacion.fechaEvento)}
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                />
+              </div>
+
+              <!-- Duración -->
+              <div>
+                <label for="duracion_dias" class="block text-sm font-medium text-gray-700">
+                  Duración (días)
+                </label>
+                <input
+                  type="number"
+                  id="duracion_dias"
+                  name="duracion_dias"
+                  min="1"
+                  value={cotizacion.duracion_dias || 1}
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                />
+              </div>
+
+              <!-- Estado -->
+              <div>
+                <label for="estado" class="block text-sm font-medium text-gray-700">
+                  Estado
+                </label>
+                <select
+                  id="estado"
+                  name="estado"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                >
+                  <option value="borrador" selected={cotizacion.estado === 'borrador'}>Borrador</option>
+                  <option value="enviado" selected={cotizacion.estado === 'enviado'}>Enviado</option>
+                  <option value="aprobado" selected={cotizacion.estado === 'aprobado'}>Aprobado</option>
+                  <option value="rechazado" selected={cotizacion.estado === 'rechazado'}>Rechazado</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Items de la Cotización -->
+        <div class="bg-white shadow rounded-lg">
+          <div class="px-4 py-5 sm:p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg leading-6 font-medium text-gray-900">Items de la Cotización</h3>
+              <button
+                type="button"
+                id="add-item-btn"
+                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200"
+              >
+                <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Agregar Item
+              </button>
+            </div>
+            
+            <DescriptionNote />
+
+            <div id="items-container" class="space-y-4">
+              <!-- Los items se cargarán dinámicamente aquí -->
+            </div>
+
+            <!-- Totales -->
+            <div class="mt-6 bg-gray-50 rounded-lg p-4">
+              <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-sm font-medium text-gray-700">Subtotal:</span>
+                  <span id="subtotal-display" class="text-sm font-medium text-gray-900">$0</span>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                  <div class="flex items-center space-x-2">
+                    <span class="text-sm font-medium text-gray-700">Descuento:</span>
+                    <input
+                      type="number"
+                      id="descuento"
+                      name="descuento"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={cotizacion.descuento || 0}
+                      class="w-16 px-2 py-1 text-xs border border-gray-300 rounded-md"
+                    />
+                    <span class="text-sm text-gray-500">%</span>
+                  </div>
+                  <span id="descuento-display" class="text-sm text-red-600">-$0</span>
+                </div>
+                
+                <div class="flex justify-between items-center text-lg font-semibold pt-2 border-t border-gray-200">
+                  <span class="text-gray-900">Total:</span>
+                  <span id="total-display" class="text-primary-600">$0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Observaciones -->
+        <div class="bg-white shadow rounded-lg">
+          <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Observaciones</h3>
+            <textarea
+              id="observaciones"
+              name="observaciones"
+              rows="4"
+              value={cotizacion.observaciones || defaultObservaciones}
+              placeholder="Términos y condiciones, notas especiales, etc..."
+              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="bg-white shadow rounded-lg">
+          <div class="px-4 py-3 bg-gray-50 text-right sm:px-6 rounded-b-lg">
+            <button
+              type="button"
+              onclick="window.location.href='/quotes'"
+              class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mr-3"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              id="submit-btn"
+              class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
+            >
+              Actualizar Cotización
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Hidden inputs para totales -->
+      <input type="hidden" id="subtotal" name="subtotal" value={cotizacion.subtotal || 0}>
+      <input type="hidden" id="total" name="total" value={cotizacion.total || 0}>
+      
+      <!-- Hidden data para JavaScript -->
+      <script is:inline type="application/json" id="items-data" set:html={
+        JSON.stringify(
+          Array.isArray(cotizacion.items) 
+            ? cotizacion.items 
+            : cotizacion.items && typeof cotizacion.items === 'object' 
+              ? Object.values(cotizacion.items)
+              : []
+        )
+      }></script>
+
+      <!-- Hidden data for ALL MASTER JavaScript Items/Services -->
+      <script is:inline type="application/json" id="all-master-items-data" set:html={JSON.stringify(allMasterItems)}></script>
+    </div>
+  ) : (
+    <div class="text-center py-12">
+      <p class="text-gray-500">Cargando cotización...</p>
+    </div>
+  )}
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      let itemCounter = 0;
+      let allMasterItemsList = [];
+      
+      // Obtener datos de la cotización
+      const cotizacionData = {
+        id: document.getElementById('quote-id').value || '',
+        items: []
+      };
+      
+      console.log('🚀 Iniciando carga de cotización...');
+
+      // Cargar TODOS los items maestros para selección
+      try {
+        const allItemsElement = document.getElementById('all-master-items-data');
+        if (allItemsElement && allItemsElement.textContent) {
+          allMasterItemsList = JSON.parse(allItemsElement.textContent);
+          console.log('🛍️ Master list of items loaded:', allMasterItemsList.length, 'items');
+        } else {
+          console.warn('⚠️ No se encontró el elemento all-master-items-data o está vacío');
+        }
+      } catch (e) {
+        console.error('❌ Error parsing all master items JSON:', e);
+      }
+      
+      // Cargar items de la cotización actual
+      try {
+        const itemsElement = document.getElementById('items-data');
+        if (itemsElement && itemsElement.textContent) {
+          const parsedItems = JSON.parse(itemsElement.textContent);
+          console.log('📦 Items RAW del JSON de la cotización:', parsedItems);
+          
+          if (Array.isArray(parsedItems)) {
+            cotizacionData.items = parsedItems;
+          } else {
+            console.log('❌ Items de cotización no es un array, creando array vacío');
+            cotizacionData.items = [];
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error parsing items JSON de la cotización:', error);
+        cotizacionData.items = [];
+      }
+      console.log('📊 Items finales de la cotización para cargar:', cotizacionData.items);
+
+      // Cargar items existentes de la cotización en la UI
+      if (cotizacionData.items && cotizacionData.items.length > 0) {
+        console.log('🔄 Cargando', cotizacionData.items.length, 'items existentes en la UI...');
+        cotizacionData.items.forEach((item, index) => {
+          console.log('📦 Cargando item', index + 1, ':', item);
+          addItem(item);
+        });
+        // Calcular totales después de cargar todos los items
+        setTimeout(() => {
+          calculateTotals();
+          console.log('✅ Items cargados y totales calculados');
+        }, 100);
+      } else {
+        console.log('ℹ️ No hay items existentes para cargar');
+      }
+
+      // Función para agregar item
+      function addItem(item) {
+        const container = document.getElementById("items-container");
+        if (!container) {
+          console.error('❌ No se encontró contenedor items-container');
+          return;
+        }
+        
+        const itemData = item && typeof item === 'object' && item !== null ? {
+          descripcion: item.descripcion || item.nombre || '',
+          cantidad: item.cantidad || 1,
+          precio_unitario: item.precio_unitario || item.precioBase || 0,
+          precio_original: item.precioBase || 0,
+          item_id: item.id || null,
+          unidad: item.unidad || 'servicio'
+        } : {
+          descripcion: '',
+          cantidad: 1,
+          precio_unitario: 0,
+          precio_original: 0,
+          item_id: null,
+          unidad: 'servicio'
+        };
+
+        // Normalizar descripción - puede ser array o string
+        if (Array.isArray(itemData.descripcion)) {
+          itemData.descripcion = itemData.descripcion.join(' • ');
+        } else if (typeof itemData.descripcion !== 'string') {
+          itemData.descripcion = itemData.descripcion ? itemData.descripcion.toString() : '';
+        }
+        
+        console.log('➕ Agregando item ' + itemCounter + ' con data:', itemData);
+
+        const index = itemCounter;
+        const descripcion = itemData.descripcion;
+        const cantidad = itemData.cantidad;
+        const precio = itemData.precio_unitario;
+        const precioOriginal = itemData.precio_original;
+        const itemId = itemData.item_id || '';
+        const unidad = itemData.unidad;
+
+        const itemHTML = buildItemHTML(index, descripcion, cantidad, precio, precioOriginal, itemId, unidad);
+        container.insertAdjacentHTML('beforeend', itemHTML);
+        
+        // Add event listeners for this item
+        addItemEventListeners(index);
+        
+        itemCounter++;
+        calculateTotals();
+      }
+      
+      // Función para construir HTML del item
+      function buildItemHTML(index, descripcion, cantidad, precio, precioOriginal, itemId, unidad) {
+        const descripcionSegura = String(descripcion || '');
+        
+        return '<div class="item-row bg-gray-50 p-4 rounded-lg border border-gray-200" data-index="' + index + '">' +
+          '<input type="hidden" name="items[' + index + '][item_id]" value="' + itemId + '">' +
+          '<input type="hidden" name="items[' + index + '][precio_original]" value="' + precioOriginal + '">' +
+          '<div class="grid grid-cols-1 md:grid-cols-12 gap-4">' +
+            '<div class="md:col-span-4">' +
+              '<label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>' +
+              '<textarea name="items[' + index + '][descripcion]" ' +
+                'placeholder="Descripción del servicio/producto" ' +
+                'rows="2" ' +
+                'class="item-descripcion block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm" ' +
+                'required>' + descripcionSegura + '</textarea>' +
+            '</div>' +
+            '<div class="md:col-span-2">' +
+              '<label class="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>' +
+              '<input type="number" name="items[' + index + '][cantidad]" value="' + cantidad + '" min="0.5" step="0.5" ' +
+                'class="item-cantidad block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm" required />' +
+            '</div>' +
+            '<div class="md:col-span-2">' +
+              '<label class="block text-sm font-medium text-gray-700 mb-1">Unidad</label>' +
+              '<select name="items[' + index + '][unidad]" ' +
+                'class="item-unidad block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">' +
+                '<option value="servicio"' + (unidad === 'servicio' ? ' selected' : '') + '>Servicio</option>' +
+                '<option value="evento"' + (unidad === 'evento' ? ' selected' : '') + '>Evento</option>' +
+                '<option value="jornada"' + (unidad === 'jornada' ? ' selected' : '') + '>Jornada</option>' +
+                '<option value="unidad"' + (unidad === 'unidad' ? ' selected' : '') + '>Unidad</option>' +
+                '<option value="hora"' + (unidad === 'hora' ? ' selected' : '') + '>Hora</option>' +
+                '<option value="kit"' + (unidad === 'kit' ? ' selected' : '') + '>Kit</option>' +
+              '</select>' +
+            '</div>' +
+            '<div class="md:col-span-2">' +
+              '<label class="block text-sm font-medium text-gray-700 mb-1">Precio Unitario</label>' +
+              '<input type="number" name="items[' + index + '][precio_unitario]" min="0" step="0.01" value="' + precio + '" ' +
+                'class="item-precio block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm" />' +
+            '</div>' +
+            '<div class="md:col-span-1">' +
+              '<label class="block text-sm font-medium text-gray-700 mb-1">Total</label>' +
+              '<div class="item-total px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm font-medium text-gray-900">' +
+                '$' + (cantidad * precio).toLocaleString('es-AR', { minimumFractionDigits: 2 }) +
+              '</div>' +
+            '</div>' +
+            '<div class="md:col-span-1 flex items-end">' +
+              '<button type="button" class="remove-item w-full px-2 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md" ' +
+                'title="Eliminar item" onclick="removeItem(' + index + ')">' +
+                'Eliminar' +
+              '</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }
+      
+      // Función para agregar event listeners a un item
+      function addItemEventListeners(index) {
+        const itemRow = document.querySelector('.item-row[data-index="' + index + '"]');
+        if (!itemRow) return;
+        
+        const cantidadInput = itemRow.querySelector('.item-cantidad');
+        const precioInput = itemRow.querySelector('.item-precio');
+        
+        if (cantidadInput) {
+          cantidadInput.addEventListener('input', calculateTotals);
+        }
+        if (precioInput) {
+          precioInput.addEventListener('input', calculateTotals);
+        }
+      }
+      
+      // Función para remover item
+      window.removeItem = function(index) {
+        const item = document.querySelector('.item-row[data-index="' + index + '"]');
+        if (item) {
+          item.remove();
+          calculateTotals();
+          console.log('🗑️ Item ' + index + ' eliminado');
+        }
+      }
+
+      // Función para calcular totales
+      function calculateTotals() {
+        const items = document.querySelectorAll('.item-row');
+        let subtotal = 0;
+
+        items.forEach(function(item) {
+          const cantidadEl = item.querySelector('.item-cantidad');
+          const precioEl = item.querySelector('.item-precio');
+          const cantidad = parseFloat(cantidadEl ? cantidadEl.value : '0') || 0;
+          const precio = parseFloat(precioEl ? precioEl.value : '0') || 0;
+          const total = cantidad * precio;
+          
+          const totalDisplay = item.querySelector('.item-total');
+          if (totalDisplay) {
+            totalDisplay.textContent = '$' + total.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+          }
+          
+          subtotal += total;
+        });
+
+        const descuentoEl = document.getElementById('descuento');
+        const descuento = parseFloat(descuentoEl ? descuentoEl.value : '0') || 0;
+        const descuentoMonto = (subtotal * descuento) / 100;
+        const total = subtotal - descuentoMonto;
+
+        const subtotalDisplay = document.getElementById('subtotal-display');
+        const descuentoDisplay = document.getElementById('descuento-display');
+        const totalDisplay = document.getElementById('total-display');
+        
+        if (subtotalDisplay) subtotalDisplay.textContent = '$' + subtotal.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+        if (descuentoDisplay) descuentoDisplay.textContent = '-$' + descuentoMonto.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+        if (totalDisplay) totalDisplay.textContent = '$' + total.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+        
+        const subtotalInput = document.getElementById('subtotal');
+        const totalInput = document.getElementById('total');
+        
+        if (subtotalInput) subtotalInput.value = subtotal.toString();
+        if (totalInput) totalInput.value = total.toString();
+        
+        console.log('💰 Totales actualizados:', { subtotal, descuento: descuentoMonto, total });
+      }
+
+      // Event listener del botón "Agregar Item"
+      const addItemBtn = document.getElementById('add-item-btn');
+      if (addItemBtn) {
+        addItemBtn.addEventListener('click', function() {
+          addItem(null); // Agregar item vacío
+        });
+      }
+
+      // Event listener para el descuento
+      const descuentoInput = document.getElementById('descuento');
+      if (descuentoInput) {
+        descuentoInput.addEventListener('input', calculateTotals);
+      }
+
+      // Event listener para el formulario
+      const form = document.getElementById('quote-form');
+      if (form) {
+        form.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          const submitBtn = document.getElementById('submit-btn');
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Actualizando...';
+          }
+
+          try {
+            const formData = new FormData(form);
+            
+            // Recopilar items
+            const items = [];
+            const itemRows = document.querySelectorAll('.item-row');
+            
+            itemRows.forEach(function(row) {
+              const index = row.getAttribute('data-index');
+              const descripcion = formData.get('items[' + index + '][descripcion]');
+              const cantidad = parseFloat(formData.get('items[' + index + '][cantidad]') || '0');
+              const precio_unitario = parseFloat(formData.get('items[' + index + '][precio_unitario]') || '0');
+              const unidad = formData.get('items[' + index + '][unidad]');
+              const item_id = formData.get('items[' + index + '][item_id]');
+              const precio_original = formData.get('items[' + index + '][precio_original]');
+              
+              if (descripcion && cantidad > 0 && precio_unitario >= 0) {
+                items.push({
+                  descripcion: descripcion,
+                  cantidad: cantidad,
+                  precio_unitario: precio_unitario,
+                  unidad: unidad,
+                  item_id: item_id || null,
+                  precio_original: precio_original || 0
+                });
+              }
+            });
+
+            const quoteData = {
+              id: cotizacionData.id,
+              cliente_id: formData.get('cliente_id'),
+              clienteId: formData.get('cliente_id'),
+              titulo: formData.get('titulo'),
+              descripcion: formData.get('descripcion'),
+              fecha_evento: formData.get('fecha_evento'),
+              fecha_evento_fin: formData.get('fecha_evento_fin'),
+              fechaEvento: formData.get('fecha_evento'),
+              fechaEventoFin: formData.get('fecha_evento_fin'),
+              duracion_dias: parseInt(formData.get('duracion_dias') || '1'),
+              estado: formData.get('estado'),
+              vigencia_dias: formData.get('vigencia_dias'),
+              descuento: formData.get('descuento'),
+              observaciones: formData.get('observaciones'),
+              subtotal: formData.get('subtotal'),
+              total: formData.get('total'),
+              items: items
+            };
+
+            console.log('📤 Enviando datos:', quoteData);
+
+            const response = await fetch('/api/quotes', {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(quoteData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+              console.log('✅ Cotización actualizada:', result);
+              window.location.href = '/quotes';
+            } else {
+              throw new Error(result.error || 'Error al actualizar la cotización');
+            }
+
+          } catch (error) {
+            console.error('❌ Error:', error);
+            alert('Error al actualizar la cotización: ' + error.message);
+          } finally {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Actualizar Cotización';
+            }
+          }
+        });
+      }
+
+      console.log('💾 Cargando datos de cotización para editar...');
+    });
+  </script>
+</Dashboard>

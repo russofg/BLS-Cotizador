@@ -1,0 +1,953 @@
+---
+import Dashboard from "../layouts/Dashboard.astro";
+import PageHeader from "../components/ui/PageHeader.astro";
+import Card from "../components/ui/Card.astro";
+import Button from "../components/ui/Button.astro";
+import Input from "../components/ui/Input.astro";
+import ThemeModeSelector from "../components/ui/ThemeModeSelector.astro";
+import ColorSelector from "../components/ui/ColorSelector.astro";
+import FontSizeSelector from "../components/ui/FontSizeSelector.astro";
+import ScrollbarStyles from "../components/ScrollbarStyles.astro";
+---
+
+<Dashboard title="Mi Perfil - BLS Cotizador" activeSection="profile">
+  <ScrollbarStyles />
+  <div class="space-y-6">
+    <!-- Header -->
+    <PageHeader
+      title="Mi Perfil"
+      subtitle="Administra tu información personal y configuración de cuenta"
+    />
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Foto de Perfil -->
+      <div class="lg:col-span-3">
+        <Card title="Foto de Perfil">
+          <div class="flex items-center space-x-6">
+            <!-- Avatar actual -->
+            <div class="shrink-0">
+              <div
+                id="current-avatar"
+                class="h-20 w-20 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300 text-lg font-medium relative overflow-hidden"
+              >
+                <span id="avatar-initials">?</span>
+                <img
+                  id="avatar-image"
+                  class="h-full w-full object-cover hidden"
+                  alt="Avatar"
+                />
+              </div>
+            </div>
+
+            <!-- Controles de avatar -->
+            <div class="flex-1">
+              <div class="space-y-3">
+                <div>
+                  <label
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  >
+                    Cambiar foto de perfil
+                  </label>
+                  <div class="flex items-center space-x-3">
+                    <input
+                      type="file"
+                      id="avatar-upload"
+                      accept="image/*"
+                      class="hidden"
+                    />
+                    <button
+                      type="button"
+                      id="upload-avatar-btn"
+                      class="inline-flex items-center justify-center font-medium rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 focus:ring-gray-500 border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm"
+                    >
+                      Subir foto
+                    </button>
+                    <button
+                      type="button"
+                      id="remove-avatar-btn"
+                      class="hidden"
+                      data-classes="inline-flex items-center justify-center font-medium rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 focus:ring-gray-500 border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm"
+                    >
+                      Quitar foto
+                    </button>
+                  </div>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  JPG, PNG o GIF hasta 2MB. Se mostrará como un círculo.
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <!-- Información del Perfil -->
+      <div class="lg:col-span-2">
+        <Card title="Información Personal">
+          <form id="profile-form" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Nombre -->
+              <Input
+                id="profile-nombre"
+                name="nombre"
+                required
+                label="Nombre completo"
+                placeholder="Tu nombre completo"
+              />
+
+              <!-- Email -->
+              <Input
+                id="profile-email"
+                name="email"
+                type="email"
+                required
+                disabled
+                label="Email"
+                placeholder="tu@email.com"
+              />
+            </div>
+
+            <!-- Rol -->
+            <div>
+              <label
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Rol en el sistema
+              </label>
+              <p
+                id="profile-rol"
+                class="mt-1 text-sm text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-md"
+              >
+                Cargando...
+              </p>
+            </div>
+
+            <!-- Estado -->
+            <div>
+              <label
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Estado de la cuenta
+              </label>
+              <div id="profile-status" class="mt-1">
+                <span
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                >
+                  Cargando...
+                </span>
+              </div>
+            </div>
+
+            <!-- Fecha de registro -->
+            <div>
+              <label
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Fecha de registro
+              </label>
+              <p
+                id="profile-created"
+                class="mt-1 text-sm text-gray-900 dark:text-gray-100"
+              >
+                Cargando...
+              </p>
+            </div>
+
+            <div
+              class="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700"
+            >
+              <Button id="cancel-profile-btn" variant="secondary" size="md">
+                Cancelar
+              </Button>
+              <Button id="save-profile-btn" variant="primary" size="md">
+                Guardar Cambios
+              </Button>
+            </div>
+          </form>
+        </Card>
+      </div>
+
+      <!-- Panel de Acciones -->
+      <div class="space-y-6">
+        <!-- Cambiar Contraseña -->
+        <Card title="Seguridad">
+          <div class="space-y-4">
+            <p class="text-sm text-gray-600 dark:text-gray-300">
+              Actualiza tu contraseña para mantener tu cuenta segura.
+            </p>
+            <Button
+              id="change-password-btn"
+              variant="secondary"
+              size="md"
+              class="w-full"
+            >
+              Cambiar Contraseña
+            </Button>
+          </div>
+        </Card>
+
+        <!-- Temas y Personalización -->
+        <Card title="Temas y Personalización">
+          <div class="space-y-6">
+            <!-- Se inicializa con valores por defecto, pero se actualizará con JavaScript -->
+            <ThemeModeSelector currentMode="light" />
+
+            <!-- Color Principal -->
+            <ColorSelector currentColor="blue" />
+
+            <!-- Tamaño de Fuente -->
+            <FontSizeSelector currentSize="medium" />
+
+            <!-- Botón para restablecer -->
+            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <Button
+                id="reset-theme-btn"
+                variant="secondary"
+                size="sm"
+                class="w-full"
+              >
+                Restablecer a valores por defecto
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        <!-- Información de la Cuenta -->
+        <Card title="Información de la Cuenta">
+          <div class="space-y-3 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-600 dark:text-gray-400"
+                >Última conexión:</span
+              >
+              <span id="last-login" class="text-gray-900 dark:text-gray-100"
+                >Cargando...</span
+              >
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600 dark:text-gray-400"
+                >Sesiones activas:</span
+              >
+              <span class="text-gray-900 dark:text-gray-100">1</span>
+            </div>
+          </div>
+        </Card>
+
+        <!-- Acciones de Cuenta -->
+        <Card title="Acciones de Cuenta">
+          <div class="space-y-3">
+            <Button
+              id="download-data-btn"
+              variant="secondary"
+              size="sm"
+              class="w-full"
+            >
+              Descargar Mis Datos
+            </Button>
+            <Button
+              id="delete-account-btn"
+              variant="danger"
+              size="sm"
+              class="w-full"
+            >
+              Eliminar Cuenta
+            </Button>
+          </div>
+        </Card>
+      </div>
+    </div>
+  </div>
+</Dashboard>
+
+<script>
+  import { authService } from "../utils/auth";
+  import { notifications } from "../utils/notifications.js";
+  import { db } from "../utils/firebase";
+  import { doc, updateDoc, getDoc } from "firebase/firestore";
+  import { themeManager, type ThemeConfig } from "../utils/theme";
+
+  let currentUser: any = null;
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    console.log("📄 Profile page loaded");
+
+    // Función para limpiar aria-hidden que puede estar interfiriendo
+    function clearAriaHidden() {
+      console.log("🧹 Cleaning aria-hidden attributes...");
+      document.body.removeAttribute("aria-hidden");
+      const mainContent = document.querySelector(".min-h-screen.bg-gray-50");
+      if (mainContent) {
+        mainContent.removeAttribute("aria-hidden");
+        console.log("✅ Removed aria-hidden from main content");
+      }
+      // También limpiar cualquier aria-hidden en el contenedor del dashboard
+      const dashboardContent = document.querySelector(
+        "[data-dashboard-content]"
+      );
+      if (dashboardContent) {
+        dashboardContent.removeAttribute("aria-hidden");
+      }
+    }
+
+    // Limpiar aria-hidden al cargar la página
+    clearAriaHidden();
+
+    // Configurar MutationObserver para detectar cuando se añade aria-hidden dinámicamente
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName === "aria-hidden"
+        ) {
+          const target = mutation.target as HTMLElement;
+          if (target.hasAttribute("aria-hidden")) {
+            console.log("🚨 aria-hidden detected on:", target);
+            // Solo remover aria-hidden de elementos principales, no de elementos internos de SweetAlert2
+            if (
+              target === document.body ||
+              target.classList.contains("min-h-screen") ||
+              target.hasAttribute("data-dashboard-content")
+            ) {
+              console.log(
+                "🧹 Removing aria-hidden from:",
+                target.tagName,
+                target.className
+              );
+              target.removeAttribute("aria-hidden");
+            }
+          }
+        }
+      });
+    });
+
+    // Observar cambios en el body y en el contenido principal
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["aria-hidden"],
+    });
+    const mainContent = document.querySelector(".min-h-screen.bg-gray-50");
+    if (mainContent) {
+      observer.observe(mainContent, {
+        attributes: true,
+        attributeFilter: ["aria-hidden"],
+      });
+    }
+
+    // Load user profile
+    await loadUserProfile();
+
+    // Set up event listeners
+    document
+      .getElementById("save-profile-btn")
+      ?.addEventListener("click", saveProfile);
+    document
+      .getElementById("cancel-profile-btn")
+      ?.addEventListener("click", loadUserProfile);
+    document
+      .getElementById("change-password-btn")
+      ?.addEventListener("click", changePassword);
+    document
+      .getElementById("download-data-btn")
+      ?.addEventListener("click", downloadData);
+    document
+      .getElementById("delete-account-btn")
+      ?.addEventListener("click", deleteAccount);
+
+    // Avatar event listeners con limpieza de aria-hidden
+    console.log("🔧 Setting up avatar event listeners...");
+
+    const uploadBtn = document.getElementById("upload-avatar-btn");
+    const fileInput = document.getElementById("avatar-upload");
+
+    if (uploadBtn && fileInput) {
+      uploadBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        console.log("🔘 Upload button clicked");
+
+        // Limpiar aria-hidden antes de intentar abrir el file input
+        clearAriaHidden();
+
+        console.log("📁 File input element:", fileInput);
+        try {
+          fileInput.click();
+          console.log("📁 File input clicked successfully");
+        } catch (error) {
+          console.error("❌ Error clicking file input:", error);
+        }
+      });
+      console.log("✅ Upload button listener added");
+    } else {
+      console.error("❌ Upload button or file input not found!");
+    }
+
+    document
+      .getElementById("avatar-upload")
+      ?.addEventListener("change", handleAvatarUpload);
+    document
+      .getElementById("remove-avatar-btn")
+      ?.addEventListener("click", removeAvatar);
+
+    // Configuración de temas
+    setupThemeHandlers();
+  });
+
+  // Configurar manejadores de eventos para temas
+  function setupThemeHandlers() {
+    console.log("🎨 Setting up theme handlers...");
+
+    // Cargar tema actual y actualizar UI
+    loadCurrentTheme();
+
+    // Escuchar cambios de tema
+    window.addEventListener("themeChange", async (event: any) => {
+      console.log("🎨 Theme change event:", event.detail);
+
+      try {
+        await themeManager.saveTheme(event.detail);
+
+        // Actualizar UI con los nuevos valores
+        loadCurrentTheme();
+
+        notifications.toast("success", "Tema actualizado");
+      } catch (error) {
+        console.error("Error saving theme:", error);
+        notifications.error("Error", "No se pudo guardar el tema");
+      }
+    });
+
+    // Botón de reset
+    document
+      .getElementById("reset-theme-btn")
+      ?.addEventListener("click", async () => {
+        try {
+          await themeManager.saveTheme({
+            mode: "light",
+            primaryColor: "blue",
+            fontSize: "medium",
+          });
+          loadCurrentTheme();
+          notifications.success(
+            "Tema restablecido",
+            "Se han restaurado los valores por defecto"
+          );
+        } catch (error) {
+          console.error("Error resetting theme:", error);
+          notifications.error("Error", "No se pudo restablecer el tema");
+        }
+      });
+  }
+
+  // Cargar tema actual y actualizar la UI
+  function loadCurrentTheme() {
+    const currentTheme = themeManager.getTheme();
+    console.log("🎨 Current theme:", currentTheme);
+
+    // Actualizar selectores con los valores actuales
+    updateThemeSelectors(currentTheme);
+  }
+
+  // Actualizar los selectores de tema con los valores actuales
+  function updateThemeSelectors(theme: ThemeConfig) {
+    // Actualizar modo de tema
+    const modes = ["light", "dark", "auto"];
+    modes.forEach((mode) => {
+      const btn = document.getElementById(`theme-${mode}`);
+      if (btn) {
+        const isActive = theme.mode === mode;
+        if (isActive) {
+          btn.classList.add(
+            "border-primary-500",
+            "bg-primary-50",
+            "dark:bg-primary-900/20"
+          );
+          btn.classList.remove("border-gray-200", "dark:border-gray-700");
+        } else {
+          btn.classList.remove(
+            "border-primary-500",
+            "bg-primary-50",
+            "dark:bg-primary-900/20"
+          );
+          btn.classList.add("border-gray-200", "dark:border-gray-700");
+        }
+      }
+    });
+
+    // Actualizar selector de color
+    const colors = ["blue", "green", "purple", "red", "orange"];
+    colors.forEach((color) => {
+      const btn = document.getElementById(`color-${color}`);
+      if (btn) {
+        const isActive = theme.primaryColor === color;
+        if (isActive) {
+          btn.classList.add(
+            "border-gray-400",
+            "ring-2",
+            "ring-primary-500",
+            "ring-offset-2",
+            "dark:ring-offset-gray-900"
+          );
+          btn.classList.remove("border-gray-200", "dark:border-gray-700");
+        } else {
+          btn.classList.remove(
+            "border-gray-400",
+            "ring-2",
+            "ring-primary-500",
+            "ring-offset-2",
+            "dark:ring-offset-gray-900"
+          );
+          btn.classList.add("border-gray-200", "dark:border-gray-700");
+        }
+      }
+    });
+
+    // Actualizar selector de tamaño de fuente
+    const sizes = ["small", "medium", "large"];
+    sizes.forEach((size) => {
+      const btn = document.getElementById(`size-${size}`);
+      if (btn) {
+        const isActive = theme.fontSize === size;
+        if (isActive) {
+          btn.classList.add(
+            "border-primary-500",
+            "bg-primary-50",
+            "dark:bg-primary-900/20"
+          );
+          btn.classList.remove("border-gray-200", "dark:border-gray-700");
+        } else {
+          btn.classList.remove(
+            "border-primary-500",
+            "bg-primary-50",
+            "dark:bg-primary-900/20"
+          );
+          btn.classList.add("border-gray-200", "dark:border-gray-700");
+        }
+      }
+    });
+  }
+
+  async function loadUserProfile() {
+    try {
+      console.log("🚀 Loading user profile...");
+      notifications.loading(
+        "Cargando perfil",
+        "Obteniendo información del usuario..."
+      );
+
+      // Check if user is authenticated first
+      console.log("🔐 Checking authentication...");
+      const isAuthenticated = await authService.isAuthenticated();
+      console.log("✅ Is authenticated:", isAuthenticated);
+
+      if (!isAuthenticated) {
+        console.error("❌ User not authenticated");
+        notifications.error(
+          "Error de autenticación",
+          "Debes iniciar sesión para ver tu perfil"
+        );
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 2000);
+        return;
+      }
+
+      console.log("👤 Getting current user...");
+      currentUser = await authService.getCurrentUser();
+      console.log("📄 Current user data:", currentUser);
+
+      if (!currentUser) {
+        console.error("❌ getCurrentUser returned null");
+        notifications.error(
+          "Error",
+          "No se pudo cargar la información del usuario. Intenta cerrar sesión e iniciar nuevamente."
+        );
+        return;
+      }
+
+      console.log("📝 Populating form fields...");
+      // Populate form fields
+      const nombreInput = document.getElementById(
+        "profile-nombre"
+      ) as HTMLInputElement;
+      const emailInput = document.getElementById(
+        "profile-email"
+      ) as HTMLInputElement;
+
+      if (nombreInput) {
+        nombreInput.value = currentUser.nombre || "";
+        console.log("📝 Nombre set:", currentUser.nombre);
+      }
+      if (emailInput) {
+        emailInput.value = currentUser.email || "";
+        console.log("📧 Email set:", currentUser.email);
+      }
+
+      // Set role
+      const rolElement = document.getElementById("profile-rol");
+      if (rolElement) {
+        const rolName =
+          currentUser.rol === "admin"
+            ? "Administrador"
+            : currentUser.rol === "usuario"
+              ? "Usuario"
+              : "Sin definir";
+        rolElement.textContent = rolName;
+        console.log("👑 Role set:", rolName);
+      }
+
+      // Set status
+      const statusElement = document.getElementById("profile-status");
+      if (statusElement) {
+        const isActive = currentUser.activo !== false;
+        statusElement.innerHTML = `
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            isActive
+              ? "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200"
+              : "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200"
+          }">
+            ${isActive ? "✓ Activa" : "✗ Inactiva"}
+          </span>
+        `;
+        console.log("📊 Status set:", isActive ? "Activa" : "Inactiva");
+      }
+
+      // Set creation date
+      const createdElement = document.getElementById("profile-created");
+      if (createdElement) {
+        try {
+          console.log("📅 Loading creation date from Firestore...");
+          const userDoc = await getDoc(doc(db, "usuarios", currentUser.id));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            console.log("📊 User document data:", userData);
+            if (userData.createdAt) {
+              const date = userData.createdAt.toDate
+                ? userData.createdAt.toDate()
+                : new Date(userData.createdAt);
+              const formattedDate = date.toLocaleDateString("es-ES", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              });
+              createdElement.textContent = formattedDate;
+              console.log("📅 Creation date set:", formattedDate);
+            } else {
+              createdElement.textContent = "No disponible";
+              console.log("⚠️ No createdAt field found");
+            }
+          } else {
+            console.warn("⚠️ User document does not exist in Firestore");
+            createdElement.textContent = "No disponible";
+          }
+        } catch (firestoreError) {
+          console.error("❌ Error loading creation date:", firestoreError);
+          createdElement.textContent = "No disponible";
+        }
+      }
+
+      // Set last login
+      const lastLoginElement = document.getElementById("last-login");
+      if (lastLoginElement) {
+        lastLoginElement.textContent = "Ahora";
+      }
+
+      // Load avatar
+      updateAvatarDisplay();
+
+      // Close loading notification
+      setTimeout(() => {
+        const swalContainer = document.querySelector(".swal2-container");
+        if (swalContainer) {
+          swalContainer.remove();
+        }
+      }, 500);
+
+      console.log("✅ Profile loaded successfully");
+    } catch (error) {
+      console.error("❌ Error loading user profile:", error);
+
+      let errorMessage = "No se pudo cargar el perfil del usuario";
+      if (error instanceof Error) {
+        console.error("Error details:", error.message, error.stack);
+        if (error.message.includes("permission-denied")) {
+          errorMessage =
+            "Sin permisos para acceder a la información del usuario";
+        } else if (error.message.includes("network")) {
+          errorMessage = "Error de conexión. Verifica tu internet";
+        } else {
+          errorMessage = `Error: ${error.message}`;
+        }
+      }
+
+      notifications.error("Error", errorMessage);
+    }
+  }
+
+  async function saveProfile() {
+    if (!currentUser) return;
+
+    const form = document.getElementById("profile-form") as HTMLFormElement;
+    if (!form || !form.checkValidity()) {
+      notifications.error(
+        "Error",
+        "Por favor completa todos los campos requeridos"
+      );
+      return;
+    }
+
+    const formData = new FormData(form);
+    const nombre = formData.get("nombre") as string;
+
+    if (!nombre?.trim()) {
+      notifications.error("Error", "El nombre es requerido");
+      return;
+    }
+
+    try {
+      notifications.loading("Guardando", "Actualizando perfil...");
+
+      // Update user in Firestore
+      await updateDoc(doc(db, "usuarios", currentUser.id), {
+        nombre: nombre.trim(),
+        fechaModificacion: new Date(),
+      });
+
+      await notifications.success(
+        "¡Perfil actualizado!",
+        "Los cambios se han guardado exitosamente"
+      );
+
+      // Reload user info
+      await loadUserProfile();
+
+      // Redirect to dashboard after successful save
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 1500);
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      notifications.error("Error", "No se pudo actualizar el perfil");
+    }
+  }
+
+  async function changePassword() {
+    if (!currentUser) return;
+
+    const { value: email } = await notifications.input(
+      "Cambiar contraseña",
+      "Se enviará un email de recuperación a tu dirección de correo",
+      "email"
+    );
+
+    if (email && email === currentUser.email) {
+      try {
+        notifications.loading("Enviando email", "Procesando solicitud...");
+
+        const { success, error } = await authService.resetPassword(email);
+
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        if (success) {
+          await notifications.success(
+            "Email enviado",
+            "Revisa tu bandeja de entrada para cambiar tu contraseña."
+          );
+        }
+      } catch (error) {
+        console.error("Password reset error:", error);
+        notifications.error(
+          "Error",
+          "No se pudo enviar el email de recuperación"
+        );
+      }
+    } else if (email) {
+      notifications.warning(
+        "Email incorrecto",
+        "Debes usar el email de tu cuenta actual"
+      );
+    }
+  }
+
+  async function downloadData() {
+    notifications.info(
+      "Funcionalidad en desarrollo",
+      "La descarga de datos estará disponible próximamente."
+    );
+  }
+
+  async function deleteAccount() {
+    const result = await notifications.confirm(
+      "¿Eliminar cuenta?",
+      "Esta acción es irreversible. Se eliminarán todos tus datos.",
+      "Sí, eliminar mi cuenta",
+      "Cancelar"
+    );
+
+    if (result.isConfirmed) {
+      notifications.info(
+        "Contacta al administrador",
+        "Para eliminar tu cuenta, contacta al administrador del sistema."
+      );
+    }
+  }
+
+  // Avatar functions
+  function updateAvatarDisplay() {
+    const avatarImage = document.getElementById(
+      "avatar-image"
+    ) as HTMLImageElement;
+    const avatarInitials = document.getElementById(
+      "avatar-initials"
+    ) as HTMLElement;
+    const removeBtn = document.getElementById(
+      "remove-avatar-btn"
+    ) as HTMLElement;
+
+    if (currentUser?.avatar) {
+      // Show image avatar
+      avatarImage.src = currentUser.avatar;
+      avatarImage.classList.remove("hidden");
+      avatarInitials.classList.add("hidden");
+
+      // Show remove button with proper classes
+      removeBtn.classList.remove("hidden");
+      const buttonClasses = removeBtn.getAttribute("data-classes");
+      if (buttonClasses) {
+        removeBtn.className = buttonClasses;
+      }
+      console.log("🖼️ Avatar image loaded");
+    } else {
+      // Show initials avatar
+      avatarImage.classList.add("hidden");
+      avatarInitials.classList.remove("hidden");
+      removeBtn.classList.add("hidden");
+      removeBtn.className = "hidden";
+
+      // Generate initials
+      const initials = generateInitials(
+        currentUser?.nombre || currentUser?.email || "?"
+      );
+      avatarInitials.textContent = initials;
+      console.log("🔤 Avatar initials set:", initials);
+    }
+  }
+
+  function generateInitials(name: string): string {
+    if (!name) return "?";
+
+    const words = name.trim().split(/\s+/);
+    if (words.length >= 2) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    } else {
+      return words[0].slice(0, 2).toUpperCase();
+    }
+  }
+
+  async function handleAvatarUpload(event: Event) {
+    console.log("📤 handleAvatarUpload triggered", event);
+    const input = event.target as HTMLInputElement;
+    console.log("📁 Input element:", input);
+    const file = input.files?.[0];
+    console.log("🗂️ Selected file:", file);
+
+    if (!file) {
+      console.log("❌ No file selected");
+      return;
+    }
+
+    // Validate file size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      notifications.error("Error", "La imagen debe ser menor a 2MB");
+      input.value = "";
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      notifications.error("Error", "Solo se permiten archivos de imagen");
+      input.value = "";
+      return;
+    }
+
+    try {
+      notifications.loading("Procesando", "Subiendo imagen...");
+
+      // Convert to base64
+      const base64 = await fileToBase64(file);
+
+      // Update in database
+      await updateDoc(doc(db, "usuarios", currentUser.id), {
+        avatar: base64,
+        fechaModificacion: new Date(),
+      });
+
+      // Update current user object
+      currentUser.avatar = base64;
+
+      // Update display
+      updateAvatarDisplay();
+
+      // Disparar evento personalizado para notificar cambios del avatar
+      window.dispatchEvent(
+        new CustomEvent("avatarUpdated", {
+          detail: { avatar: base64, user: currentUser },
+        })
+      );
+
+      notifications.success(
+        "¡Avatar actualizado!",
+        "Tu foto de perfil se ha actualizado correctamente"
+      );
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      notifications.error("Error", "No se pudo subir la imagen");
+    }
+
+    // Clear input
+    input.value = "";
+  }
+
+  async function removeAvatar() {
+    if (!currentUser?.avatar) return;
+
+    try {
+      notifications.loading("Eliminando", "Quitando foto de perfil...");
+
+      // Remove from database
+      await updateDoc(doc(db, "usuarios", currentUser.id), {
+        avatar: null,
+        fechaModificacion: new Date(),
+      });
+
+      // Update current user object
+      currentUser.avatar = undefined;
+
+      // Update display
+      updateAvatarDisplay();
+
+      // Disparar evento personalizado para notificar que se eliminó el avatar
+      window.dispatchEvent(
+        new CustomEvent("avatarUpdated", {
+          detail: { avatar: null, user: currentUser },
+        })
+      );
+
+      notifications.success(
+        "Foto eliminada",
+        "Se ha quitado tu foto de perfil"
+      );
+    } catch (error) {
+      console.error("Error removing avatar:", error);
+      notifications.error("Error", "No se pudo quitar la foto");
+    }
+  }
+
+  function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  }
+</script>

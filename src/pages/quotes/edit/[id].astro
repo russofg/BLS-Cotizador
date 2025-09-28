@@ -1,0 +1,1565 @@
+---
+import Dashboard from "../../../layouts/Dashboard.astro";
+import { cotizacionService, clienteService } from "../../../utils/database";
+import { DateHelper } from "../../../utils/dateHelpers";
+import { QuoteHelper } from "../../../utils/quoteHelpers";
+import DescriptionNote from "../../../components/DescriptionNote.astro";
+import ScrollbarStyles from "../../../components/ScrollbarStyles.astro";
+import { DEFAULT_QUOTE_TEXTS } from "../../../config/company";
+
+// Valores por defecto para los campos de texto
+const defaultObservaciones = DEFAULT_QUOTE_TEXTS.observaciones;
+const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
+
+
+
+const { id } = Astro.params;
+
+let cotizacion: any = null;
+let clientes: any[] = [];
+let error = "";
+let allMasterItems: any[] = [];
+
+try {
+  if (id) {
+    const cotizaciones = await cotizacionService.getAll();
+    cotizacion = cotizaciones.find((c: any) => c.id === id);
+    
+    if (!cotizacion) {
+      error = "Cotización no encontrada";
+    } else {
+      clientes = await clienteService.getAll();
+      
+      // Generate improved quote number using centralized helper
+      const cliente = clientes.find((c: any) => c.id === cotizacion.cliente_id);
+      cotizacion.numeroMejorado = QuoteHelper.generateQuoteNumber(cotizacion, cliente);
+      
+      // Normalize items using centralized helper
+      cotizacion.items = QuoteHelper.normalizeItems(cotizacion.items);
+      
+      // Calculate end date if missing using centralized helper
+      if (cotizacion.fechaEvento && !cotizacion.fechaEventoFin) {
+        const normalizedQuote = QuoteHelper.calculateEndDateIfMissing(cotizacion);
+        cotizacion.fechaEventoFin = normalizedQuote.fechaEventoFin;
+        console.log('🛠️ Fecha de fin calculada automáticamente:', DateHelper.safeFormatDateForInput(normalizedQuote.fechaEventoFin));
+      }
+      
+      // Debug: Ver qué fechas tenemos disponibles
+      console.log('🔍 Debug de fechas de la cotización:', {
+        fechaEvento: cotizacion.fechaEvento,
+        fechaEventoFin: cotizacion.fechaEventoFin,
+        fechaEvento_formatted: safeFormatDate(cotizacion.fechaEvento),
+        fechaEventoFin_formatted: safeFormatDate(cotizacion.fechaEventoFin),
+        tipoFechaEvento: typeof cotizacion.fechaEvento,
+        tipoFechaEventoFin: typeof cotizacion.fechaEventoFin
+      });
+    }
+  } else {
+    error = "ID de cotización no proporcionado";
+  }
+} catch (err) {
+  console.error('Error loading cotizacion:', err);
+  error = `Error al cargar la cotización: ${err}`;
+}
+
+// Cargar TODOS los items del maestro para el modal de selección
+try {
+  const { itemService } = await import("../../../utils/database");
+  allMasterItems = await itemService.getAll();
+  console.log('🛍️ Master items cargados:', allMasterItems.length);
+} catch (itemErr) {
+  console.error('❌ Error loading master items:', itemErr);
+  allMasterItems = [];
+}
+
+// Helper function to safely format a date value for display (DD/MM/YYYY)
+function safeFormatDate(dateValue: any): string {
+  if (!dateValue) return '';
+  
+  // If it's already a string in YYYY-MM-DD format, return it
+  if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    return dateValue;
+  }
+  
+  // If it's a string but not in the correct format, try to parse it
+  if (typeof dateValue === 'string') {
+    try {
+      // For ISO date strings, parse without timezone conversion
+      if (dateValue.includes('T') || dateValue.includes('Z')) {
+        const date = new Date(dateValue);
+        if (isNaN(date.getTime())) {
+          console.warn('Invalid date value:', dateValue);
+          return '';
+        }
+        // Use local date parts to avoid timezone issues
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      } else {
+        // For simple date strings, add time to avoid timezone issues
+        const date = new Date(dateValue + 'T12:00:00');
+        if (isNaN(date.getTime())) {
+          console.warn('Invalid date value:', dateValue);
+          return '';
+        }
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+    } catch (error) {
+      console.warn('Error formatting date string:', dateValue, error);
+      return '';
+    }
+  }
+  
+  // If it's a Date object, format it directly avoiding timezone issues
+  if (dateValue instanceof Date) {
+    if (isNaN(dateValue.getTime())) {
+      console.warn('Invalid Date object:', dateValue);
+      return '';
+    }
+    // Use local date parts to avoid timezone conversion
+    const year = dateValue.getFullYear();
+    const month = String(dateValue.getMonth() + 1).padStart(2, '0');
+    const day = String(dateValue.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  
+  // Handle Firebase Timestamp objects
+  if (dateValue && typeof dateValue === 'object' && dateValue.toDate) {
+    const date = dateValue.toDate();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  
+  // Handle Firebase Timestamp objects with seconds property
+  if (dateValue && typeof dateValue === 'object' && typeof dateValue.seconds === 'number') {
+    const date = new Date(dateValue.seconds * 1000);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  
+  // For any other type, try to create a Date object
+  try {
+    const date = new Date(dateValue + 'T12:00:00');
+    if (isNaN(date.getTime())) {
+      console.warn('Cannot convert to valid date:', dateValue);
+      return '';
+    }
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  } catch (error) {
+    console.warn('Error formatting date value:', dateValue, error);
+    return '';
+  }
+}
+---
+
+<Dashboard title="Editar Cotización - BLS Cotizador" activeSection="quotes">
+  <ScrollbarStyles />
+  {error ? (
+    <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400 dark:text-red-300" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-red-800 dark:text-red-300">Error</h3>
+          <div class="mt-2 text-sm text-red-700 dark:text-red-400">
+            <p>{error}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : cotizacion ? (
+    <div class="max-w-7xl mx-auto space-y-6">
+      <!-- Header -->
+      <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+        <div class="px-4 py-5 sm:px-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Editar Cotización</h1>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 break-words">
+                {cotizacion.numeroMejorado || cotizacion.numero || `COT-${new Date(cotizacion.created_at).getFullYear()}-${String(cotizacion.id).padStart(3, '0')}`}
+              </p>
+            </div>
+            <div class="flex justify-start sm:justify-end">
+              <a
+                href="/quotes"
+                class="inline-flex items-center justify-center px-4 py-2.5 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 touch-scroll-item"
+              >
+                <svg class="-ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Volver a Cotizaciones
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulario Principal -->
+      <form id="quote-form" class="space-y-6">
+        <input type="hidden" id="quote-id" name="quote-id" value={cotizacion.id} />
+        
+        <!-- Información General -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+          <div class="px-3 py-4 sm:px-4 sm:py-5 md:p-6">
+            <h3 class="text-xl leading-6 font-medium text-gray-900 dark:text-white mb-4">Información General</h3>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <!-- Cliente -->
+              <div class="col-span-1 sm:col-span-2">
+                <label for="cliente_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Cliente *
+                </label>
+                <select
+                  id="cliente_id"
+                  name="cliente_id"
+                  required
+                  class="mt-1.5 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm py-2"
+                >
+                  <option value="">Seleccionar cliente...</option>
+                  {clientes.map((cliente: any) => {
+                    const isSelected = cliente.id === cotizacion.cliente_id || cliente.id === cotizacion.clienteId;
+                    return (
+                      <option value={cliente.id} selected={isSelected}>
+                        {cliente.nombre}{cliente.empresa ? ` - ${cliente.empresa}` : ''}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              <!-- Título -->
+              <div class="col-span-1 sm:col-span-2">
+                <label for="titulo" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Título de la cotización *
+                </label>
+                <input
+                  type="text"
+                  id="titulo"
+                  name="titulo"
+                  required
+                  value={cotizacion.titulo || ''}
+                  class="mt-1.5 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm py-2"
+                />
+              </div>
+
+              <!-- Grid para fecha y duración -->
+              <div class="col-span-1 sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+                <!-- Fecha de Inicio -->
+                <div>
+                  <label for="fecha_evento" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Fecha de inicio del evento
+                  </label>
+                  <input
+                    type="date"
+                    id="fecha_evento"
+                    name="fecha_evento"
+                    value={safeFormatDate(cotizacion.fechaEvento)}
+                    class="mt-1.5 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm py-2"
+                  />
+                </div>
+
+                <!-- Fecha de Fin -->
+                <div>
+                  <label for="fecha_evento_fin" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Fecha de fin del evento
+                  </label>
+                  <input
+                    type="date"
+                    id="fecha_evento_fin"
+                    name="fecha_evento_fin"
+                    value={safeFormatDate(cotizacion.fechaEventoFin)}
+                    class="mt-1.5 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm py-2"
+                  />
+                </div>
+
+                <!-- Duración -->
+                <div>
+                  <label for="duracion_dias" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Duración (días)
+                  </label>
+                  <div class="mt-1.5 relative">
+                    <input
+                      type="number"
+                      id="duracion_dias"
+                      name="duracion_dias"
+                      min="1"
+                      value={cotizacion.duracion_dias || 1}
+                      class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm py-2"
+                    />
+                    <p class="absolute text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+                      Se calcula automáticamente entre fechas
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Lugar del evento -->
+              <div class="col-span-1 sm:col-span-2">
+                <label for="lugar_evento" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Lugar del evento
+                </label>
+                <input
+                  type="text"
+                  id="lugar_evento"
+                  name="lugar_evento"
+                  value={cotizacion.lugar_evento || ''}
+                  placeholder="Ej: Hotel Hilton, Centro de Convenciones..."
+                  class="mt-1.5 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm py-2"
+                />
+              </div>
+
+              <!-- Estado -->
+              <div class="col-span-1 sm:col-span-2 md:col-span-1">
+                <label for="estado" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Estado
+                </label>
+                <select
+                  id="estado"
+                  name="estado"
+                  class="mt-1.5 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm py-2"
+                >
+                  <option value="borrador" selected={cotizacion.estado === 'borrador'}>Borrador</option>
+                  <option value="enviado" selected={cotizacion.estado === 'enviado'}>Enviado</option>
+                  <option value="aprobado" selected={cotizacion.estado === 'aprobado'}>Aprobado</option>
+                  <option value="rechazado" selected={cotizacion.estado === 'rechazado'}>Rechazado</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Items de la Cotización -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+          <div class="px-4 py-5 sm:p-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+              <h3 class="text-xl leading-6 font-medium text-gray-900 dark:text-white">Items de la Cotización</h3>
+              <button
+                type="button"
+                id="add-item-btn"
+                class="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-md text-primary-700 bg-primary-100 dark:bg-primary-900 dark:text-primary-200 hover:bg-primary-200 dark:hover:bg-primary-800 w-full sm:w-auto justify-center touch-scroll-item"
+              >
+                <svg class="-ml-0.5 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Agregar Item
+              </button>
+            </div>
+            
+            <DescriptionNote />
+
+            <div id="items-container" class="space-y-0 custom-scrollbar">
+              <!-- Table Header (with responsive design) -->
+              <div class="hidden md:grid grid-cols-12 gap-4 py-3 px-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600 rounded-t-md font-medium text-xs uppercase tracking-wide text-gray-500 dark:text-gray-300">
+                <div class="col-span-7">Descripción</div>
+                <div class="col-span-1 text-center">Cantidad</div>
+                <div class="col-span-1 text-right">Precio</div>
+                <div class="col-span-1 text-right">Total</div>
+                <div class="col-span-2 text-center">Acción</div>
+              </div>
+              
+              <!-- Mobile header - only visible on small screens -->
+              <div class="md:hidden flex justify-between py-3 px-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600 rounded-t-md font-medium text-xs uppercase tracking-wide text-gray-500 dark:text-gray-300">
+                <div>Items</div>
+                <div>Detalles</div>
+              </div>
+              
+              <!-- Los items se cargarán dinámicamente aquí -->
+            </div>
+
+            <!-- Totales -->
+            <div class="mt-6 sm:mt-8 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-lg p-4 sm:p-6 border dark:border-gray-600 shadow-sm">
+              <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Resumen de Totales</h4>
+              <div class="space-y-4">
+                <div class="flex justify-between items-center py-2">
+                  <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Subtotal:</span>
+                  <span id="subtotal-display" class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">$0</span>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center py-2 border-t border-gray-200 dark:border-gray-600 space-y-2 sm:space-y-0">
+                  <div class="flex items-center space-x-2 sm:space-x-3">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Descuento:</span>
+                    <div class="flex items-center space-x-2">
+                      <input
+                        type="number"
+                        id="descuento"
+                        name="descuento"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value={cotizacion.descuento || 0}
+                        class="w-20 sm:w-24 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:border-primary-500 focus:ring-primary-500 text-center touch-scroll-item"
+                      />
+                      <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">%</span>
+                    </div>
+                  </div>
+                  <span id="descuento-display" class="text-base sm:text-lg text-red-600 dark:text-red-400 font-semibold">-$0</span>
+                </div>
+                
+                <div class="flex justify-between items-center py-3 sm:py-4 border-t-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md px-4 sm:px-5 shadow-sm">
+                  <span class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Total:</span>
+                  <span id="total-display" class="text-xl sm:text-2xl font-bold text-primary-600 dark:text-primary-400">$0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Observaciones -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+          <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-xl leading-6 font-medium text-gray-900 dark:text-white mb-4">Observaciones</h3>
+            <textarea
+              id="observaciones"
+              name="observaciones"
+              rows="5"
+              value={cotizacion.observaciones || defaultObservaciones}
+              placeholder="Términos y condiciones, notas especiales, etc..."
+              class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm px-4 py-3"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Condiciones Comerciales -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+          <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-xl leading-6 font-medium text-gray-900 dark:text-white mb-4">Condiciones Comerciales</h3>
+            <textarea
+              id="condiciones"
+              name="condiciones"
+              rows="15"
+              value={cotizacion.condiciones || defaultCondiciones}
+              placeholder="Edita las condiciones comerciales que aparecerán en el PDF..."
+              class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm px-4 py-3"
+            ></textarea>
+            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              Estas condiciones aparecerán automáticamente en el PDF de la cotización. Puedes personalizarlas según el cliente o tipo de evento.
+            </p>
+          </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+          <div class="px-4 py-4 sm:py-5 bg-gray-50 dark:bg-gray-700 sm:px-6 rounded-b-lg flex flex-col-reverse sm:flex-row sm:justify-end gap-3 sm:space-x-3">
+            <button
+              type="button"
+              onclick="window.location.href='/quotes'"
+              class="w-full sm:w-auto bg-white dark:bg-gray-700 py-2.5 px-5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 touch-scroll-item"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              id="submit-btn"
+              class="w-full sm:w-auto px-5 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 touch-scroll-item"
+            >
+              Actualizar Cotización
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Hidden inputs para totales -->
+      <input type="hidden" id="subtotal" name="subtotal" value={cotizacion.subtotal || 0}>
+      <input type="hidden" id="total" name="total" value={cotizacion.total || 0}>
+      
+      <!-- Hidden data para JavaScript -->
+      <script is:inline type="application/json" id="items-data" set:html={
+        JSON.stringify(
+          Array.isArray(cotizacion.items) 
+            ? cotizacion.items 
+            : cotizacion.items && typeof cotizacion.items === 'object' 
+              ? Object.values(cotizacion.items)
+              : []
+        )
+      }></script>
+
+      <!-- Hidden data for ALL MASTER JavaScript Items/Services -->
+      <script is:inline type="application/json" id="all-master-items-data" set:html={JSON.stringify(allMasterItems)}></script>
+    </div>
+  ) : (
+    <div class="text-center py-12">
+      <p class="text-gray-500 dark:text-gray-400">Cargando cotización...</p>
+    </div>
+  )}
+
+  <!-- Modal para Seleccionar Items -->
+  <div id="item-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 dark:bg-black dark:bg-opacity-80 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-0 sm:top-8 mx-auto p-4 border dark:border-gray-700 w-full sm:w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white dark:bg-gray-800 max-h-screen sm:max-h-[90vh] overflow-hidden flex flex-col h-full sm:h-auto">
+      <div class="mt-2 flex-1 flex flex-col min-h-0">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Seleccionar Item/Servicio</h3>
+          <button type="button" id="close-modal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 touch-scroll-item">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Búsqueda -->
+        <div class="mb-4">
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              id="search-items" 
+              placeholder="Buscar item o servicio..." 
+              class="w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+            />
+          </div>
+        </div>
+        
+        <!-- Lista de Items -->
+        <div id="items-list" class="flex-1 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-md dark:bg-gray-700 min-h-0 custom-scrollbar">
+          <!-- Los items se cargarán dinámicamente aquí -->
+        </div>
+        
+        <div class="flex flex-col sm:flex-row sm:justify-end gap-3 sm:gap-4 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <button 
+            type="button" 
+            id="cancel-modal" 
+            class="w-full sm:w-auto px-5 py-3 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 font-medium text-sm touch-scroll-item flex items-center justify-center"
+          >
+            <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Cancelar
+          </button>
+          <button 
+            type="button" 
+            id="add-empty-item" 
+            class="w-full sm:w-auto px-5 py-3 bg-primary-600 dark:bg-primary-700 text-white rounded-md hover:bg-primary-700 dark:hover:bg-primary-600 font-medium text-sm touch-scroll-item flex items-center justify-center"
+          >
+            <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Agregar Item Vacío
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      let itemCounter = 0;
+      let allMasterItemsList: any[] = [];
+      
+      // Obtener datos de la cotización
+      const cotizacionData = {
+        id: (document.getElementById('quote-id') as HTMLInputElement)?.value || '',
+        items: []
+      };
+      
+      console.log('🚀 Iniciando carga de cotización...');
+
+      // Cargar TODOS los items maestros para selección
+      try {
+        const allItemsElement = document.getElementById('all-master-items-data');
+        if (allItemsElement && allItemsElement.textContent) {
+          allMasterItemsList = JSON.parse(allItemsElement.textContent);
+          console.log('🛍️ Master list of items loaded:', allMasterItemsList.length, 'items');
+        } else {
+          console.warn('⚠️ No se encontró el elemento all-master-items-data o está vacío');
+        }
+      } catch (e) {
+        console.error('❌ Error parsing all master items JSON:', e);
+      }
+      
+      // Cargar items de la cotización actual
+      try {
+        const itemsElement = document.getElementById('items-data');
+        if (itemsElement && itemsElement.textContent) {
+          const parsedItems = JSON.parse(itemsElement.textContent);
+          console.log('📦 Items RAW del JSON de la cotización:', parsedItems);
+          
+          if (Array.isArray(parsedItems)) {
+            cotizacionData.items = parsedItems;
+          } else {
+            console.log('❌ Items de cotización no es un array, creando array vacío');
+            cotizacionData.items = [];
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error parsing items JSON de la cotización:', error);
+        cotizacionData.items = [];
+      }
+      console.log('📊 Items finales de la cotización para cargar:', cotizacionData.items);
+
+      // Cargar items existentes de la cotización en la UI
+      if (cotizacionData.items && cotizacionData.items.length > 0) {
+        console.log('🔄 Cargando', cotizacionData.items.length, 'items existentes en la UI...');
+        cotizacionData.items.forEach((item, index) => {
+          console.log('📦 Cargando item', index + 1, ':', item);
+          addItem(item);
+        });
+        // Calcular totales después de cargar todos los items
+        setTimeout(() => {
+          calculateTotals();
+          // Setup mobile toggle buttons after all items are loaded
+          setupMobileToggleButtons();
+          console.log('✅ Items cargados y totales calculados, y botones móviles configurados');
+        }, 100);
+      } else {
+        console.log('ℹ️ No hay items existentes para cargar');
+        // Setup mobile toggle buttons even if there are no items (for future items)
+        setupMobileToggleButtons();
+      }
+
+      // Función para agregar item
+      function addItem(item: any): void {
+        const container = document.getElementById("items-container");
+        if (!container) {
+          console.error('❌ No se encontró contenedor items-container');
+          return;
+        }
+        
+        const itemData = item && typeof item === 'object' && item !== null ? {
+          descripcion: item.descripcion || item.nombre || '',
+          cantidad: item.cantidad || 1,
+          precio_unitario: item.precio_unitario || item.precioBase || 0,
+          precio_original: item.precioBase || 0,
+          item_id: item.id || null,
+          unidad: item.unidad || 'servicio'
+        } : {
+          descripcion: '',
+          cantidad: 1,
+          precio_unitario: 0,
+          precio_original: 0,
+          item_id: null,
+          unidad: 'servicio'
+        };
+
+        // Process item name and description (corrected logic)
+        let itemName = '';
+        let itemDescription = '';
+        
+        // Get the name from the item data
+        if (item && item.nombre) {
+          itemName = item.nombre;
+        }
+        
+        // Get the description, handling arrays
+        if (Array.isArray(itemData.descripcion)) {
+          itemDescription = itemData.descripcion.join(', ');
+        } else if (itemData.descripcion) {
+          itemDescription = itemData.descripcion;
+        }
+        
+        // If no separate name, try to extract from description
+        if (!itemName && itemDescription) {
+          // For custom items, the description might be the full text
+          itemName = itemDescription.split('.')[0] || itemDescription.substring(0, 50) + '...';
+        }
+        
+        // Ensure we're working with strings
+        itemName = String(itemName || '').trim();
+        itemDescription = String(itemDescription || '').trim();
+        
+        console.log('➕ Agregando item ' + itemCounter + ' con data:', {
+          itemName,
+          itemDescription,
+          originalData: itemData
+        });
+
+        const index = itemCounter;
+        const descripcion = itemDescription; // Use only the description for the textarea
+        const cantidad = itemData.cantidad;
+        const precio = itemData.precio_unitario;
+        const precioOriginal = itemData.precio_original;
+        const itemId = itemData.item_id || '';
+        const unidad = itemData.unidad;
+        
+        // Build display text with name in bold and description below (same as view)
+        let displayText = '';
+        
+        if (itemName) {
+          displayText = `<strong>${itemName}</strong>`;
+          if (itemDescription && itemDescription !== itemName) {
+            displayText += `<br><span class="text-gray-600">${itemDescription}</span>`;
+          }
+        } else if (itemDescription) {
+          // If no name, just show description
+          displayText = itemDescription;
+        } else {
+          displayText = 'Item sin descripción';
+        }
+
+        // Create item HTML with editable format that maintains visual style (now fully responsive)
+        const itemHTML = `
+          <div class="item-row border-b border-gray-200 dark:border-gray-600 py-4" data-index="${index}">
+            <!-- Desktop version (hidden on mobile) -->
+            <div class="hidden md:grid grid-cols-12 gap-4 items-center">
+              <!-- Descripción Editable (combines format and editing) -->
+              <div class="col-span-7">
+                <div 
+                  contenteditable="true"
+                  class="min-h-16 p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:border-primary-500 focus:ring-1 focus:ring-primary-500 bg-white dark:bg-gray-700"
+                  style="line-height: 1.4;"
+                  data-placeholder="Escriba el nombre del item y descripción..."
+                  onblur="updateHiddenField(${index})"
+                  oninput="updateHiddenField(${index})"
+                ><strong class="dark:text-white">${itemName}</strong>${itemDescription && itemDescription !== itemName ? `<br><span class="text-gray-600 dark:text-gray-400">${itemDescription}</span>` : ''}</div>
+                
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Tip: Edite directamente el texto. Use <strong>negrita</strong> para el nombre.
+                </div>
+              </div>
+              
+              <!-- Cantidad -->
+              <div class="col-span-1 text-center">
+                <input
+                  type="number"
+                  name="items[${index}][cantidad]"
+                  min="0.1"
+                  step="0.1"
+                  value="${cantidad}"
+                  class="w-full text-center border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-2 py-1 text-sm item-cantidad focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                  required
+                />
+              </div>
+              
+              <!-- Precio Unitario -->
+              <div class="col-span-1 text-right">
+                <input
+                  type="number"
+                  name="items[${index}][precio_unitario]"
+                  min="0"
+                  step="0.01"
+                  value="${precio}"
+                  class="w-full text-right border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-2 py-1 text-sm item-precio focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                  required
+                />
+              </div>
+              
+              <!-- Total -->
+              <div class="col-span-1 text-right">
+                <span class="item-total font-semibold text-gray-900 dark:text-white">$${(cantidad * precio).toLocaleString('es-AR')}</span>
+              </div>
+              
+              <!-- Eliminar -->
+              <div class="col-span-2 text-center">
+                <button
+                  type="button"
+                  onclick="removeItem(${index})"
+                  class="text-red-600 hover:text-red-800 dark:text-red-500 dark:hover:text-red-400 p-2 border border-red-200 dark:border-red-800 rounded-md hover:bg-red-50 dark:hover:bg-red-900 transition-colors"
+                  title="Eliminar item"
+                >
+                  <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span class="text-xs font-medium">Eliminar</span>
+                </button>
+              </div>
+            </div>
+            
+            <!-- Mobile version (hidden on desktop) -->
+            <div class="md:hidden space-y-4">
+              <!-- Item heading and expand button -->
+              <div class="flex justify-between items-start">
+                <div class="flex-1 pr-2">
+                  <h4 class="font-semibold text-gray-900 dark:text-white">${itemName || "Item sin nombre"}</h4>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    ${cantidad} × $${parseFloat(precio).toLocaleString('es-AR')} = <span class="font-medium">$${(cantidad * precio).toLocaleString('es-AR')}</span>
+                  </p>
+                </div>
+                <button type="button" class="toggle-item-details bg-gray-100 dark:bg-gray-700 p-2 rounded-full" data-index="${index}">
+                  <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
+              
+              <!-- Collapsible details (hidden by default) -->
+              <div class="item-details hidden bg-gray-50 dark:bg-gray-800 p-4 rounded-lg space-y-4" id="item-details-${index}">
+                <!-- Descripción -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Descripción
+                  </label>
+                  <div 
+                    contenteditable="true"
+                    class="w-full min-h-16 p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:border-primary-500 focus:ring-1 focus:ring-primary-500 bg-white dark:bg-gray-700"
+                    data-placeholder="Escriba el nombre del item y descripción..."
+                    onblur="updateHiddenField(${index})"
+                    oninput="updateHiddenField(${index})"
+                  ><strong class="dark:text-white">${itemName}</strong>${itemDescription && itemDescription !== itemName ? `<br><span class="text-gray-600 dark:text-gray-400">${itemDescription}</span>` : ''}</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Tip: Edite directamente el texto. Use <strong>negrita</strong> para el nombre.
+                  </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                  <!-- Cantidad -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Cantidad
+                    </label>
+                    <input
+                      type="number"
+                      name="items[${index}][cantidad]"
+                      min="0.1"
+                      step="0.1"
+                      value="${cantidad}"
+                      class="w-full text-center border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md px-3 py-2 text-sm item-cantidad-mobile focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                      required
+                    />
+                  </div>
+                  
+                  <!-- Precio Unitario -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Precio
+                    </label>
+                    <input
+                      type="number"
+                      name="items[${index}][precio_unitario]"
+                      min="0"
+                      step="0.01"
+                      value="${precio}"
+                      class="w-full text-right border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md px-3 py-2 text-sm item-precio-mobile focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <!-- Total -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Total
+                  </label>
+                  <div class="item-total-mobile w-full bg-gray-100 dark:bg-gray-700 py-2 px-3 rounded-md font-semibold text-gray-900 dark:text-white text-right">
+                    $${(cantidad * precio).toLocaleString('es-AR')}
+                  </div>
+                </div>
+                
+                <!-- Acción -->
+                <div>
+                  <button
+                    type="button"
+                    onclick="removeItem(${index})"
+                    class="w-full mt-2 py-2 px-4 flex items-center justify-center text-white bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 rounded-md transition-colors"
+                    title="Eliminar item"
+                  >
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Eliminar Item
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Hidden fields -->
+            <input type="hidden" name="items[${index}][item_id]" value="${itemId}" />
+            <input type="hidden" name="items[${index}][precio_original]" value="${precioOriginal}" />
+            <input type="hidden" name="items[${index}][unidad]" value="${unidad}" />
+            <input type="hidden" name="items[${index}][nombre]" value="${itemName}" class="item-nombre-hidden" />
+            <input type="hidden" name="items[${index}][descripcion]" value="${itemDescription}" class="item-descripcion-hidden" />
+          </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', itemHTML);
+        
+        // Add event listeners for this item
+        addItemEventListeners(index);
+        
+        // Setup event listeners for quantity and price changes (both desktop and mobile versions)
+        const itemRow = container.lastElementChild;
+        if (itemRow) {
+          // Desktop inputs
+          const cantidadInput = itemRow.querySelector('.item-cantidad');
+          const precioInput = itemRow.querySelector('.item-precio');
+          
+          if (cantidadInput && precioInput) {
+            cantidadInput.addEventListener('input', calculateTotals);
+            precioInput.addEventListener('input', calculateTotals);
+          }
+          
+          // Mobile inputs
+          const cantidadInputMobile = itemRow.querySelector('.item-cantidad-mobile');
+          const precioInputMobile = itemRow.querySelector('.item-precio-mobile');
+          
+          if (cantidadInputMobile && precioInputMobile) {
+            cantidadInputMobile.addEventListener('input', calculateTotals);
+            precioInputMobile.addEventListener('input', calculateTotals);
+            
+            // Sincronizar cambios entre las versiones móvil y escritorio
+            cantidadInputMobile.addEventListener('input', function() {
+              if (cantidadInput) cantidadInput.value = this.value;
+            });
+            
+            precioInputMobile.addEventListener('input', function() {
+              if (precioInput) precioInput.value = this.value;
+            });
+            
+            cantidadInput?.addEventListener('input', function() {
+              cantidadInputMobile.value = this.value;
+            });
+            
+            precioInput?.addEventListener('input', function() {
+              precioInputMobile.value = this.value;
+            });
+          }
+        }
+        
+        // Apply dark mode styles to the new item
+        applyDarkModeToContentEditable();
+        
+        itemCounter++;
+        calculateTotals();
+      }
+
+      // Function to remove item
+      function removeItem(index: number): void {
+        const itemRow = document.querySelector(`[data-index="${index}"]`);
+        if (itemRow) {
+          itemRow.remove();
+          calculateTotals();
+        }
+      }
+
+      // Make removeItem globally available
+      (window as any).removeItem = removeItem;
+
+      // Function to update hidden fields from contenteditable
+      function updateHiddenField(index: number): void {
+        const contentDiv = document.querySelector(`[data-index="${index}"] [contenteditable]`);
+        const nombreInput = document.querySelector(`[data-index="${index}"] .item-nombre-hidden`) as HTMLInputElement;
+        const descripcionInput = document.querySelector(`[data-index="${index}"] .item-descripcion-hidden`) as HTMLInputElement;
+        
+        if (contentDiv && nombreInput && descripcionInput) {
+          const content = contentDiv.innerHTML;
+          
+          // Extract name from <strong> tags
+          const strongMatch = content.match(/<strong[^>]*>(.*?)<\/strong>/i);
+          const nombre = strongMatch ? strongMatch[1].trim() : '';
+          
+          // Extract description (everything after the first <br>)
+          let descripcion = '';
+          const brIndex = content.indexOf('<br>');
+          if (brIndex > -1) {
+            let afterBr = content.substring(brIndex + 4);
+            // Remove span tags but keep content
+            afterBr = afterBr.replace(/<span[^>]*>/gi, '').replace(/<\/span>/gi, '');
+            descripcion = afterBr.trim();
+          }
+          
+          // If no br found, check if all content is just the name
+          if (!descripcion && !strongMatch) {
+            // All content might be the description
+            descripcion = contentDiv.textContent?.trim() || '';
+          }
+          
+          nombreInput.value = nombre;
+          descripcionInput.value = descripcion;
+          
+          // Fix dark mode styling for the content
+          const isDarkMode = document.documentElement.classList.contains('dark');
+          
+          // Re-format content to ensure dark mode styling
+          let newContent = '';
+          if (nombre) {
+            newContent = `<strong class="dark:text-white">${nombre}</strong>`;
+            if (descripcion) {
+              newContent += `<br><span class="text-gray-600 dark:text-gray-400">${descripcion}</span>`;
+            }
+          } else if (descripcion) {
+            newContent = `<span class="${isDarkMode ? 'dark:text-white' : ''}">${descripcion}</span>`;
+          }
+          
+          if (newContent) {
+            contentDiv.innerHTML = newContent;
+          }
+          
+          console.log('✅ Updated hidden fields:', { nombre, descripcion });
+        }
+      }
+
+      // Make updateHiddenField globally available
+      (window as any).updateHiddenField = updateHiddenField;
+      
+      // Función para construir HTML del item
+      function buildItemHTML(index: number, descripcion: string, cantidad: number, precio: number, precioOriginal: number, itemId: string, unidad: string): string {
+        const descripcionSegura = String(descripcion || '');
+        
+        return '<div class="item-row bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600" data-index="' + index + '">' +
+          '<input type="hidden" name="items[' + index + '][item_id]" value="' + itemId + '">' +
+          '<input type="hidden" name="items[' + index + '][precio_original]" value="' + precioOriginal + '">' +
+          '<div class="grid grid-cols-1 md:grid-cols-12 gap-4">' +
+            '<div class="md:col-span-4">' +
+              '<label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>' +
+              '<textarea name="items[' + index + '][descripcion]" ' +
+                'placeholder="Descripción del servicio/producto" ' +
+                'rows="2" ' +
+                'class="item-descripcion block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm" ' +
+                'required>' + descripcionSegura + '</textarea>' +
+            '</div>' +
+            '<div class="md:col-span-2">' +
+              '<label class="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>' +
+              '<input type="number" name="items[' + index + '][cantidad]" value="' + cantidad + '" min="0.5" step="0.5" ' +
+                'class="item-cantidad block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm" required />' +
+            '</div>' +
+            '<div class="md:col-span-2">' +
+              '<label class="block text-sm font-medium text-gray-700 mb-1">Unidad</label>' +
+              '<select name="items[' + index + '][unidad]" ' +
+                'class="item-unidad block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">' +
+                '<option value="servicio"' + (unidad === 'servicio' ? ' selected' : '') + '>Servicio</option>' +
+                '<option value="evento"' + (unidad === 'evento' ? ' selected' : '') + '>Evento</option>' +
+                '<option value="jornada"' + (unidad === 'jornada' ? ' selected' : '') + '>Jornada</option>' +
+                '<option value="unidad"' + (unidad === 'unidad' ? ' selected' : '') + '>Unidad</option>' +
+                '<option value="hora"' + (unidad === 'hora' ? ' selected' : '') + '>Hora</option>' +
+                '<option value="kit"' + (unidad === 'kit' ? ' selected' : '') + '>Kit</option>' +
+              '</select>' +
+            '</div>' +
+            '<div class="md:col-span-2">' +
+              '<label class="block text-sm font-medium text-gray-700 mb-1">Precio Unitario</label>' +
+              '<input type="number" name="items[' + index + '][precio_unitario]" min="0" step="0.01" value="' + precio + '" ' +
+                'class="item-precio block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm" />' +
+            '</div>' +
+            '<div class="md:col-span-1">' +
+              '<label class="block text-sm font-medium text-gray-700 mb-1">Total</label>' +
+              '<div class="item-total px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm font-medium text-gray-900">' +
+                '$' + (cantidad * precio).toLocaleString('es-AR', { minimumFractionDigits: 2 }) +
+              '</div>' +
+            '</div>' +
+            '<div class="md:col-span-1 flex items-end">' +
+              '<button type="button" class="remove-item w-full px-2 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md" ' +
+                'title="Eliminar item" onclick="removeItem(' + index + ')">' +
+                'Eliminar' +
+              '</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }
+      
+      // Función para agregar event listeners a un item
+      function addItemEventListeners(index: number): void {
+        const itemRow = document.querySelector('.item-row[data-index="' + index + '"]');
+        if (!itemRow) return;
+        
+        const cantidadInput = itemRow.querySelector('.item-cantidad');
+        const precioInput = itemRow.querySelector('.item-precio');
+        
+        if (cantidadInput) {
+          cantidadInput.addEventListener('input', calculateTotals);
+        }
+        if (precioInput) {
+          precioInput.addEventListener('input', calculateTotals);
+        }
+      }
+      
+      // Función para remover item
+      (window as any).removeItem = function(index: number): void {
+        const item = document.querySelector('.item-row[data-index="' + index + '"]');
+        if (item) {
+          item.remove();
+          calculateTotals();
+          console.log('🗑️ Item ' + index + ' eliminado');
+        }
+      }
+
+      // Configurar event listener global para los botones desplegables de móvil (usando delegación de eventos)
+      function setupMobileToggleButtons() {
+        // Remove existing event listeners to prevent duplicates
+        document.removeEventListener('click', handleToggleButtonClick);
+        
+        // Add a single event listener on the document to handle all toggle button clicks
+        document.addEventListener('click', handleToggleButtonClick);
+      }
+      
+      // Handler function for toggle button clicks using event delegation
+      function handleToggleButtonClick(event: Event): void {
+        // Check if the clicked element or any of its parents has the toggle-item-details class
+        const toggleButton = (event.target as Element)?.closest('.toggle-item-details');
+        
+        if (toggleButton) {
+          const index = toggleButton.getAttribute('data-index');
+          const detailsPanel = document.getElementById(`item-details-${index}`);
+          
+          if (detailsPanel) {
+            // Toggle visibility
+            const isHidden = detailsPanel.classList.contains('hidden');
+            
+            if (isHidden) {
+              detailsPanel.classList.remove('hidden');
+              // Rotate arrow icon
+              const svg = toggleButton.querySelector('svg') as SVGSVGElement;
+              if (svg) svg.style.transform = 'rotate(180deg)';
+            } else {
+              detailsPanel.classList.add('hidden');
+              // Reset arrow icon
+              const svg = toggleButton.querySelector('svg') as SVGSVGElement;
+              if (svg) svg.style.transform = 'rotate(0)';
+            }
+          }
+        }
+      }
+
+      // Función para calcular totales
+      function calculateTotals() {
+        const items = document.querySelectorAll('.item-row');
+        let subtotal = 0;
+
+        items.forEach(function(item) {
+          // Maneja tanto inputs de desktop como móvil
+          const cantidadEl = item.querySelector('.item-cantidad') || item.querySelector('.item-cantidad-mobile');
+          const precioEl = item.querySelector('.item-precio') || item.querySelector('.item-precio-mobile');
+          const cantidad = parseFloat((cantidadEl as HTMLInputElement)?.value || '0') || 0;
+          const precio = parseFloat((precioEl as HTMLInputElement)?.value || '0') || 0;
+          const total = cantidad * precio;
+          
+          // Actualiza visualización de total tanto en móvil como escritorio
+          const totalDisplay = item.querySelector('.item-total');
+          const totalDisplayMobile = item.querySelector('.item-total-mobile');
+          
+          if (totalDisplay) {
+            totalDisplay.textContent = '$' + total.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+          }
+          
+          if (totalDisplayMobile) {
+            totalDisplayMobile.textContent = '$' + total.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+          }
+          
+          // Actualizar también el resumen de item en vista móvil
+          const itemHeading = item.querySelector('h4');
+          const itemSummary = itemHeading?.nextElementSibling;
+          if (itemSummary) {
+            itemSummary.innerHTML = `${cantidad} × $${precio.toLocaleString('es-AR')} = <span class="font-medium">$${total.toLocaleString('es-AR')}</span>`;
+          }
+          
+          subtotal += total;
+        });
+
+        const descuentoEl = document.getElementById('descuento') as HTMLInputElement;
+        const descuento = parseFloat(descuentoEl?.value || '0') || 0;
+        const descuentoMonto = (subtotal * descuento) / 100;
+        const total = subtotal - descuentoMonto;
+
+        const subtotalDisplay = document.getElementById('subtotal-display');
+        const descuentoDisplay = document.getElementById('descuento-display');
+        const totalDisplay = document.getElementById('total-display');
+        
+        if (subtotalDisplay) subtotalDisplay.textContent = '$' + subtotal.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+        if (descuentoDisplay) descuentoDisplay.textContent = '-$' + descuentoMonto.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+        if (totalDisplay) totalDisplay.textContent = '$' + total.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+        
+        const subtotalInput = document.getElementById('subtotal') as HTMLInputElement;
+        const totalInput = document.getElementById('total') as HTMLInputElement;
+        
+        if (subtotalInput) subtotalInput.value = subtotal.toString();
+        if (totalInput) totalInput.value = total.toString();
+        
+        console.log('💰 Totales actualizados:', { subtotal, descuento: descuentoMonto, total });
+      }
+
+      // Event listener del botón "Agregar Item"
+      const addItemBtn = document.getElementById('add-item-btn');
+      if (addItemBtn) {
+        addItemBtn.addEventListener('click', function() {
+          showItemModal();
+        });
+      }
+
+      // Función para mostrar el modal de selección de items
+      function showItemModal() {
+        const modal = document.getElementById('item-modal');
+        if (modal) {
+          // Optimización para móviles: bloquear scroll del body para evitar doble scroll
+          document.body.style.overflow = 'hidden';
+          modal.classList.remove('hidden');
+          
+          // Enfocar el campo de búsqueda automáticamente
+          setTimeout(() => {
+            const searchField = document.getElementById('search-items');
+            if (searchField) {
+              searchField.focus();
+            }
+          }, 100);
+          
+          loadItemsList();
+        }
+      }
+
+      // Función para ocultar el modal
+      function hideItemModal() {
+        const modal = document.getElementById('item-modal');
+        if (modal) {
+          document.body.style.overflow = ''; // Restablecer scroll del body
+          modal.classList.add('hidden');
+        }
+      }
+
+      // Event listeners del modal
+      const closeModal = document.getElementById('close-modal');
+      const cancelModal = document.getElementById('cancel-modal');
+      const addEmptyItem = document.getElementById('add-empty-item');
+
+      if (closeModal) closeModal.addEventListener('click', hideItemModal);
+      if (cancelModal) cancelModal.addEventListener('click', hideItemModal);
+      if (addEmptyItem) {
+        addEmptyItem.addEventListener('click', function() {
+          addItem(null);
+          hideItemModal();
+        });
+      }
+
+      // Función para cargar la lista de items en el modal
+      function loadItemsList() {
+        const itemsList = document.getElementById('items-list');
+        if (!itemsList) return;
+
+        if (allMasterItemsList.length === 0) {
+          itemsList.innerHTML = '<div class="p-4 text-center text-gray-500 dark:text-gray-400">No hay items disponibles</div>';
+          return;
+        }
+
+        let html = '';
+        allMasterItemsList.forEach(function(item: any) {
+          const nombre = item.nombre || '';
+          let descripcion = '';
+          
+          // Handle array descriptions (from real catalog items)
+          if (Array.isArray(item.descripcion)) {
+            descripcion = item.descripcion.slice(0, 2).join(' • ') + 
+                         (item.descripcion.length > 2 ? '...' : '');
+          } else {
+            descripcion = item.descripcion || '';
+          }
+          
+          const precio = item.precioBase || item.precio || 0;
+          const categoria = item.categoria || 'Sin categoría';
+          
+          // El padding vertical más grande para mejorar la experiencia táctil en móvil
+          html += `
+            <div class="py-3 px-4 sm:p-4 border-b border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer item-option touch-scroll-item" data-item='${JSON.stringify(item)}'>
+              <div class="flex justify-between items-start">
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-gray-900 dark:text-white truncate">${nombre}</div>
+                  ${descripcion ? `<div class="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">${descripcion}</div>` : ''}
+                  <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">${categoria}</div>
+                </div>
+                <div class="text-right ml-4">
+                  <div class="font-semibold text-primary-600 dark:text-primary-400">$${precio.toLocaleString('es-AR')}</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">por ${item.unidad || 'servicio'}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        itemsList.innerHTML = html;
+
+        // Agregar event listeners a los items
+        const itemOptions = itemsList.querySelectorAll('.item-option');
+        itemOptions.forEach(function(option) {
+          option.addEventListener('click', function(this: HTMLElement) {
+            const itemDataAttr = this.getAttribute('data-item');
+            if (itemDataAttr) {
+              const itemData = JSON.parse(itemDataAttr);
+              addItem(itemData);
+              hideItemModal();
+            }
+          });
+        });
+      }
+
+      // Función de búsqueda en el modal
+      const searchInput = document.getElementById('search-items') as HTMLInputElement;
+      if (searchInput) {
+        searchInput.addEventListener('input', function(this: HTMLInputElement) {
+          const searchTerm = this.value.toLowerCase();
+          const itemOptions = document.querySelectorAll('.item-option');
+          
+          itemOptions.forEach(function(option) {
+            const itemDataAttr = option.getAttribute('data-item');
+            if (itemDataAttr) {
+              const itemData = JSON.parse(itemDataAttr);
+              const descripcion = Array.isArray(itemData.descripcion) ? itemData.descripcion.join(' ') : (itemData.descripcion || itemData.nombre || '');
+              const categoria = itemData.categoria || '';
+              
+              const searchText = (descripcion + ' ' + categoria).toLowerCase();
+              
+              if (searchText.includes(searchTerm)) {
+                (option as HTMLElement).style.display = 'block';
+              } else {
+                (option as HTMLElement).style.display = 'none';
+              }
+            }
+          });
+        });
+      }
+
+      // Event listener para el descuento
+      const descuentoInput = document.getElementById('descuento');
+      if (descuentoInput) {
+        descuentoInput.addEventListener('input', calculateTotals);
+      }
+
+      // Event listeners para calcular duración automáticamente
+      const fechaEventoInput = document.getElementById('fecha_evento') as HTMLInputElement;
+      const fechaEventoFinInput = document.getElementById('fecha_evento_fin') as HTMLInputElement;
+      const duracionDiasInput = document.getElementById('duracion_dias') as HTMLInputElement;
+
+      function calculateDuration() {
+        if (fechaEventoInput && fechaEventoFinInput && duracionDiasInput) {
+          const startDate = fechaEventoInput.value;
+          const endDate = fechaEventoFinInput.value;
+          
+          if (startDate && endDate) {
+            const start = new Date(startDate + 'T12:00:00');
+            const end = new Date(endDate + 'T12:00:00');
+            
+            if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+              // Reset hours to ensure we just count days
+              start.setHours(0, 0, 0, 0);
+              end.setHours(0, 0, 0, 0);
+              
+              // Calculate the difference in days (inclusive - both dates included)
+              // Del 24/06 al 28/06 = 5 días (24, 25, 26, 27, 28)
+              const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+              const calculatedDays = diffDays > 0 ? diffDays : 1; // Mínimo 1 día
+              
+              duracionDiasInput.value = calculatedDays.toString();
+              console.log(`🗓️ Calculando duración: ${startDate} hasta ${endDate} = ${calculatedDays} días`);
+            }
+          }
+        }
+      }
+
+      if (fechaEventoInput) {
+        fechaEventoInput.addEventListener('change', calculateDuration);
+      }
+      if (fechaEventoFinInput) {
+        fechaEventoFinInput.addEventListener('change', calculateDuration);
+      }
+
+      // Event listener para el formulario
+      const form = document.getElementById('quote-form') as HTMLFormElement;
+      if (form) {
+        form.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Actualizando...';
+          }
+
+          try {
+            const formData = new FormData(form);
+            
+            // Recopilar items
+            const items: any[] = [];
+            const itemRows = document.querySelectorAll('.item-row');
+            
+            itemRows.forEach(function(row) {
+              const index = row.getAttribute('data-index');
+              const nombre = formData.get('items[' + index + '][nombre]') as string;
+              const descripcion = formData.get('items[' + index + '][descripcion]') as string;
+              const cantidad = parseFloat((formData.get('items[' + index + '][cantidad]') as string) || '0');
+              const precio_unitario = parseFloat((formData.get('items[' + index + '][precio_unitario]') as string) || '0');
+              const unidad = formData.get('items[' + index + '][unidad]') as string;
+              const item_id = formData.get('items[' + index + '][item_id]') as string;
+              const precio_original = formData.get('items[' + index + '][precio_original]') as string;
+              
+              if (descripcion && cantidad > 0 && precio_unitario >= 0) {
+                items.push({
+                  nombre: nombre || '',
+                  descripcion: descripcion,
+                  cantidad: cantidad,
+                  precio_unitario: precio_unitario,
+                  unidad: unidad,
+                  item_id: item_id || null,
+                  precio_original: precio_original || 0
+                });
+              }
+            });
+
+            const quoteData = {
+              id: cotizacionData.id,
+              cliente_id: formData.get('cliente_id'),
+              clienteId: formData.get('cliente_id'),
+              titulo: formData.get('titulo'),
+              descripcion: formData.get('descripcion'),
+              fecha_evento: formData.get('fecha_evento'),
+              fecha_evento_fin: formData.get('fecha_evento_fin'),
+              fechaEvento: formData.get('fecha_evento'),
+              fechaEventoFin: formData.get('fecha_evento_fin'),
+              lugar_evento: formData.get('lugar_evento'),
+              duracion_dias: parseInt((formData.get('duracion_dias') as string) || '1'),
+              estado: formData.get('estado'),
+              vigencia_dias: formData.get('vigencia_dias'),
+              descuento: formData.get('descuento'),
+              observaciones: formData.get('observaciones'),
+              condiciones: formData.get('condiciones'),
+              subtotal: formData.get('subtotal'),
+              total: formData.get('total'),
+              items: items
+            };
+
+            console.log('📤 Enviando datos:', quoteData);
+
+            const response = await fetch('/api/quotes', {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(quoteData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+              console.log('✅ Cotización actualizada:', result);
+              window.location.href = '/quotes';
+            } else {
+              throw new Error(result.error || 'Error al actualizar la cotización');
+            }
+
+          } catch (error: any) {
+            console.error('❌ Error:', error);
+            alert('Error al actualizar la cotización: ' + (error?.message || 'Error desconocido'));
+          } finally {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Actualizar Cotización';
+            }
+          }
+        });
+      }
+
+      console.log('💾 Cargando datos de cotización para editar...');
+      
+      // ✨ NUEVA FUNCIONALIDAD: Calcular fecha de fin automáticamente si está vacía
+      document.addEventListener('DOMContentLoaded', function() {
+        const fechaEventoInput = document.getElementById('fecha_evento') as HTMLInputElement;
+        const fechaEventoFinInput = document.getElementById('fecha_evento_fin') as HTMLInputElement;
+        const duracionDiasInput = document.getElementById('duracion_dias') as HTMLInputElement;
+        
+        // Función para calcular y rellenar fecha de fin
+        function calcularFechaFinSiVacia() {
+          console.log('🔄 Verificando si necesita calcular fecha de fin...');
+          
+          if (fechaEventoInput && fechaEventoFinInput && duracionDiasInput) {
+            const fechaInicio = fechaEventoInput.value;
+            const fechaFin = fechaEventoFinInput.value;
+            const duracion = parseInt(duracionDiasInput.value) || 1;
+            
+            console.log('📅 Estado actual:', {
+              fechaInicio: fechaInicio,
+              fechaFin: fechaFin,
+              duracion: duracion
+            });
+            
+            // Si hay fecha de inicio pero no fecha de fin, calcular
+            if (fechaInicio && !fechaFin) {
+              const startDate = new Date(fechaInicio);
+              if (!isNaN(startDate.getTime())) {
+                const endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + (duracion - 1));
+                
+                const fechaFinCalculada = endDate.toISOString().split('T')[0];
+                fechaEventoFinInput.value = fechaFinCalculada;
+                
+                console.log('✅ Fecha de fin calculada automáticamente:', fechaFinCalculada);
+              }
+            }
+          }
+        }
+        
+        // Ejecutar al cargar la página
+        setTimeout(calcularFechaFinSiVacia, 100);
+        
+        // También ejecutar cuando cambien las fechas
+        if (fechaEventoInput) {
+          fechaEventoInput.addEventListener('change', calcularFechaFinSiVacia);
+        }
+        if (duracionDiasInput) {
+          duracionDiasInput.addEventListener('change', calcularFechaFinSiVacia);
+        }
+      });
+      
+      // Dark mode support for dynamically created elements
+      function applyDarkModeToContentEditable() {
+        // Check if we're in dark mode
+        const isDarkMode = document.documentElement.classList.contains('dark');
+        console.log('🌓 Applying ' + (isDarkMode ? 'dark' : 'light') + ' mode to dynamic elements');
+        
+        // Update contenteditable elements for dark mode
+        const contentEditables = document.querySelectorAll('[contenteditable="true"]');
+        contentEditables.forEach(el => {
+          if (isDarkMode) {
+            el.classList.add('dark:bg-gray-700', 'dark:border-gray-600');
+            
+            // Ensure proper text color in dark mode
+            const strongElements = el.querySelectorAll('strong');
+            strongElements.forEach(strong => {
+              strong.classList.add('dark:text-white');
+            });
+            
+            // Update description spans
+            const descSpans = el.querySelectorAll('span');
+            descSpans.forEach(span => {
+              span.classList.add('dark:text-gray-400');
+              span.classList.remove('text-gray-600');
+              span.classList.add('text-gray-600');
+            });
+          } else {
+            // Light mode adjustments if needed
+            const descSpans = el.querySelectorAll('span');
+            descSpans.forEach(span => {
+              span.classList.remove('dark:text-gray-400');
+              span.classList.add('text-gray-600');
+            });
+          }
+        });
+        
+        // Update item totals and item rows
+        const itemTotals = document.querySelectorAll('.item-total');
+        itemTotals.forEach(el => {
+          if (isDarkMode) {
+            el.classList.add('dark:text-white');
+          } else {
+            el.classList.remove('dark:text-white');
+          }
+        });
+      }
+      
+      // Run initially and when theme changes
+      applyDarkModeToContentEditable();
+      
+      // Listen for theme changes
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.attributeName === 'class' && 
+              mutation.target === document.documentElement) {
+            applyDarkModeToContentEditable();
+          }
+        });
+      });
+      
+      observer.observe(document.documentElement, { 
+        attributes: true,
+        attributeFilter: ['class']
+      });
+    });
+  </script>
+</Dashboard>

@@ -1,0 +1,62 @@
+---
+
+---
+
+<style is:global>
+  /* Personalización de scrollbar para mejorar usabilidad en pantallas táctiles */
+  /* Estilos para webkit (Chrome, Safari, Edge moderno) */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background-color: rgba(156, 163, 175, 0.1);
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.7);
+  }
+
+  /* Estilos para Firefox */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) rgba(156, 163, 175, 0.1);
+  }
+
+  /* Mejorar tamaño de los elementos tocables en móvil */
+  @media (max-width: 640px) {
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .touch-scroll-item {
+      padding-top: 0.75rem;
+      padding-bottom: 0.75rem;
+      min-height: 3rem;
+    }
+  }
+
+  /* Modo oscuro */
+  .dark .custom-scrollbar::-webkit-scrollbar-track {
+    background-color: rgba(31, 41, 55, 0.4);
+  }
+
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(107, 114, 128, 0.5);
+  }
+
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(107, 114, 128, 0.7);
+  }
+
+  .dark .custom-scrollbar {
+    scrollbar-color: rgba(107, 114, 128, 0.5) rgba(31, 41, 55, 0.4);
+  }
+</style>

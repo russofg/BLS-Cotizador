@@ -1,16 +1,83 @@
 ---
-
+import Base from "../layouts/Base.astro";
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Base title="BLS Cotizador - Sistema de Cotizaciones">
+  <div
+    class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100"
+  >
+    <div class="max-w-md w-full space-y-8">
+      <div>
+        <div
+          class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-primary-600"
+        >
+          <svg
+            class="h-8 w-8 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          BLS Cotizador
+        </h2>
+        <p class="mt-2 text-center text-sm text-gray-600">
+          Sistema de cotizaciones para eventos audiovisuales
+        </p>
+      </div>
+
+      <div class="mt-8 space-y-6">
+        <div class="rounded-md shadow-sm space-y-4">
+          <a
+            href="/login"
+            class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          >
+            Iniciar Sesión
+          </a>
+
+          <a
+            href="/setup-simple"
+            class="group relative w-full flex justify-center py-3 px-4 border border-primary-600 text-sm font-medium rounded-md text-primary-600 bg-white hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          >
+            🔧 Configurar Base de Datos
+          </a>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mt-6">
+          <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="font-medium text-gray-900">Items</h3>
+            <p class="text-2xl font-bold text-primary-600" id="items-count">
+              -
+            </p>
+            <p class="text-xs text-gray-500">servicios disponibles</p>
+          </div>
+          <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="font-medium text-gray-900">Cotizaciones</h3>
+            <p class="text-2xl font-bold text-primary-600" id="quotes-count">
+              -
+            </p>
+            <p class="text-xs text-gray-500">este mes</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Base>
+
+<script>
+  // Simple stats loading simulation
+  document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(() => {
+      const itemsCountEl = document.getElementById("items-count");
+      const quotesCountEl = document.getElementById("quotes-count");
+      if (itemsCountEl) itemsCountEl.textContent = "150+";
+      if (quotesCountEl) quotesCountEl.textContent = "12";
+    }, 500);
+  });
+</script>

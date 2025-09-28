@@ -1,0 +1,460 @@
+---
+import Base from "./Base.astro";
+
+interface Props {
+  title: string;
+  activeSection?: string;
+}
+
+const { title, activeSection } = Astro.props;
+---
+
+<Base title={title}>
+  <div
+    class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
+    data-dashboard-content
+  >
+    <!-- Navigation -->
+    <nav class="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-20">
+      <div class="max-w-7xl mx-auto px-2 sm:px-4">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 flex items-center">
+              <h1
+                class="text-xl sm:text-2xl font-bold text-primary-600 dark:text-primary-400 truncate"
+              >
+                BLS Cotizador
+              </h1>
+            </div>
+
+            <!-- Desktop navigation -->
+            <div class="hidden md:ml-6 md:flex md:space-x-4 xl:space-x-8">
+              <a
+                href="/dashboard"
+                class={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  activeSection === "dashboard"
+                    ? "border-primary-500 text-gray-900 dark:text-white"
+                    : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-500"
+                }`}
+              >
+                Dashboard
+              </a>
+              <a
+                href="/items"
+                class={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  activeSection === "items"
+                    ? "border-primary-500 text-gray-900 dark:text-white"
+                    : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-500"
+                }`}
+              >
+                Gestión de Items
+              </a>
+              <a
+                href="/clients"
+                class={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  activeSection === "clients"
+                    ? "border-primary-500 text-gray-900 dark:text-white"
+                    : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-500"
+                }`}
+              >
+                Clientes
+              </a>
+              <a
+                href="/quotes"
+                class={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  activeSection === "quotes"
+                    ? "border-primary-500 text-gray-900 dark:text-white"
+                    : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-500"
+                }`}
+              >
+                Cotizaciones
+              </a>
+              <a
+                href="/config"
+                class={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  activeSection === "config"
+                    ? "border-primary-500 text-gray-900 dark:text-white"
+                    : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-500"
+                }`}
+              >
+                Configuración
+              </a>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2 sm:space-x-4">
+            <!-- Mobile menu button -->
+            <button
+              id="mobile-menu-button"
+              type="button"
+              class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              aria-expanded="false"
+              aria-label="Menú principal"
+            >
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+            </button>
+
+            <!-- User menu -->
+            <div class="relative">
+              <button
+                id="user-menu-button"
+                type="button"
+                class="flex items-center space-x-1 sm:space-x-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 rounded-md p-1 sm:p-2"
+                aria-expanded="false"
+                aria-haspopup="true"
+              >
+                <!-- Avatar del usuario -->
+                <div
+                  class="h-6 w-6 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-xs font-medium relative overflow-hidden flex-shrink-0"
+                >
+                  <span id="user-avatar-initials">U</span>
+                  <img
+                    id="user-avatar-image"
+                    class="h-full w-full object-cover hidden"
+                    alt="Avatar"
+                  />
+                </div>
+                <span id="user-name" class="hidden sm:inline">Usuario</span>
+                <svg
+                  class="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+
+              <!-- Dropdown menu -->
+              <div
+                id="user-menu"
+                class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-700"
+                role="menu"
+                aria-orientation="vertical"
+                aria-labelledby="user-menu-button"
+              >
+                <div
+                  class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700"
+                >
+                  <span id="user-email" class="break-words"
+                    >usuario@ejemplo.com</span
+                  >
+                </div>
+                <a
+                  href="/profile"
+                  class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  role="menuitem"
+                >
+                  Mi perfil
+                </a>
+                <a
+                  href="/config"
+                  class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  role="menuitem"
+                >
+                  Configuración
+                </a>
+                <button
+                  id="logout-button"
+                  class="block w-full text-left px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  role="menuitem"
+                >
+                  Cerrar sesión
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile menu panel -->
+      <div
+        id="mobile-menu"
+        class="hidden md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-md"
+      >
+        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+          <a
+            href="/dashboard"
+            class={`block px-3 py-2 rounded-md text-base font-medium ${
+              activeSection === "dashboard"
+                ? "bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300"
+                : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            }`}
+          >
+            Dashboard
+          </a>
+          <a
+            href="/items"
+            class={`block px-3 py-2 rounded-md text-base font-medium ${
+              activeSection === "items"
+                ? "bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300"
+                : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            }`}
+          >
+            Gestión de Items
+          </a>
+          <a
+            href="/clients"
+            class={`block px-3 py-2 rounded-md text-base font-medium ${
+              activeSection === "clients"
+                ? "bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300"
+                : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            }`}
+          >
+            Clientes
+          </a>
+          <a
+            href="/quotes"
+            class={`block px-3 py-2 rounded-md text-base font-medium ${
+              activeSection === "quotes"
+                ? "bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300"
+                : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            }`}
+          >
+            Cotizaciones
+          </a>
+          <a
+            href="/config"
+            class={`block px-3 py-2 rounded-md text-base font-medium ${
+              activeSection === "config"
+                ? "bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300"
+                : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            }`}
+          >
+            Configuración
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-4 sm:py-6 px-2 sm:px-4 md:px-6 lg:px-8">
+      <slot />
+    </main>
+  </div>
+</Base>
+
+<script>
+  import { authService } from "../utils/auth";
+  import { notifications } from "../utils/notifications.js";
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    // Función para generar iniciales
+    function generateInitials(name: string): string {
+      if (!name) return "U";
+      const words = name.trim().split(/\s+/);
+      if (words.length >= 2) {
+        return (words[0][0] + words[1][0]).toUpperCase();
+      } else {
+        return words[0].slice(0, 2).toUpperCase();
+      }
+    }
+
+    // Función para actualizar el avatar del usuario
+    function updateUserAvatar(user: any) {
+      const avatarInitials = document.getElementById("user-avatar-initials");
+      const avatarImage = document.getElementById(
+        "user-avatar-image"
+      ) as HTMLImageElement;
+
+      if (!avatarInitials || !avatarImage) return;
+
+      if (user.avatar) {
+        // Mostrar imagen del avatar
+        avatarImage.src = user.avatar;
+        avatarImage.classList.remove("hidden");
+        avatarInitials.style.display = "none";
+      } else {
+        // Mostrar iniciales
+        avatarImage.classList.add("hidden");
+        avatarInitials.style.display = "flex";
+        avatarInitials.textContent = generateInitials(
+          user.nombre || user.email
+        );
+      }
+    }
+
+    // Load user info with retry logic and auth state listener
+    const loadUserInfo = async (retries = 3) => {
+      try {
+        const user = await authService.getCurrentUser();
+        if (user) {
+          const userNameElement = document.getElementById("user-name");
+          const userEmailElement = document.getElementById("user-email");
+
+          if (userNameElement) {
+            userNameElement.textContent = user.nombre || "Usuario";
+          }
+          if (userEmailElement) {
+            userEmailElement.textContent = user.email || "";
+          }
+
+          // Actualizar avatar
+          updateUserAvatar(user);
+
+          return true;
+        } else if (retries > 0) {
+          // Retry after a short delay
+          setTimeout(() => loadUserInfo(retries - 1), 500);
+        }
+      } catch (error) {
+        console.error("Error loading user info:", error);
+        if (retries > 0) {
+          setTimeout(() => loadUserInfo(retries - 1), 500);
+        }
+      }
+      return false;
+    };
+
+    // Also listen for auth state changes to update user info immediately
+    authService.onAuthStateChange(async (user) => {
+      if (user) {
+        // Wait a bit for Firestore data to be available
+        setTimeout(async () => {
+          const currentUser = await authService.getCurrentUser();
+          if (currentUser) {
+            const userNameElement = document.getElementById("user-name");
+            const userEmailElement = document.getElementById("user-email");
+
+            if (userNameElement) {
+              userNameElement.textContent = currentUser.nombre || "Usuario";
+            }
+            if (userEmailElement) {
+              userEmailElement.textContent = currentUser.email || "";
+            }
+
+            // Actualizar avatar
+            updateUserAvatar(currentUser);
+          }
+        }, 1000);
+      }
+    });
+
+    await loadUserInfo();
+
+    // Escuchar eventos de actualización de avatar
+    window.addEventListener("avatarUpdated", (event: any) => {
+      console.log("🔔 Avatar updated event received:", event.detail);
+      const { avatar, user } = event.detail;
+      // Actualizar el avatar en el dashboard
+      updateUserAvatar(user);
+    });
+
+    // User menu toggle
+    const userMenuButton = document.getElementById("user-menu-button");
+    const userMenu = document.getElementById("user-menu");
+
+    userMenuButton?.addEventListener("click", () => {
+      const isHidden = userMenu?.classList.contains("hidden");
+      if (isHidden) {
+        userMenu?.classList.remove("hidden");
+      } else {
+        userMenu?.classList.add("hidden");
+      }
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener("click", (e) => {
+      if (
+        !userMenuButton?.contains(e.target as Node) &&
+        !userMenu?.contains(e.target as Node)
+      ) {
+        userMenu?.classList.add("hidden");
+      }
+    });
+
+    // Close menu when clicking on menu items
+    userMenu?.addEventListener("click", (e) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "A") {
+        userMenu.classList.add("hidden");
+      }
+    });
+
+    // Logout functionality
+    const logoutButton = document.getElementById("logout-button");
+    logoutButton?.addEventListener("click", async () => {
+      const result = await notifications.confirm(
+        "Cerrar sesión",
+        "¿Estás seguro que deseas salir del sistema?",
+        "Sí, cerrar sesión",
+        "Cancelar"
+      );
+
+      if (result.isConfirmed) {
+        try {
+          notifications.loading("Cerrando sesión", "Por favor espera...");
+          await authService.signOut();
+          notifications.success("¡Hasta luego!", "Sesión cerrada exitosamente");
+
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 1000);
+        } catch (error) {
+          console.error("Logout error:", error);
+          notifications.error("Error", "No se pudo cerrar la sesión");
+        }
+      }
+    });
+  });
+
+  // Mobile menu functionality
+  const mobileMenuButton = document.getElementById("mobile-menu-button");
+  const mobileMenu = document.getElementById("mobile-menu");
+
+  if (mobileMenuButton && mobileMenu) {
+    mobileMenuButton.addEventListener("click", () => {
+      const expanded =
+        mobileMenuButton.getAttribute("aria-expanded") === "true";
+
+      if (expanded) {
+        mobileMenuButton.setAttribute("aria-expanded", "false");
+        mobileMenu.classList.add("hidden");
+        // Change hamburger to menu icon
+        mobileMenuButton.innerHTML = `
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        `;
+      } else {
+        mobileMenuButton.setAttribute("aria-expanded", "true");
+        mobileMenu.classList.remove("hidden");
+        // Change to X icon
+        mobileMenuButton.innerHTML = `
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        `;
+      }
+    });
+
+    // Close mobile menu on resize to desktop
+    window.addEventListener("resize", () => {
+      if (window.innerWidth >= 768) {
+        // 768px is md breakpoint in Tailwind
+        mobileMenu.classList.add("hidden");
+        mobileMenuButton.setAttribute("aria-expanded", "false");
+        mobileMenuButton.innerHTML = `
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        `;
+      }
+    });
+  }
+</script>
