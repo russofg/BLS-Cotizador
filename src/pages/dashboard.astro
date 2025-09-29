@@ -9,7 +9,8 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
 import { DateHelper } from "../utils/dateHelpers";
 import { QuoteHelper } from "../utils/quoteHelpers";
 
-// Temporary static stats for debugging
+// Load analytics data
+let analytics: any = null;
 let stats: {
   totalCotizaciones: number;
   cotizacionesPendientes: number;
@@ -24,14 +25,33 @@ let stats: {
   cotizacionesRecientes: [],
 };
 
-// Try to load stats, but fail gracefully
+// Try to load analytics and stats, but fail gracefully
 try {
-  const { statsService } = await import("../utils/database");
-  stats = await statsService.getDashboardStats();
-  console.log("Dashboard stats loaded successfully");
+  const { AnalyticsService } = await import("../services/AnalyticsService");
+  analytics = await AnalyticsService.getDashboardAnalytics();
+  
+  // Update stats with analytics data
+  stats = {
+    totalCotizaciones: analytics.quotes.totalQuotes,
+    cotizacionesPendientes: analytics.quotes.quotesByStatus.find((s: any) => s.status === 'Pendiente')?.count || 0,
+    itemsActivos: analytics.items.activeItems,
+    totalClientes: analytics.clients.totalClients,
+    cotizacionesRecientes: [], // Will be loaded separately
+  };
+  
+  console.log("Dashboard analytics loaded successfully");
 } catch (error) {
-  console.error("Error loading dashboard stats:", error);
-  // Keep default stats
+  console.error("Error loading dashboard analytics:", error);
+  
+  // Fallback to old stats service
+  try {
+    const { statsService } = await import("../utils/database");
+    stats = await statsService.getDashboardStats();
+    console.log("Dashboard stats loaded successfully (fallback)");
+  } catch (fallbackError) {
+    console.error("Error loading dashboard stats (fallback):", fallbackError);
+    // Keep default stats
+  }
 }
 
 // Iconos como strings para reutilizar
@@ -164,6 +184,120 @@ const icons = {
       </Card>
     </div>
   </Card>
+
+  <!-- Analytics Section -->
+  {analytics && (
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <!-- Quotes Analytics -->
+      <Card title="Análisis de Cotizaciones" class="h-fit">
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {analytics.quotes.quotesThisMonth}
+              </div>
+              <div class="text-sm text-blue-600 dark:text-blue-400">Este mes</div>
+            </div>
+            <div class="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                ${analytics.quotes.averageQuoteValue.toLocaleString()}
+              </div>
+              <div class="text-sm text-green-600 dark:text-green-400">Promedio</div>
+            </div>
+          </div>
+          
+          <div class="space-y-2">
+            <h4 class="font-medium text-gray-900 dark:text-white">Por Estado:</h4>
+            {analytics.quotes.quotesByStatus.slice(0, 3).map((status: any) => (
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600 dark:text-gray-400">{status.status}</span>
+                <Badge variant="info">{status.count}</Badge>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      <!-- Clients Analytics -->
+      <Card title="Análisis de Clientes" class="h-fit">
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+              <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {analytics.clients.newClientsThisMonth}
+              </div>
+              <div class="text-sm text-purple-600 dark:text-purple-400">Nuevos este mes</div>
+            </div>
+            <div class="text-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+              <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                {analytics.clients.clientsWithQuotes}
+              </div>
+              <div class="text-sm text-orange-600 dark:text-orange-400">Con cotizaciones</div>
+            </div>
+          </div>
+          
+          <div class="space-y-2">
+            <h4 class="font-medium text-gray-900 dark:text-white">Top Clientes:</h4>
+            {analytics.clients.topClientsByQuotes.slice(0, 3).map((client: any) => (
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-600 dark:text-gray-400 truncate">{client.clientName}</span>
+                <Badge variant="primary">{client.quoteCount}</Badge>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+    </div>
+  )}
+
+  <!-- Charts Section -->
+  {analytics && (
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <!-- Quotes Chart -->
+      <Card title="Cotizaciones por Mes" class="h-fit">
+        <div class="space-y-3">
+          {analytics.quotes.quotesByMonth.slice(-6).map((month: any) => (
+            <div class="flex items-center space-x-3">
+              <div class="text-sm text-gray-600 dark:text-gray-400 w-16">
+                {new Date(month.month + '-01').toLocaleDateString('es-ES', { month: 'short' })}
+              </div>
+              <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div 
+                  class="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                  style={`width: ${(month.count / Math.max(...analytics.quotes.quotesByMonth.map((m: any) => m.count))) * 100}%`}
+                ></div>
+              </div>
+              <div class="text-sm font-medium text-gray-900 dark:text-white w-8">
+                {month.count}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <!-- Items Chart -->
+      <Card title="Items por Categoría" class="h-fit">
+        <div class="space-y-3">
+          {analytics.items.itemsByCategory.slice(0, 5).map((category: any) => (
+            <div class="flex items-center space-x-3">
+              <div class="text-sm text-gray-600 dark:text-gray-400 flex-1 truncate">
+                {category.category}
+              </div>
+              <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div 
+                  class="bg-green-500 h-2 rounded-full transition-all duration-300"
+                  style={`width: ${(category.count / Math.max(...analytics.items.itemsByCategory.map((c: any) => c.count))) * 100}%`}
+                ></div>
+              </div>
+              <div class="text-sm font-medium text-gray-900 dark:text-white w-8">
+                {category.count}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  )}
 
   <!-- Recent Quotes -->
   <div class="bg-white dark:bg-gray-800 shadow rounded-lg">

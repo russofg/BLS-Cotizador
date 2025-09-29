@@ -5,6 +5,8 @@ import {
   signOut, 
   onAuthStateChanged,
   sendPasswordResetEmail,
+  updateEmail,
+  sendEmailVerification,
   type User
 } from 'firebase/auth'
 import { 
@@ -20,6 +22,8 @@ export interface AuthUser {
   rol: string
   activo: boolean
   avatar?: string // Base64 image data
+  emailVerificado?: boolean
+  emailPendienteVerificacion?: string
 }
 
 export const authService = {
@@ -56,13 +60,18 @@ export const authService = {
       }
 
       const userData = userDoc.data()
+      
+      const finalEmail = userData.emailPendienteVerificacion || userData.email || firebaseUser.email!
+      
       return {
         id: firebaseUser.uid,
-        email: firebaseUser.email!,
+        email: finalEmail,
         nombre: userData.nombre || '',
         rol: userData.rol || 'usuario',
         activo: userData.activo !== false,
-        avatar: userData.avatar || undefined
+        avatar: userData.avatar || undefined,
+        emailVerificado: userData.emailVerificado !== false,
+        emailPendienteVerificacion: userData.emailPendienteVerificacion || undefined
       }
     } catch (error) {
       console.error('Error getting user data:', error)
@@ -126,6 +135,38 @@ export const authService = {
       await sendPasswordResetEmail(auth, email)
       return { success: true, error: null }
     } catch (error: any) {
+      return { success: false, error }
+    }
+  },
+
+  // Update user email
+  async updateUserEmail(newEmail: string): Promise<{ success: boolean; error: any }> {
+    try {
+      const user = auth.currentUser
+      if (!user) {
+        throw new Error('No hay usuario autenticado')
+      }
+
+      await updateEmail(user, newEmail)
+      return { success: true, error: null }
+    } catch (error: any) {
+      console.error('Email update error:', error)
+      return { success: false, error }
+    }
+  },
+
+  // Send email verification
+  async sendEmailVerification(): Promise<{ success: boolean; error: any }> {
+    try {
+      const user = auth.currentUser
+      if (!user) {
+        throw new Error('No hay usuario autenticado')
+      }
+
+      await sendEmailVerification(user)
+      return { success: true, error: null }
+    } catch (error: any) {
+      console.error('Email verification error:', error)
       return { success: false, error }
     }
   },

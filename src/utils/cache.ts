@@ -102,6 +102,9 @@ export const CacheKeys = {
   itemById: (id: string) => CacheKeys.generateKey('item', id),
   itemStats: () => CacheKeys.generateKey('item-stats'),
   
+  // Analytics cache keys
+  analytics: (type: string) => CacheKeys.generateKey('analytics', type),
+  
   // Category cache keys
   categories: (filters?: any) => CacheKeys.generateKey('categories', JSON.stringify(filters || {})),
   categoryById: (id: string) => CacheKeys.generateKey('category', id),

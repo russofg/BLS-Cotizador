@@ -170,10 +170,12 @@ export class ClienteService {
         throw new Error(validation.errors.join(', '));
       }
 
-      // Verificar que el email no esté en uso
-      const existingClient = await this.getByEmail(clienteData.email);
-      if (existingClient) {
-        throw new Error('Ya existe un cliente con este email');
+      // Verificar que el email no esté en uso solo si no está vacío
+      if (clienteData.email && clienteData.email.trim().length > 0) {
+        const existingClient = await this.getByEmail(clienteData.email);
+        if (existingClient) {
+          throw new Error('Ya existe un cliente con este email');
+        }
       }
 
       const now = new Date();
@@ -213,7 +215,7 @@ export class ClienteService {
       }
 
       // Si se está actualizando el email, verificar que no esté en uso
-      if (updates.email) {
+      if (updates.email && updates.email.trim().length > 0) {
         // Primero obtener el cliente actual para comparar emails
         const currentClient = await this.getById(id);
         if (!currentClient) {
@@ -244,7 +246,7 @@ export class ClienteService {
   }
 
   /**
-   * Elimina un cliente (soft delete marcándolo como inactivo)
+   * Elimina un cliente permanentemente de Firebase
    */
   static async delete(id: string): Promise<void> {
     try {
@@ -252,8 +254,18 @@ export class ClienteService {
         throw new Error('ID de cliente es requerido');
       }
 
-      // Soft delete - marcar como inactivo en lugar de eliminar
-      await this.update(id, { activo: false });
+      // Verificar que el cliente existe
+      const existingClient = await this.getById(id);
+      if (!existingClient) {
+        throw new Error('Cliente no encontrado');
+      }
+
+      // Eliminar permanentemente de Firebase
+      const docRef = doc(db, this.COLLECTION_NAME, id);
+      await deleteDoc(docRef);
+      
+      // Invalidate related cache
+      invalidateRelatedCache('client');
     } catch (error) {
       console.error('Error deleting client:', error);
       throw error;
@@ -375,8 +387,8 @@ export class ClienteService {
       errors.push(...nameValidation.errors);
     }
 
-    // Validar email
-    if (data.email !== undefined) {
+    // Validar email solo si no está vacío
+    if (data.email !== undefined && data.email.trim().length > 0) {
       const emailValidation = ValidationHelper.validateEmail(data.email);
       errors.push(...emailValidation.errors);
     }
@@ -387,13 +399,10 @@ export class ClienteService {
       errors.push(...phoneValidation.errors);
     }
 
-    // Para creación, nombre y email son obligatorios
+    // Para creación, solo el nombre es obligatorio
     if (!isUpdate) {
       if (!data.nombre) {
         errors.push('Nombre es obligatorio');
-      }
-      if (!data.email) {
-        errors.push('Email es obligatorio');
       }
     }
 

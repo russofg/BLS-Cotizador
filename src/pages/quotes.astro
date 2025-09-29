@@ -8,6 +8,10 @@ import Card from "../components/ui/Card.astro";
 import Button from "../components/ui/Button.astro";
 import Badge from "../components/ui/Badge.astro";
 import ScrollbarStyles from "../components/ScrollbarStyles.astro";
+import {
+  QuoteTrackingService,
+  QuoteStatus,
+} from "../services/QuoteTrackingService";
 
 // Usar la función centralizada de formateo de fechas
 const safeFormatDate = DateHelper.safeFormatDate;
@@ -15,11 +19,20 @@ const safeFormatDate = DateHelper.safeFormatDate;
 // Obtener todas las cotizaciones y clientes
 let cotizaciones: any[] = [];
 let clientes: any[] = [];
+let trackingStats: any = null;
 let error = "";
 
 try {
   cotizaciones = await cotizacionService.getAll();
   clientes = await clienteService.getAll();
+
+  // Cargar estadísticas de seguimiento
+  try {
+    trackingStats = await QuoteTrackingService.getTrackingStats();
+  } catch (trackingError) {
+    console.warn("Error loading tracking stats:", trackingError);
+    // Continuar sin estadísticas de seguimiento
+  }
 
   // Enriquecer cotizaciones con información del cliente usando utilidades centralizadas
   cotizaciones = cotizaciones.map((cotizacion) => {
@@ -84,6 +97,112 @@ try {
         <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded">
           {error}
         </div>
+      )
+    }
+
+    <!-- Estadísticas de Seguimiento -->
+    {
+      trackingStats && (
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card class="text-center">
+            <div class="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+              {trackingStats.totalCotizaciones}
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-400">
+              Total Cotizaciones
+            </div>
+          </Card>
+
+          <Card class="text-center">
+            <div class="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
+              {trackingStats.conversionRate.toFixed(1)}%
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-400">
+              Tasa de Conversión
+            </div>
+          </Card>
+
+          <Card class="text-center">
+            <div class="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-1">
+              {trackingStats.cotizacionesVencidas}
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-400">Vencidas</div>
+          </Card>
+
+          <Card class="text-center">
+            <div class="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+              {trackingStats.tiempoPromedioAprobacion.toFixed(0)} días
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-400">
+              Promedio Aprobación
+            </div>
+          </Card>
+        </div>
+      )
+    }
+
+    <!-- Distribución por Estado -->
+    {
+      trackingStats && trackingStats.porEstado.length > 0 && (
+        <Card title="Distribución por Estado" class="mb-6">
+          <div class="space-y-3">
+            {trackingStats.porEstado.map((estado: any) => (
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                  <Badge
+                    variant={
+                      estado.estado === "aprobada"
+                        ? "success"
+                        : estado.estado === "enviada"
+                          ? "info"
+                          : estado.estado === "revisada"
+                            ? "warning"
+                            : estado.estado === "rechazada"
+                              ? "danger"
+                              : "default"
+                    }
+                  >
+                    {QuoteTrackingService.getStatusDisplayName(estado.estado)}
+                  </Badge>
+                  <span class="text-sm text-gray-600 dark:text-gray-400">
+                    {estado.count} cotizaciones
+                  </span>
+                </div>
+                <div class="text-sm font-medium text-gray-900 dark:text-white">
+                  {estado.porcentaje.toFixed(1)}%
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )
+    }
+
+    <!-- Próximos Vencimientos -->
+    {
+      trackingStats && trackingStats.proximosVencimientos.length > 0 && (
+        <Card title="Próximos Vencimientos" class="mb-6">
+          <div class="space-y-3">
+            {trackingStats.proximosVencimientos
+              .slice(0, 5)
+              .map((cotizacion: any) => (
+                <div class="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                  <div class="flex-1">
+                    <div class="font-medium text-gray-900 dark:text-white">
+                      {cotizacion.numero}
+                    </div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                      {cotizacion.clienteNombre} - $
+                      {cotizacion.total.toLocaleString()}
+                    </div>
+                  </div>
+                  <div class="text-sm font-medium text-orange-600 dark:text-orange-400">
+                    {cotizacion.diasVencimiento} días
+                  </div>
+                </div>
+              ))}
+          </div>
+        </Card>
       )
     }
 
@@ -278,6 +397,28 @@ try {
                           stroke-linejoin="round"
                           stroke-width="2"
                           d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                    </Button>
+                    <Button
+                      href={`/quotes/tracking/${cotizacion.id}`}
+                      variant="info"
+                      size="sm"
+                      title="Seguimiento de cotización"
+                      class="flex-1 lg:flex-none lg:w-20 py-2.5 text-center font-medium"
+                    >
+                      <span class="hidden sm:inline">Seguir</span>
+                      <svg
+                        class="w-4 h-4 sm:hidden"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                         />
                       </svg>
                     </Button>

@@ -101,10 +101,56 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
                 name="email"
                 type="email"
                 required
-                disabled
                 label="Email"
                 placeholder="tu@email.com"
               />
+
+              <!-- Email Verification Status -->
+              <div
+                id="email-verification-status"
+                class="mt-2 text-sm"
+                style="display: none;"
+              >
+                <div
+                  id="email-verified"
+                  class="flex items-center text-green-600 dark:text-green-400"
+                >
+                  <svg
+                    class="w-4 h-4 mr-2"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clip-rule="evenodd"></path>
+                  </svg>
+                  Email verificado
+                </div>
+                <div
+                  id="email-pending"
+                  class="flex items-center text-orange-600 dark:text-orange-400"
+                >
+                  <svg
+                    class="w-4 h-4 mr-2"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                      clip-rule="evenodd"></path>
+                  </svg>
+                  <span>Email pendiente de verificación</span>
+                  <button
+                    id="resend-verification"
+                    class="ml-2 text-blue-600 dark:text-blue-400 hover:underline"
+                    onclick="resendEmailVerification()"
+                  >
+                    Reenviar verificación
+                  </button>
+                </div>
+              </div>
             </div>
 
             <!-- Rol -->
@@ -576,8 +622,16 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
         console.log("📝 Nombre set:", currentUser.nombre);
       }
       if (emailInput) {
-        emailInput.value = currentUser.email || "";
-        console.log("📧 Email set:", currentUser.email);
+        // Mostrar email pendiente de verificación si existe, sino el email actual
+        const emailToShow =
+          currentUser.emailPendienteVerificacion || currentUser.email || "";
+        emailInput.value = emailToShow;
+        console.log("📧 Email set:", emailToShow);
+        console.log(
+          "📧 Email pendiente:",
+          currentUser.emailPendienteVerificacion
+        );
+        console.log("📧 Email actual:", currentUser.email);
       }
 
       // Set role
@@ -592,6 +646,9 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
         rolElement.textContent = rolName;
         console.log("👑 Role set:", rolName);
       }
+
+      // Set email verification status
+      updateEmailVerificationStatus(currentUser);
 
       // Set status
       const statusElement = document.getElementById("profile-status");
@@ -681,6 +738,75 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
     }
   }
 
+  // Update email verification status display
+  function updateEmailVerificationStatus(user: any) {
+    const statusContainer = document.getElementById(
+      "email-verification-status"
+    );
+    const verifiedDiv = document.getElementById("email-verified");
+    const pendingDiv = document.getElementById("email-pending");
+
+    if (!statusContainer || !verifiedDiv || !pendingDiv) {
+      console.warn("Email verification status elements not found");
+      return;
+    }
+
+    // Show the container
+    statusContainer.style.display = "block";
+
+    // Check if there's a pending email verification
+    const hasPendingEmail =
+      user.emailPendienteVerificacion &&
+      user.emailPendienteVerificacion !== user.email;
+    const isEmailVerified = user.emailVerificado !== false && !hasPendingEmail;
+
+    if (isEmailVerified) {
+      verifiedDiv.style.display = "flex";
+      pendingDiv.style.display = "none";
+      console.log("✅ Email verification status: Verified");
+    } else {
+      verifiedDiv.style.display = "none";
+      pendingDiv.style.display = "flex";
+      console.log("⚠️ Email verification status: Pending");
+
+      // Update the pending message to show the pending email
+      const pendingSpan = pendingDiv.querySelector("span");
+      if (pendingSpan && hasPendingEmail) {
+        pendingSpan.textContent = `Email pendiente de verificación: ${user.emailPendienteVerificacion}`;
+      }
+    }
+  }
+
+  // Resend email verification
+  async function resendEmailVerification() {
+    try {
+      console.log("📧 Resending email verification...");
+      notifications.loading("Enviando", "Reenviando email de verificación...");
+
+      const result = await authService.sendEmailVerification();
+
+      if (result.success) {
+        await notifications.success(
+          "¡Email enviado!",
+          "Se ha reenviado el email de verificación. Revisa tu bandeja de entrada."
+        );
+      } else {
+        throw new Error(
+          result.error?.message || "Error al reenviar verificación"
+        );
+      }
+    } catch (error) {
+      console.error("❌ Error resending email verification:", error);
+      notifications.error(
+        "Error",
+        "No se pudo reenviar el email de verificación. Intenta nuevamente."
+      );
+    }
+  }
+
+  // Make resendEmailVerification globally available
+  (window as any).resendEmailVerification = resendEmailVerification;
+
   async function saveProfile() {
     if (!currentUser) return;
 
@@ -695,18 +821,125 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
 
     const formData = new FormData(form);
     const nombre = formData.get("nombre") as string;
+    const email = formData.get("email") as string;
 
     if (!nombre?.trim()) {
       notifications.error("Error", "El nombre es requerido");
       return;
     }
 
+    if (!email?.trim()) {
+      notifications.error("Error", "El email es requerido");
+      return;
+    }
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      notifications.error("Error", "El formato del email no es válido");
+      return;
+    }
+
+    // Verificar si el email cambió
+    const emailChanged = email.trim() !== currentUser.email;
+
+    // Si hay un email pendiente de verificación, también considerar si está cambiando ese
+    const hasPendingEmail =
+      currentUser.emailPendienteVerificacion &&
+      currentUser.emailPendienteVerificacion !== currentUser.email;
+    const isChangingPendingEmail =
+      hasPendingEmail &&
+      email.trim() !== currentUser.emailPendienteVerificacion;
+
+    // Si el email cambió, verificar que no esté en uso
+    if (emailChanged || isChangingPendingEmail) {
+      try {
+        notifications.loading(
+          "Verificando",
+          "Verificando disponibilidad del email..."
+        );
+
+        // Verificar si el email ya está en uso por otro usuario
+        const { collection, query, where, getDocs } = await import(
+          "firebase/firestore"
+        );
+        const emailQuery = query(
+          collection(db, "usuarios"),
+          where("email", "==", email.trim())
+        );
+        const emailSnapshot = await getDocs(emailQuery);
+
+        // Si hay documentos y no es el usuario actual, el email está en uso
+        if (!emailSnapshot.empty) {
+          const emailInUse = emailSnapshot.docs.some(
+            (doc) => doc.id !== currentUser.id
+          );
+          if (emailInUse) {
+            notifications.error(
+              "Error",
+              "Este email ya está en uso por otro usuario"
+            );
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Error checking email availability:", error);
+        notifications.error(
+          "Error",
+          "No se pudo verificar la disponibilidad del email"
+        );
+        return;
+      }
+    }
+
     try {
       notifications.loading("Guardando", "Actualizando perfil...");
 
-      // Update user in Firestore
+      // Si el email cambió, usar flujo de verificación
+      if (emailChanged || isChangingPendingEmail) {
+        console.log("📧 Email changed, updating in Firestore first...");
+
+        // Update user in Firestore with pending verification status
+        await updateDoc(doc(db, "usuarios", currentUser.id), {
+          nombre: nombre.trim(),
+          email: email.trim(),
+          emailVerificado: false,
+          emailPendienteVerificacion: email.trim(),
+          fechaModificacion: new Date(),
+        });
+
+        // Send email verification
+        console.log("📧 Sending email verification...");
+        const verificationResult = await authService.sendEmailVerification();
+
+        if (!verificationResult.success) {
+          console.error(
+            "❌ Error sending email verification:",
+            verificationResult.error
+          );
+          throw new Error(
+            `Error al enviar verificación: ${verificationResult.error?.message || "Error desconocido"}`
+          );
+        }
+
+        console.log("✅ Email verification sent successfully");
+
+        // Show specific message for email change
+        await notifications.success(
+          "¡Email actualizado!",
+          "Se ha enviado un email de verificación a tu nueva dirección. " +
+            "Por favor, verifica tu email antes de poder iniciar sesión con la nueva dirección."
+        );
+
+        // Reload user info
+        await loadUserProfile();
+        return; // Exit early for email changes
+      }
+
+      // Update user in Firestore (for non-email changes)
       await updateDoc(doc(db, "usuarios", currentUser.id), {
         nombre: nombre.trim(),
+        email: email.trim(),
         fechaModificacion: new Date(),
       });
 
