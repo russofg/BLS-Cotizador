@@ -12,6 +12,7 @@ interface CacheEntry<T> {
 class SimpleCache {
   private cache = new Map<string, CacheEntry<any>>();
   private readonly DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
+  private readonly MAX_SIZE = 500; // Maximum number of items in cache
 
   /**
    * Get data from cache
@@ -29,13 +30,26 @@ class SimpleCache {
       return null;
     }
 
+    // LRU implementation: Move accessed item to the end (most recently used)
+    this.cache.delete(key);
+    this.cache.set(key, entry);
+
     return entry.data as T;
   }
 
   /**
-   * Set data in cache
+   * Set data in cache with LRU eviction
    */
   set<T>(key: string, data: T, ttl: number = this.DEFAULT_TTL): void {
+    // If setting a new key and we're at capacity, evict the oldest
+    if (!this.cache.has(key) && this.cache.size >= this.MAX_SIZE) {
+      // The first item in the Map iterator is the oldest (least recently used)
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey) this.cache.delete(oldestKey);
+    }
+
+    // Always delete first to ensure it's added at the end (most recently used)
+    this.cache.delete(key);
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
@@ -137,7 +151,7 @@ export const CacheTTL = {
 };
 
 // Helper function to invalidate related cache entries
-export function invalidateRelatedCache(type: 'client' | 'item' | 'category' | 'quote' | 'config'): void {
+export function invalidateRelatedCache(type: 'client' | 'item' | 'category' | 'quote' | 'config' | 'analytics'): void {
   const keys = Array.from(cache.getStats().keys);
   
   keys.forEach(key => {

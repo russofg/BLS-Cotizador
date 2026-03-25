@@ -1,12 +1,12 @@
 import { pdfService, type CotizacionPDFData } from './pdf';
-import { excelService, type ExcelExportData } from './excel';
+import { excelService } from './excel';
 import { notifications } from './notifications';
+import { COMPANY_INFO, DEFAULT_QUOTE_TEXTS } from '../config/company';
+import { QuoteHelper } from './quoteHelpers';
 
 export type ExportFormat = 'pdf' | 'excel' | 'both';
 
-export interface ExportData extends CotizacionPDFData {
-  // This interface extends PDF data which should be compatible with Excel data
-}
+export interface ExportData extends CotizacionPDFData {}
 
 export const exportService = {
   /**
@@ -122,6 +122,23 @@ export const exportService = {
   },
 
   /**
+   * Helper to safely format dates
+   */
+  formatDate(date: any): string {
+    if (!date) return '';
+    try {
+      const d = (date && typeof date === 'object' && date.toDate) ? date.toDate() : new Date(date);
+      if (isNaN(d.getTime())) return '';
+      const day = d.getDate().toString().padStart(2, '0');
+      const month = (d.getMonth() + 1).toString().padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch (e) {
+      return '';
+    }
+  },
+
+  /**
    * Validate export data before processing
    */
   validateExportData(data: Partial<ExportData>): { valid: boolean; errors: string[] } {
@@ -198,40 +215,45 @@ export const exportService = {
       cotizacion: {
         numero: cotizacion.numeroMejorado || cotizacion.numero || `COT-${Date.now()}`,
         titulo: cotizacion.titulo || 'Sin título',
-        descripcion: cotizacion.descripcion,
-        fecha_evento: cotizacion.fechaEvento || cotizacion.fecha_evento,
-        duracion_horas: cotizacion.duracionHoras || cotizacion.duracion_horas,
-        subtotal: cotizacion.subtotal || 0,
-        descuento: cotizacion.descuento || 0,
-        total: cotizacion.total || 0,
-        observaciones: cotizacion.observaciones,
-        vigencia_dias: cotizacion.vigenciaDias || cotizacion.vigencia_dias || 30,
-        created_at: cotizacion.created_at || cotizacion.createdAt || new Date().toISOString(),
+        descripcion: cotizacion.descripcion || '',
+        fechaEvento: this.formatDate(cotizacion.fechaEvento || cotizacion.fecha_evento),
+        fechaEventoFin: this.formatDate(cotizacion.fechaEventoFin || cotizacion.fecha_evento_fin),
+        lugarEvento: cotizacion.lugarEvento || cotizacion.lugar_evento || '',
+        duracionHoras: cotizacion.duracionHoras || cotizacion.duracion_horas || 24,
+        duracionDias: cotizacion.duracionDias || cotizacion.duracion_dias || 1,
+        requiereArmado: !!(cotizacion.requiereArmado || cotizacion.requiere_armado),
+        subtotal: parseFloat(cotizacion.subtotal) || 0,
+        descuento: parseFloat(cotizacion.descuento) || 0,
+        total: parseFloat(cotizacion.total) || 0,
+        observaciones: cotizacion.observaciones || DEFAULT_QUOTE_TEXTS.observaciones,
+        condiciones: cotizacion.condiciones || DEFAULT_QUOTE_TEXTS.condiciones,
+        vigenciaDias: cotizacion.vigenciaDias || cotizacion.vigencia_dias || 30,
+        createdAt: this.formatDate(cotizacion.createdAt || cotizacion.created_at || new Date()),
         estado: cotizacion.estado || 'borrador'
       },
       cliente: {
-        nombre: cliente.nombre || 'Cliente sin nombre',
-        empresa: cliente.empresa,
-        email: cliente.email,
-        telefono: cliente.telefono,
-        direccion: cliente.direccion
+        nombre: cliente?.nombre || 'Cliente sin nombre',
+        empresa: cliente?.empresa || '',
+        email: cliente?.email || '',
+        telefono: cliente?.telefono || '',
+        direccion: cliente?.direccion || ''
       },
-      items: items.map(item => ({
-        nombre: item.nombre || 'Item sin nombre',
-        descripcion: item.descripcion,
-        cantidad: item.cantidad || 1,
-        precio_unitario: item.precioUnitario || item.precio_unitario || 0,
+      items: (items || []).map(item => ({
+        nombre: item.nombre || item.name || 'Item sin nombre',
+        descripcion: QuoteHelper.getDescriptionAsArray(item.descripcion),
+        cantidad: item.cantidad || item.quantity || 1,
+        precioUnitario: item.precioUnitario || item.precio_unitario || item.precio || 0,
         descuento: item.descuento || 0,
-        subtotal: item.subtotal || 0,
-        unidad: item.unidad || 'und',
-        observaciones: item.observaciones
+        subtotal: item.subtotal || item.total || ((item.cantidad || item.quantity || 1) * (item.precioUnitario || item.precio_unitario || item.precio || 0)),
+        unidad: item.unidad || item.unit || 'und',
+        observaciones: item.observaciones || item.notes || ''
       })),
       empresa: {
         nombre: empresa.nombre || 'Empresa',
         direccion: empresa.direccion || '',
         telefono: empresa.telefono || '',
         email: empresa.email || '',
-        website: empresa.website
+        website: empresa.website || ''
       },
       venue: venue ? {
         nombre: venue.nombre,

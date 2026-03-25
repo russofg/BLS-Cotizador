@@ -3,22 +3,8 @@
  * Mantiene compatibilidad con el servicio anterior pero con mejoras
  */
 
-import { db } from '../utils/firebase';
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  orderBy, 
-  limit,
-  startAfter,
-  QueryDocumentSnapshot
-} from 'firebase/firestore';
+import { adminDb } from '../utils/firebaseAdmin';
+import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { ValidationHelper } from '../utils/validationHelpers';
 import { cache, CacheKeys, CacheTTL, invalidateRelatedCache } from '../utils/cache';
 
@@ -91,18 +77,18 @@ export class ClienteService {
         return cachedData;
       }
 
-      let q = query(collection(db, this.COLLECTION_NAME), orderBy('nombre', 'asc'));
+      let q: FirebaseFirestore.Query = adminDb.collection(this.COLLECTION_NAME).orderBy('nombre', 'asc');
       
       // Aplicar filtros
       if (filters?.activo !== undefined) {
-        q = query(q, where('activo', '==', filters.activo));
+        q = q.where('activo', '==', filters.activo);
       }
       
       if (filters?.empresa) {
-        q = query(q, where('empresa', '==', filters.empresa));
+        q = q.where('empresa', '==', filters.empresa);
       }
       
-      const snapshot = await getDocs(q);
+      const snapshot = await q.get();
       let clientes = snapshot.docs.map(doc => this.mapDocumentToCliente(doc));
       
       // Aplicar filtro de búsqueda si existe
@@ -122,7 +108,7 @@ export class ClienteService {
       return clientes;
     } catch (error) {
       console.error('Error getting all clients:', error);
-      throw new Error('Error al obtener los clientes');
+      throw error;
     }
   }
 
@@ -142,8 +128,8 @@ export class ClienteService {
         return cachedData;
       }
 
-      const docSnap = await getDoc(doc(db, this.COLLECTION_NAME, id));
-      if (!docSnap.exists()) {
+      const docSnap = await adminDb.collection(this.COLLECTION_NAME).doc(id).get();
+      if (!docSnap.exists) {
         return null;
       }
       
@@ -155,7 +141,7 @@ export class ClienteService {
       return cliente;
     } catch (error) {
       console.error('Error getting client by ID:', error);
-      throw new Error('Error al obtener el cliente');
+      throw error;
     }
   }
 
@@ -179,14 +165,14 @@ export class ClienteService {
       }
 
       const now = new Date();
-      const docRef = await addDoc(collection(db, this.COLLECTION_NAME), {
+      const docRef = await adminDb.collection(this.COLLECTION_NAME).add({
         ...clienteData,
         activo: clienteData.activo ?? true,
         createdAt: now,
         updatedAt: now
       });
       
-      const docSnap = await getDoc(docRef);
+      const docSnap = await docRef.get();
       const newCliente = this.mapDocumentToCliente(docSnap);
       
       // Invalidate related cache
@@ -231,8 +217,7 @@ export class ClienteService {
         }
       }
 
-      const docRef = doc(db, this.COLLECTION_NAME, id);
-      await updateDoc(docRef, {
+      await adminDb.collection(this.COLLECTION_NAME).doc(id).update({
         ...updates,
         updatedAt: new Date()
       });
@@ -261,8 +246,7 @@ export class ClienteService {
       }
 
       // Eliminar permanentemente de Firebase
-      const docRef = doc(db, this.COLLECTION_NAME, id);
-      await deleteDoc(docRef);
+      await adminDb.collection(this.COLLECTION_NAME).doc(id).delete();
       
       // Invalidate related cache
       invalidateRelatedCache('client');
@@ -281,7 +265,7 @@ export class ClienteService {
         throw new Error('ID de cliente es requerido');
       }
 
-      await deleteDoc(doc(db, this.COLLECTION_NAME, id));
+      await adminDb.collection(this.COLLECTION_NAME).doc(id).delete();
     } catch (error) {
       console.error('Error permanently deleting client:', error);
       throw error;
@@ -310,7 +294,7 @@ export class ClienteService {
         .slice(0, limitCount);
     } catch (error) {
       console.error('Error searching clients:', error);
-      throw new Error('Error al buscar clientes');
+      throw error;
     }
   }
 
@@ -323,13 +307,10 @@ export class ClienteService {
         return null;
       }
 
-      const q = query(
-        collection(db, this.COLLECTION_NAME), 
-        where('email', '==', email.toLowerCase()),
-        limit(1)
-      );
-      
-      const snapshot = await getDocs(q);
+      const snapshot = await adminDb.collection(this.COLLECTION_NAME)
+        .where('email', '==', email.toLowerCase())
+        .limit(1)
+        .get();
       if (snapshot.empty) {
         return null;
       }
@@ -337,7 +318,7 @@ export class ClienteService {
       return this.mapDocumentToCliente(snapshot.docs[0]);
     } catch (error) {
       console.error('Error getting client by email:', error);
-      throw new Error('Error al buscar cliente por email');
+      throw error;
     }
   }
 
@@ -357,7 +338,7 @@ export class ClienteService {
       };
     } catch (error) {
       console.error('Error getting client stats:', error);
-      throw new Error('Error al obtener estadísticas de clientes');
+      throw error;
     }
   }
 
@@ -415,8 +396,8 @@ export class ClienteService {
   /**
    * Mapea un documento de Firestore a un objeto Cliente
    */
-  private static mapDocumentToCliente(doc: QueryDocumentSnapshot): Cliente {
-    const data = doc.data();
+  private static mapDocumentToCliente(doc: DocumentSnapshot | QueryDocumentSnapshot): Cliente {
+    const data = doc.data() || {};
     return {
       id: doc.id,
       nombre: data.nombre || '',

@@ -2,27 +2,8 @@
  * Servicio de automatización para procesar recordatorios
  * Se ejecuta automáticamente cada minuto
  */
-import { initializeApp } from "firebase/app";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  updateDoc,
-  doc,
-} from "firebase/firestore";
-import { RealEmailService } from "./RealEmailService.cjs";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBJiXU5fV9hMnntRQ-Tw-W4OpoL3ofXioU",
-  authDomain: "cotizador-bls.firebaseapp.com",
-  projectId: "cotizador-bls",
-  storageBucket: "cotizador-bls.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456",
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { adminDb } from '../utils/firebaseAdmin';
+import { RealEmailService } from "./RealEmailService";
 
 // Configurar email service una sola vez
 let emailServiceConfigured = false;
@@ -101,15 +82,14 @@ export class ReminderAutomationService {
     console.log(`\n🔍 [${startTime.toLocaleTimeString()}] Procesando recordatorios automáticamente...`);
 
     try {
-      const cotizacionesRef = collection(db, "cotizaciones");
-      const snapshot = await getDocs(cotizacionesRef);
+      const snapshot = await adminDb.collection("cotizaciones").get();
 
       let processedCount = 0;
       let checkedCount = 0;
       const now = new Date();
 
       for (const docSnapshot of snapshot.docs) {
-        const data = docSnapshot.data();
+        const data = docSnapshot.data() || {};
 
         // Verificar si hay un recordatorio programado
         if (data.proximoSeguimiento && data.proximoSeguimientoEmail) {
@@ -139,7 +119,7 @@ export class ReminderAutomationService {
                 processedCount++;
 
                 // Limpiar el recordatorio después de enviarlo
-                await updateDoc(doc(db, "cotizaciones", docSnapshot.id), {
+                await adminDb.collection("cotizaciones").doc(docSnapshot.id).update({
                   proximoSeguimiento: null,
                   proximoSeguimientoTipo: null,
                   proximoSeguimientoMensaje: null,

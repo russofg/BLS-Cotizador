@@ -2,30 +2,7 @@
  * Servicio para gestionar usuarios y sus emails
  * Permite configurar múltiples destinatarios para recordatorios
  */
-import { initializeApp } from "firebase/app";
-import {
-  getFirestore,
-  collection,
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  getDocs,
-  query,
-  orderBy,
-} from "firebase/firestore";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBJiXU5fV9hMnntRQ-Tw-W4OpoL3ofXioU",
-  authDomain: "cotizador-bls.firebaseapp.com",
-  projectId: "cotizador-bls",
-  storageBucket: "cotizador-bls.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456",
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { adminDb } from '../utils/firebaseAdmin';
 
 export interface UserProfile {
   id: string;
@@ -50,13 +27,13 @@ export class UserManagementService {
    */
   static async getActiveUsers(): Promise<UserProfile[]> {
     try {
-      const usuariosRef = collection(db, this.COLLECTION_NAME);
-      const q = query(usuariosRef, orderBy('nombre'));
-      const snapshot = await getDocs(q);
+      const snapshot = await adminDb.collection(this.COLLECTION_NAME)
+        .orderBy('nombre')
+        .get();
 
       const usuarios: UserProfile[] = [];
       snapshot.forEach((doc) => {
-        const data = doc.data();
+        const data = doc.data() || {};
         if (data.activo !== false) {
           usuarios.push({
             id: doc.id,
@@ -104,12 +81,12 @@ export class UserManagementService {
    */
   static async getUserById(userId: string): Promise<UserProfile | null> {
     try {
-      const userDoc = await getDoc(doc(db, this.COLLECTION_NAME, userId));
-      if (!userDoc.exists()) {
+      const userDoc = await adminDb.collection(this.COLLECTION_NAME).doc(userId).get();
+      if (!userDoc.exists) {
         return null;
       }
 
-      const data = userDoc.data();
+      const data = userDoc.data() || {};
       return {
         id: userDoc.id,
         nombre: data.nombre || '',
@@ -144,14 +121,11 @@ export class UserManagementService {
 
       if (userData.id) {
         // Actualizar usuario existente
-        await updateDoc(doc(db, this.COLLECTION_NAME, userData.id), userDoc);
+        await adminDb.collection(this.COLLECTION_NAME).doc(userData.id).update(userDoc);
       } else {
         // Crear nuevo usuario
-        const newUserRef = doc(collection(db, this.COLLECTION_NAME));
-        await setDoc(newUserRef, {
-          ...userDoc,
-          id: newUserRef.id,
-        });
+        const newUserRef = await adminDb.collection(this.COLLECTION_NAME).add(userDoc);
+        await newUserRef.update({ id: newUserRef.id });
       }
 
       return true;

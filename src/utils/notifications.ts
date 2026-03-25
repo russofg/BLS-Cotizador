@@ -1,30 +1,38 @@
 import Swal from 'sweetalert2';
 
 // Configuración base para SweetAlert2
+// Configuración base para SweetAlert2 Premium
 const defaultConfig = {
-  confirmButtonColor: '#3b82f6', // primary-500
-  cancelButtonColor: '#ef4444',   // red-500
+  customClass: {
+    container: 'premium-swal-container',
+    popup: 'rounded-[2rem] shadow-premium-lg border-0 dark:bg-gray-900 dark:text-gray-100 p-8',
+    title: 'font-heading font-black text-2xl uppercase tracking-tight text-gray-900 dark:text-white mb-4',
+    htmlContainer: 'text-sm text-gray-500 dark:text-gray-400 leading-relaxed font-medium',
+    confirmButton: 'px-8 py-4 rounded-2xl font-heading font-black text-xs uppercase tracking-widest bg-primary-600 hover:bg-primary-700 text-white transition-all shadow-lg shadow-primary-500/30 border-0 outline-none',
+    cancelButton: 'px-8 py-4 rounded-2xl font-heading font-black text-xs uppercase tracking-widest bg-gray-100 hover:bg-gray-200 text-gray-500 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-400 transition-all border-0 outline-none',
+    actions: 'gap-4 mt-8',
+    icon: 'border-2 scale-75'
+  },
+  buttonsStyling: false, // Desactivar estilos por defecto para usar clases de Tailwind
   showCloseButton: true,
   reverseButtons: true,
-  // Evitar que SweetAlert2 interfiera con aria-hidden
   heightAuto: false,
   scrollbarPadding: false,
-  // Configurar para que no modifique aria-hidden del DOM
+  showClass: {
+    popup: 'animate__animated animate__fadeInUp animate__faster'
+  },
+  hideClass: {
+    popup: 'animate__animated animate__fadeOutDown animate__faster'
+  },
   willOpen: () => {
-    // Remover aria-hidden que SweetAlert2 puede haber añadido
     document.body.removeAttribute('aria-hidden');
     const mainContent = document.querySelector('.min-h-screen.bg-gray-50');
-    if (mainContent) {
-      mainContent.removeAttribute('aria-hidden');
-    }
+    if (mainContent) mainContent.removeAttribute('aria-hidden');
   },
   didClose: () => {
-    // Asegurar que se limpie aria-hidden después de cerrar
     document.body.removeAttribute('aria-hidden');
     const mainContent = document.querySelector('.min-h-screen.bg-gray-50');
-    if (mainContent) {
-      mainContent.removeAttribute('aria-hidden');
-    }
+    if (mainContent) mainContent.removeAttribute('aria-hidden');
   }
 };
 
@@ -108,17 +116,20 @@ export const notifications = {
     });
   },
 
-  // Confirmación de eliminación
+  // Confirmación de eliminación Premium
   confirmDelete: (itemName?: string) => {
     return Swal.fire({
       ...defaultConfig,
       icon: 'warning',
-      title: '¿Estás seguro?',
-      text: itemName ? `Se eliminará "${itemName}" permanentemente.` : 'Esta acción no se puede deshacer.',
+      title: '¿Confirmar eliminación?',
+      text: itemName ? `Se eliminará permanentemente "${itemName}".` : 'Esta acción es irreversible y no se podrá deshacer.',
       showCancelButton: true,
       confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#ef4444' // Rojo para eliminación
+      cancelButtonText: 'No, cancelar',
+      customClass: {
+        ...defaultConfig.customClass,
+        confirmButton: 'px-8 py-4 rounded-2xl font-heading font-black text-xs uppercase tracking-widest bg-red-600 hover:bg-red-700 text-white transition-all shadow-lg shadow-red-500/30 border-0 outline-none',
+      }
     });
   },
 
@@ -136,7 +147,7 @@ export const notifications = {
     });
   },
 
-  // Toast simple (notificación pequeña)
+  // Toast Premium (notificación pequeña)
   toast: (type: 'success' | 'error' | 'warning' | 'info', message: string) => {
     return Swal.fire({
       icon: type,
@@ -146,10 +157,13 @@ export const notifications = {
       showConfirmButton: false,
       timer: 3000,
       timerProgressBar: true,
+      customClass: {
+        popup: 'rounded-2xl shadow-premium border-0 bg-white dark:bg-gray-800 p-4',
+        title: 'text-sm font-heading font-extrabold text-gray-900 dark:text-white ml-2 uppercase tracking-tight',
+      },
       didOpen: (toast) => {
         toast.addEventListener('mouseenter', Swal.stopTimer);
         toast.addEventListener('mouseleave', Swal.resumeTimer);
-        // Asegurar que no se modifique aria-hidden
         document.body.removeAttribute('aria-hidden');
       }
     });

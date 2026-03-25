@@ -3,6 +3,7 @@ import Dashboard from "../../../layouts/Dashboard.astro";
 import { cotizacionService, clienteService } from "../../../utils/database";
 import DescriptionNote from "../../../components/DescriptionNote.astro";
 import { DEFAULT_QUOTE_TEXTS } from "../../../config/company";
+import { QuoteHelper } from "../../../utils/quoteHelpers";
 
 const { id } = Astro.params;
 
@@ -259,10 +260,17 @@ function safeFormatDate(dateValue: any): string {
                   name="estado"
                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                 >
-                  <option value="borrador" selected={cotizacion.estado === 'borrador'}>Borrador</option>
-                  <option value="enviado" selected={cotizacion.estado === 'enviado'}>Enviado</option>
-                  <option value="aprobado" selected={cotizacion.estado === 'aprobado'}>Aprobado</option>
-                  <option value="rechazado" selected={cotizacion.estado === 'rechazado'}>Rechazado</option>
+                  {(() => {
+                    const s = String(cotizacion.estado || 'borrador').toLowerCase();
+                    return (
+                      <>
+                        <option value="borrador" selected={s.includes('borrador')}>Borrador</option>
+                        <option value="enviado" selected={s.includes('enviad')}>Enviado</option>
+                        <option value="aprobado" selected={s.includes('aprob')}>Aprobado</option>
+                        <option value="rechazado" selected={s.includes('recha')}>Rechazado</option>
+                      </>
+                    );
+                  })()}
                 </select>
               </div>
             </div>
@@ -280,7 +288,7 @@ function safeFormatDate(dateValue: any): string {
                 class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200"
               >
                 <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
                 Agregar Item
               </button>

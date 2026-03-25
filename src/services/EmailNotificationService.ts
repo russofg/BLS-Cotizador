@@ -213,7 +213,7 @@ export class EmailNotificationService {
       // Intentar enviar email real primero
       try {
         // Importar el servicio real dinámicamente
-        const { RealEmailService } = await import('../../RealEmailService.cjs');
+        const { RealEmailService } = await import('./RealEmailService');
         
         // Configurar Hostinger SMTP
         RealEmailService.configure({

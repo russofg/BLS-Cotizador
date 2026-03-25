@@ -1,8 +1,12 @@
 import type { APIRoute } from 'astro';
 import { itemService } from '../../utils/database';
+import { checkRateLimit } from '../../utils/rateLimit';
+import { AnalyticsService } from '../../services/AnalyticsService';
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, request }) => {
   try {
+    const limited = checkRateLimit(request, 'READ', 'items');
+    if (limited) return limited;
     const search = url.searchParams.get('search') || undefined;
     const categoria = url.searchParams.get('categoria') || undefined;
     const activo = url.searchParams.get('activo');
@@ -39,6 +43,8 @@ export const GET: APIRoute = async ({ url }) => {
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const limited = checkRateLimit(request, 'WRITE', 'items');
+    if (limited) return limited;
     const itemData = await request.json();
     
     // Validate required fields
@@ -64,6 +70,9 @@ export const POST: APIRoute = async ({ request }) => {
       activo: itemData.activo !== false
     });
     
+    // Invalidate analytics cache
+    AnalyticsService.invalidateCache();
+    
     return new Response(JSON.stringify(newItem), {
       status: 201,
       headers: {
@@ -85,6 +94,8 @@ export const POST: APIRoute = async ({ request }) => {
 
 export const PUT: APIRoute = async ({ request }) => {
   try {
+    const limited = checkRateLimit(request, 'WRITE', 'items');
+    if (limited) return limited;
     const itemData = await request.json();
     
     if (!itemData.id) {
@@ -109,6 +120,9 @@ export const PUT: APIRoute = async ({ request }) => {
       activo: itemData.activo !== false
     });
     
+    // Invalidate analytics cache
+    AnalyticsService.invalidateCache();
+    
     return new Response(JSON.stringify(updatedItem), {
       status: 200,
       headers: {
@@ -130,6 +144,8 @@ export const PUT: APIRoute = async ({ request }) => {
 
 export const DELETE: APIRoute = async ({ request }) => {
   try {
+    const limited = checkRateLimit(request, 'WRITE', 'items');
+    if (limited) return limited;
     const { id } = await request.json();
     
     if (!id) {
@@ -144,6 +160,9 @@ export const DELETE: APIRoute = async ({ request }) => {
     }
 
     await itemService.delete(id);
+    
+    // Invalidate analytics cache
+    AnalyticsService.invalidateCache();
     
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

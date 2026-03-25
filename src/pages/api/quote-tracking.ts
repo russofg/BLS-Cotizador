@@ -1,8 +1,11 @@
 import type { APIRoute } from 'astro';
 import { QuoteTrackingService, QuoteStatus } from '../../services/QuoteTrackingService';
+import { checkRateLimit } from '../../utils/rateLimit';
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, request }) => {
   try {
+    const limited = checkRateLimit(request, 'READ', 'quote-tracking');
+    if (limited) return limited;
     const action = url.searchParams.get('action') || 'list';
     const quoteId = url.searchParams.get('quoteId');
     
@@ -64,6 +67,8 @@ export const GET: APIRoute = async ({ url }) => {
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const limited = checkRateLimit(request, 'WRITE', 'quote-tracking');
+    if (limited) return limited;
     const body = await request.json();
     const { action, quoteId, status, comentario, usuario, tipo, fecha, mensaje } = body;
     

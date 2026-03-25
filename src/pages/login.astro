@@ -3,6 +3,8 @@ import Base from "../layouts/Base.astro";
 import Input from "../components/ui/Input.astro";
 import Button from "../components/ui/Button.astro";
 import { ValidationHelper } from "../utils/validationHelpers";
+
+const isDev = import.meta.env.DEV;
 ---
 
 <Base title="Iniciar Sesión - BLS Cotizador">
@@ -127,35 +129,37 @@ import { ValidationHelper } from "../utils/validationHelpers";
           </div>
         </div>
 
-        <!-- Demo credentials -->
-        <div class="rounded-md bg-blue-50 p-4">
-          <div class="flex">
-            <div class="flex-shrink-0">
-              <svg
-                class="h-5 w-5 text-blue-400"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                  clip-rule="evenodd"></path>
-              </svg>
-            </div>
-            <div class="ml-3">
-              <h3 class="text-sm font-medium text-blue-800">
-                Credenciales de Demo
-              </h3>
-              <div class="mt-2 text-sm text-blue-700">
-                <p><strong>Usuario:</strong> demo@bls.com.ar</p>
-                <p><strong>Contraseña:</strong> demo123</p>
-                <p class="mt-1 text-xs">
-                  Estas credenciales son solo para demostración.
-                </p>
+        {/* Demo credentials — solo visible en desarrollo */}
+        {isDev && (
+          <div class="rounded-md bg-blue-50 p-4" id="demo-credentials">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg
+                  class="h-5 w-5 text-blue-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-800">
+                  🛠️ Modo Desarrollo
+                </h3>
+                <div class="mt-2 text-sm text-blue-700">
+                  <p><strong>Usuario:</strong> demo@bls.com.ar</p>
+                  <p><strong>Contraseña:</strong> demo123</p>
+                  <p class="mt-1 text-xs">
+                    Este bloque no se muestra en producción.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         <!-- Registro link -->
         <div class="mt-6 text-center space-y-2">
@@ -276,22 +280,23 @@ import { ValidationHelper } from "../utils/validationHelpers";
       }
     });
 
-    // Auto-fill demo credentials when clicking on demo info
-    const demoInfo = document.querySelector(".bg-blue-50");
-    demoInfo?.addEventListener("click", () => {
-      const emailInput = document.getElementById(
-        "email-address"
-      ) as HTMLInputElement;
-      const passwordInput = document.getElementById(
-        "password"
-      ) as HTMLInputElement;
+    // Auto-fill demo credentials — solo en desarrollo
+    if (import.meta.env.DEV) {
+      const demoInfo = document.getElementById("demo-credentials");
+      demoInfo?.addEventListener("click", () => {
+        const emailInput = document.getElementById(
+          "email-address"
+        ) as HTMLInputElement;
+        const passwordInput = document.getElementById(
+          "password"
+        ) as HTMLInputElement;
 
-      if (emailInput && passwordInput) {
-        // Pre-fill demo credentials for easy testing
-        emailInput.value = "demo@bls.com.ar";
-        passwordInput.value = "demo123";
-      }
-    });
+        if (emailInput && passwordInput) {
+          emailInput.value = "demo@bls.com.ar";
+          passwordInput.value = "demo123";
+        }
+      });
+    }
 
     // Forgot password functionality
     const forgotPasswordLink = document.getElementById("forgot-password-link");

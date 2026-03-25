@@ -1,46 +1,16 @@
 import type { APIRoute } from 'astro';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs, query, orderBy } from 'firebase/firestore';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBJiXU5fV9hMnntRQ-Tw-W4OpoL3ofXioU",
-  authDomain: "cotizador-bls.firebaseapp.com",
-  projectId: "cotizador-bls",
-  storageBucket: "cotizador-bls.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456",
-};
-
-// Crear una instancia única de Firebase para esta API
-let app: any = null;
-let db: any = null;
-
-function getFirebaseInstance() {
-  if (!app) {
-    try {
-      app = initializeApp(firebaseConfig);
-      db = getFirestore(app);
-    } catch (error) {
-      console.error('Error inicializando Firebase:', error);
-      // Si ya existe una app, usar la existente
-      app = initializeApp(firebaseConfig, 'users-api');
-      db = getFirestore(app);
-    }
-  }
-  return { app, db };
-}
+import { adminDb } from '../../utils/firebaseAdmin';
+import { checkRateLimit } from '../../utils/rateLimit';
 
 export const GET: APIRoute = async ({ request }) => {
   try {
-    console.log('📡 API: Obteniendo usuarios para notificaciones...');
-    
-    const { db } = getFirebaseInstance();
-    
-    const usuariosRef = collection(db, 'usuarios');
-    const q = query(usuariosRef, orderBy('nombre'));
-    const snapshot = await getDocs(q);
+    // Rate limit check
+    const limited = checkRateLimit(request, 'READ', 'users');
+    if (limited) return limited;
 
-    const usuarios = [];
+    const snapshot = await adminDb.collection('usuarios').orderBy('nombre').get();
+
+    const usuarios: any[] = [];
     snapshot.forEach((doc) => {
       const data = doc.data();
       if (data.activo !== false && data.notificacionesEmail !== false && data.email) {
@@ -54,8 +24,6 @@ export const GET: APIRoute = async ({ request }) => {
         });
       }
     });
-    
-    console.log(`✅ API: ${usuarios.length} usuarios encontrados`);
     
     return new Response(JSON.stringify({
       success: true,
@@ -71,7 +39,7 @@ export const GET: APIRoute = async ({ request }) => {
     });
     
   } catch (error) {
-    console.error('❌ API Error obteniendo usuarios:', error);
+    console.error('Error obteniendo usuarios:', error);
     
     return new Response(JSON.stringify({
       success: false,
@@ -80,11 +48,9 @@ export const GET: APIRoute = async ({ request }) => {
     }), {
       status: 500,
       headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
+        'Content-Type': 'application/json'
       }
     });
   }
 };
+

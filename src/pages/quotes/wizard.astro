@@ -20,172 +20,158 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
   title="Nueva Cotización (Wizard) - BLS Cotizador"
   activeSection="quotes"
 >
-  <div class="max-w-7xl mx-auto space-y-6">
+  <div class="max-w-7xl mx-auto space-y-8">
     <!-- Header -->
-    <Card>
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-            Nueva Cotización
-          </h1>
-          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Crea una cotización paso a paso con validaciones y diseño mejorado
-          </p>
-        </div>
-        <div class="flex space-x-3">
-          <Button href="/quotes" variant="secondary" size="sm">
-            Volver a Cotizaciones
-          </Button>
-        </div>
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 last:mb-0">
+      <div>
+        <h1 class="text-3xl font-heading font-extrabold text-gray-900 dark:text-white tracking-tight">
+          Nueva Cotización <span class="text-primary-600 dark:text-primary-400">Pro</span>
+        </h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-medium">
+          Diseña una propuesta comercial impecable en pocos pasos.
+        </p>
       </div>
-    </Card>
+      <div class="flex items-center space-x-3">
+        <Button href="/quotes" variant="secondary" class="shadow-premium border-gray-100 dark:border-gray-800">
+          <span class="mr-2">←</span> Volver
+        </Button>
+      </div>
+    </div>
 
     <!-- Progress Steps -->
-    <Card>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="wizard-progress">
-        <div id="step-indicator-1" class="step-indicator" data-step="1">
-          <div
-            class="flex items-center space-x-3 p-4 rounded-lg transition-all bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-200 dark:border-primary-700"
-          >
-            <div
-              class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium bg-primary-500 dark:bg-primary-600 text-white"
-            >
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="wizard-progress">
+      <!-- Paso 1 -->
+      <div id="step-indicator-1" class="step-indicator group" data-step="1">
+        <div class="relative h-full p-4 rounded-3xl transition-all duration-300 bg-white dark:bg-gray-800 shadow-premium border-2 border-primary-500 dark:border-primary-400">
+          <div class="flex items-center space-x-4">
+            <div class="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-2xl text-base font-heading font-black bg-primary-600 text-white shadow-lg shadow-primary-500/30">
               1
             </div>
-            <div class="flex-1">
-              <h4 class="text-sm font-medium text-gray-900 dark:text-white">
-                Información Básica
+            <div class="min-w-0">
+              <h4 class="text-sm font-heading font-extrabold text-gray-900 dark:text-white truncate uppercase tracking-widest">
+                Evento
               </h4>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                Datos del evento
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div id="step-indicator-2" class="step-indicator" data-step="2">
-          <div
-            class="flex items-center space-x-3 p-4 rounded-lg transition-all bg-gray-50 dark:bg-gray-700/30 border-2 border-gray-200 dark:border-gray-700"
-          >
-            <div
-              class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
-            >
-              2
-            </div>
-            <div class="flex-1">
-              <h4 class="text-sm font-medium text-gray-900 dark:text-white">
-                Seleccionar Items
-              </h4>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                Servicios y productos
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div id="step-indicator-3" class="step-indicator" data-step="3">
-          <div
-            class="flex items-center space-x-3 p-4 rounded-lg transition-all bg-gray-50 dark:bg-gray-700/30 border-2 border-gray-200 dark:border-gray-700"
-          >
-            <div
-              class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
-            >
-              3
-            </div>
-            <div class="flex-1">
-              <h4 class="text-sm font-medium text-gray-900 dark:text-white">
-                Configurar Precios
-              </h4>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                Ajustar cantidades
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div id="step-indicator-4" class="step-indicator" data-step="4">
-          <div
-            class="flex items-center space-x-3 p-4 rounded-lg transition-all bg-gray-50 dark:bg-gray-700/30 border-2 border-gray-200 dark:border-gray-700"
-          >
-            <div
-              class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
-            >
-              4
-            </div>
-            <div class="flex-1">
-              <h4 class="text-sm font-medium text-gray-900 dark:text-white">
-                Revisar y Crear
-              </h4>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                Finalizar cotización
-              </p>
+              <p class="text-[10px] text-primary-600 dark:text-primary-400 font-bold uppercase tracking-tighter">Información básica</p>
             </div>
           </div>
         </div>
       </div>
-    </Card>
+
+      <!-- Paso 2 -->
+      <div id="step-indicator-2" class="step-indicator group" data-step="2">
+        <div class="relative h-full p-4 rounded-3xl transition-all duration-300 bg-white dark:bg-gray-800/50 shadow-sm border-2 border-transparent group-hover:bg-white dark:group-hover:bg-gray-800">
+          <div class="flex items-center space-x-4 opacity-50 group-[.active]:opacity-100 transition-opacity">
+            <div class="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-2xl text-base font-heading font-black bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500">
+              2
+            </div>
+            <div class="min-w-0">
+              <h4 class="text-sm font-heading font-extrabold text-gray-500 dark:text-gray-400 truncate uppercase tracking-widest group-[.active]:text-gray-900 dark:group-[.active]:text-white">
+                Catálogo
+              </h4>
+              <p class="text-[10px] text-gray-400 dark:text-gray-600 font-bold uppercase tracking-tighter">Selección de items</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paso 3 -->
+      <div id="step-indicator-3" class="step-indicator group" data-step="3">
+        <div class="relative h-full p-4 rounded-3xl transition-all duration-300 bg-white dark:bg-gray-800/50 shadow-sm border-2 border-transparent group-hover:bg-white dark:group-hover:bg-gray-800">
+          <div class="flex items-center space-x-4 opacity-50 group-[.active]:opacity-100 transition-opacity">
+            <div class="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-2xl text-base font-heading font-black bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500">
+              3
+            </div>
+            <div class="min-w-0">
+              <h4 class="text-sm font-heading font-extrabold text-gray-500 dark:text-gray-400 truncate uppercase tracking-widest group-[.active]:text-gray-900 dark:group-[.active]:text-white">
+                Precios
+              </h4>
+              <p class="text-[10px] text-gray-400 dark:text-gray-600 font-bold uppercase tracking-tighter">Ajustes y totales</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paso 4 -->
+      <div id="step-indicator-4" class="step-indicator group" data-step="4">
+        <div class="relative h-full p-4 rounded-3xl transition-all duration-300 bg-white dark:bg-gray-800/50 shadow-sm border-2 border-transparent group-hover:bg-white dark:group-hover:bg-gray-800">
+          <div class="flex items-center space-x-4 opacity-50 group-[.active]:opacity-100 transition-opacity">
+            <div class="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-2xl text-base font-heading font-black bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500">
+              4
+            </div>
+            <div class="min-w-0">
+              <h4 class="text-sm font-heading font-extrabold text-gray-500 dark:text-gray-400 truncate uppercase tracking-widest group-[.active]:text-gray-900 dark:group-[.active]:text-white">
+                Revisión
+              </h4>
+              <p class="text-[10px] text-gray-400 dark:text-gray-600 font-bold uppercase tracking-tighter">Propuesta final</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Wizard Content -->
     <div id="wizard-container" class="min-h-96">
       <!-- Step 1: Información Básica -->
-      <div id="step-1" class="wizard-step">
-        <Card>
-          <div class="space-y-6">
-            <div>
-              <h3
-                class="text-lg font-semibold text-gray-900 dark:text-white mb-4"
-              >
-                Información Básica de la Cotización
+      <div id="step-1" class="wizard-step anime-fade-in">
+        <Card class="shadow-premium rounded-3xl overflow-hidden border-0">
+          <div class="p-2 sm:p-4">
+            <div class="mb-10 text-center lg:text-left">
+              <h3 class="text-2xl font-heading font-extrabold text-gray-900 dark:text-white mb-2">
+                Información del Evento
               </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
-                Comencemos con los datos principales del evento o proyecto.
+              <p class="text-sm text-gray-500 dark:text-gray-400 font-medium max-w-2xl">
+                Define los parámetros fundamentales de tu propuesta comercial para comenzar.
               </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <!-- Cliente -->
+              <div class="lg:col-span-2">
+                <Select
+                  id="wizard-cliente_id"
+                  name="cliente_id"
+                  required
+                  label="Cliente / Empresa"
+                  placeholder="Selecciona el destinatario..."
+                  options={[]}
+                />
+              </div>
+
+              <!-- Estado -->
               <Select
-                id="wizard-cliente_id"
-                name="cliente_id"
-                required
-                label="Cliente"
-                placeholder="Seleccionar cliente..."
-                options={[]}
+                id="wizard-estado"
+                name="estado"
+                label="Estado Inicial"
+                value="borrador"
+                options={[
+                  { value: "borrador", label: "Borrador Interno" },
+                  { value: "enviado", label: "Enviado a Cliente" },
+                  { value: "aprobado", label: "Aprobado / Firmado" },
+                  { value: "rechazado", label: "Rechazado / Cancelado" },
+                ]}
               />
 
               <!-- Título -->
-              <Input
-                id="wizard-titulo"
-                name="titulo"
-                required
-                label="Título del Evento"
-                placeholder="Ej: Evento corporativo anual"
-              />
-
-              <!-- Fecha de inicio -->
-              <Input
-                id="wizard-fecha_evento"
-                name="fecha_evento"
-                type="date"
-                label="Fecha de inicio del evento"
-              />
-
-              <!-- Fecha de fin -->
-              <Input
-                id="wizard-fecha_evento_fin"
-                name="fecha_evento_fin"
-                type="date"
-                label="Fecha de fin del evento"
-              />
+              <div class="md:col-span-2 lg:col-span-3">
+                <Input
+                  id="wizard-titulo"
+                  name="titulo"
+                  required
+                  label="Título de la Propuesta / Nombre del Evento"
+                  placeholder="Ej: Lanzamiento Marca X - Verano 2024"
+                />
+              </div>
 
               <!-- Lugar del evento -->
-              <Input
-                id="wizard-lugar_evento"
-                name="lugar_evento"
-                type="text"
-                label="Lugar del evento"
-                placeholder="ej. Hotel Hilton, Centro de Convenciones..."
-              />
+              <div class="md:col-span-2">
+                <Input
+                  id="wizard-lugar_evento"
+                  name="lugar_evento"
+                  type="text"
+                  label="Ubicación o Venue"
+                  placeholder="Ej: Sheraton Hotel, Salón Ceibo..."
+                />
+              </div>
 
               <!-- Duración -->
               <Input
@@ -195,77 +181,74 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
                 min={1}
                 step={1}
                 value="1"
-                label="Duración (días)"
-                placeholder="Se calcula automáticamente"
+                label="Duración (Jornadas)"
+                placeholder="Días"
               />
 
-              <!-- Estado -->
-              <Select
-                id="wizard-estado"
-                name="estado"
-                label="Estado"
-                value="borrador"
-                options={[
-                  { value: "borrador", label: "Borrador" },
-                  { value: "enviado", label: "Enviado" },
-                  { value: "aprobado", label: "Aprobado" },
-                  { value: "rechazado", label: "Rechazado" },
-                ]}
+              <!-- Fecha de inicio -->
+              <Input
+                id="wizard-fecha_evento"
+                name="fecha_evento"
+                type="date"
+                label="Fecha de Inicio"
               />
-            </div>
 
-            <!-- Descripción completa -->
-            <Textarea
-              id="wizard-descripcion"
-              name="descripcion"
-              rows={3}
-              placeholder="Describe el evento o proyecto en detalle..."
-              label="Descripción del Evento"
-            />
-
-            <!-- Armado previo -->
-            <div class="flex items-center space-x-3">
-              <input
-                id="wizard-requiere_armado"
-                name="requiere_armado"
-                type="checkbox"
-                class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-700"
+              <!-- Fecha de fin -->
+              <Input
+                id="wizard-fecha_evento_fin"
+                name="fecha_evento_fin"
+                type="date"
+                label="Fecha de Finalización"
               />
-              <div>
-                <label
-                  for="wizard-requiere_armado"
-                  class="text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Requiere día de armado previo
-                </label>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                  El evento necesita montaje/armado el día anterior
-                </p>
+
+              <!-- Armado previo -->
+              <div class="flex items-center p-5 bg-gray-50 dark:bg-gray-900/40 rounded-2xl border border-gray-100 dark:border-gray-700 transition-all hover:bg-white dark:hover:bg-gray-800 h-full">
+                <input
+                  id="wizard-requiere_armado"
+                  name="requiere_armado"
+                  type="checkbox"
+                  class="h-6 w-6 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded-xl transition-all"
+                />
+                <div class="ml-4">
+                  <label
+                    for="wizard-requiere_armado"
+                    class="block text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-widest"
+                  >
+                    Día de Armado
+                  </label>
+                  <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 leading-tight">
+                    Requiere montaje técnico previo al evento.
+                  </p>
+                </div>
               </div>
             </div>
 
+            <!-- Descripción completa -->
+            <div class="mt-8">
+              <Textarea
+                id="wizard-descripcion"
+                name="descripcion"
+                rows={4}
+                placeholder="Detalla los alcances generales de la propuesta..."
+                label="Descripción y Alcance General"
+              />
+            </div>
+
             <!-- Navegación -->
-            <div
-              class="flex justify-end pt-6 border-t border-gray-200 dark:border-gray-700"
-            >
+            <div class="flex justify-end pt-10 mt-10 border-t border-gray-100 dark:border-gray-800">
               <Button
                 id="next-to-step-2"
                 variant="primary"
-                size="md"
-                disabled={false}
+                class="shadow-premium px-10 group"
               >
-                Siguiente: Seleccionar Items
+                <span>Siguiente Paso</span>
                 <svg
-                  class="ml-2 w-4 h-4"
+                  class="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 5l7 7-7 7"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </Button>
             </div>
@@ -273,182 +256,92 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
         </Card>
       </div>
 
-      <!-- Step 2: Seleccionar Items (Hidden initially) -->
-      <div id="step-2" class="wizard-step hidden">
-        <Card>
-          <div class="space-y-6">
-            <div>
-              <h3
-                class="text-lg font-semibold text-gray-900 dark:text-white mb-4"
-              >
-                Seleccionar Items y Servicios
+      <!-- Step 2: Seleccionar Items -->
+      <div id="step-2" class="wizard-step hidden anime-fade-in">
+        <Card class="shadow-premium rounded-3xl overflow-hidden border-0">
+          <div class="p-2 sm:p-4">
+            <div class="mb-8 text-center lg:text-left">
+              <h3 class="text-2xl font-heading font-extrabold text-gray-900 dark:text-white mb-2">
+                Catálogo de Servicios
               </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
-                Elige los equipos y servicios necesarios para el evento.
+              <p class="text-sm text-gray-500 dark:text-gray-400 font-medium max-w-2xl">
+                Explora y selecciona los equipos y servicios técnicos para tu propuesta.
               </p>
             </div>
 
-            <!-- Filtros de búsqueda -->
-            <div
-              class="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
-            >
-              <Input
-                id="wizard-search-items"
-                placeholder="Buscar items..."
-                label="Buscar"
-              />
-              <Select
-                id="wizard-category-filter"
-                label="Categoría"
-                options={[{ value: "", label: "Todas las categorías" }]}
-              />
-              <div class="flex items-end">
-                <Button
-                  id="clear-filters-wizard"
-                  variant="secondary"
-                  size="sm"
-                  class="w-full"
-                >
-                  Limpiar Filtros
-                </Button>
+            <!-- Filtros de búsqueda (Premium Control Panel) -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 p-6 bg-gray-50 dark:bg-gray-900/40 rounded-3xl border border-gray-100 dark:border-gray-800 mb-8">
+              <div class="md:col-span-12 lg:col-span-5">
+                <Input
+                  id="wizard-search-items"
+                  placeholder="Busca por nombre o descripción..."
+                  label="Buscador Inteligente"
+                />
               </div>
-              <div class="flex items-end">
-                <Button
-                  id="create-custom-item-wizard"
-                  variant="primary"
-                  size="sm"
-                  class="w-full"
-                >
-                  <svg
-                    class="mr-1 w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                  </svg>
-                  Item Personalizado
+              <div class="md:col-span-6 lg:col-span-4">
+                <Select
+                  id="wizard-category-filter"
+                  label="Filtrar por Especialidad"
+                  options={[{ value: "", label: "Todas las áreas técnicas" }]}
+                />
+              </div>
+              <div class="md:col-span-6 lg:col-span-3 flex flex-col justify-end space-y-2 lg:space-y-0 lg:flex-row lg:items-end lg:gap-2">
+                <Button id="clear-filters-wizard" variant="secondary" size="sm" class="w-full lg:w-auto">
+                  Limpiar
+                </Button>
+                <Button id="create-custom-item-wizard" variant="primary" size="sm" class="w-full lg:w-auto font-bold">
+                  <span class="mr-1">＋</span> Personalizado
                 </Button>
               </div>
             </div>
 
             <!-- Items disponibles y seleccionados en dos columnas -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
               <!-- Items Disponibles -->
-              <div>
-                <h4
-                  class="text-md font-medium text-gray-900 dark:text-white mb-4"
-                >
-                  Items Disponibles
-                </h4>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between px-2">
+                  <h4 class="text-sm font-heading font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                    Items Disponibles
+                  </h4>
+                  <span class="text-[10px] bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full font-bold text-gray-500">LISTA COMPLETA</span>
+                </div>
                 <div
                   id="wizard-available-items"
-                  class="space-y-2 max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-700/50"
+                  class="space-y-3 max-h-[500px] overflow-y-auto px-1 custom-scrollbar"
                 >
-                  <!-- Loading state -->
-                  <div class="text-center py-8">
-                    <svg
-                      class="animate-spin h-6 w-6 mx-auto mb-2 text-primary-600 dark:text-primary-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        class="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        stroke-width="4"></circle>
-                      <path
-                        class="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                      Cargando items...
-                    </p>
-                  </div>
+                  <!-- Rendered via JS -->
                 </div>
               </div>
 
               <!-- Items Seleccionados -->
-              <div>
-                <h4
-                  class="text-md font-medium text-gray-900 dark:text-white mb-4"
-                >
-                  Items Seleccionados <span
-                    id="wizard-selected-count"
-                    class="text-sm text-gray-500 dark:text-gray-400">(0)</span
-                  >
-                </h4>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between px-2">
+                  <h4 class="text-sm font-heading font-black text-primary-600 dark:text-primary-400 uppercase tracking-widest">
+                    Items Seleccionados
+                  </h4>
+                  <span id="wizard-selected-count" class="text-xs font-heading font-black bg-primary-600 text-white px-2.5 py-0.5 rounded-full shadow-lg shadow-primary-500/20">0</span>
+                </div>
                 <div
                   id="wizard-selected-items"
-                  class="space-y-2 max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-green-50 dark:bg-green-900/20"
+                  class="space-y-3 max-h-[500px] overflow-y-auto p-4 bg-primary-50/30 dark:bg-primary-900/10 rounded-3xl border-2 border-dashed border-primary-100 dark:border-primary-900/30 custom-scrollbar"
                 >
-                  <div
-                    class="text-center py-8 text-gray-500 dark:text-gray-400"
-                  >
-                    <svg
-                      class="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-6.1M4 13h6.1"
-                      ></path>
-                    </svg>
-                    <p class="text-sm">No hay items seleccionados</p>
-                  </div>
+                  <!-- Rendered via JS -->
                 </div>
               </div>
             </div>
 
             <!-- Navegación -->
-            <div
-              class="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700"
-            >
-              <Button id="back-to-step-1" variant="secondary" size="md">
-                <svg
-                  class="mr-2 w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 19l-7-7 7-7"></path>
+            <div class="flex justify-between pt-10 mt-10 border-t border-gray-100 dark:border-gray-800">
+              <Button id="back-to-step-1" variant="secondary" class="group">
+                <svg class="mr-2 w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
                 </svg>
-                Anterior
+                <span>Anterior</span>
               </Button>
-              <Button
-                id="next-to-step-3"
-                variant="primary"
-                size="md"
-                disabled={false}
-              >
-                Siguiente: Configurar Precios
-                <svg
-                  class="ml-2 w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 5l7 7-7 7"></path>
+              <Button id="next-to-step-3" variant="primary" class="shadow-premium px-10 group">
+                <span>Configurar Precios</span>
+                <svg class="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </Button>
             </div>
@@ -456,102 +349,83 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
         </Card>
       </div>
 
-      <!-- Step 3: Configurar Precios (Hidden initially) -->
-      <div id="step-3" class="wizard-step hidden">
-        <Card>
-          <div class="space-y-6">
-            <div>
-              <h3
-                class="text-lg font-semibold text-gray-900 dark:text-white mb-4"
-              >
-                Configurar Precios y Totales
+      <!-- Step 3: Configurar Precios -->
+      <div id="step-3" class="wizard-step hidden anime-fade-in">
+        <Card class="shadow-premium rounded-3xl overflow-hidden border-0">
+          <div class="p-2 sm:p-4">
+            <div class="mb-10 text-center lg:text-left">
+              <h3 class="text-2xl font-heading font-extrabold text-gray-900 dark:text-white mb-2">
+                Ingeniería de Costos
               </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
-                Ajusta cantidades, precios y descuentos.
+              <p class="text-sm text-gray-500 dark:text-gray-400 font-medium max-w-2xl">
+                Ajusta las cantidades y precios unitarios para cada servicio seleccionado.
               </p>
             </div>
 
             <!-- Items con precios editables -->
-            <div id="wizard-price-items" class="space-y-4">
-              <!-- Los items se cargarán aquí -->
+            <div id="wizard-price-items" class="space-y-6 mb-10">
+              <!-- Rendered via JS -->
             </div>
 
-            <!-- Descuentos y totales -->
-            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Input
-                    id="wizard-descuento"
-                    name="descuento"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    value="0"
-                    label="Descuento (%)"
-                  />
+            <!-- Descuentos y totales (Premium Summary Card) -->
+            <div class="bg-gray-900 dark:bg-black p-8 rounded-[2rem] shadow-premium-lg text-white">
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+                <div class="space-y-6">
+                  <div class="max-w-xs">
+                    <label for="wizard-descuento" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
+                      Bonificación Comercial (%)
+                    </label>
+                    <div class="relative">
+                      <input
+                        id="wizard-descuento"
+                        name="descuento"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value="0"
+                        class="block w-full bg-gray-800 border-gray-700 text-white rounded-2xl py-3 px-4 focus:ring-primary-500 focus:border-primary-500 text-xl font-heading font-bold"
+                      />
+                      <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-500 font-bold">%</div>
+                    </div>
+                  </div>
+                  <p class="text-xs text-gray-500 max-w-sm">
+                    Aplica un descuento global sobre el subtotal de todos los servicios.
+                  </p>
                 </div>
-                <div class="space-y-2">
-                  <div class="flex justify-between text-sm">
-                    <span class="text-gray-700 dark:text-gray-300"
-                      >Subtotal:</span
-                    >
-                    <span
-                      id="wizard-subtotal-display"
-                      class="font-medium text-gray-900 dark:text-white">$0</span
-                    >
+
+                <div class="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10 space-y-4">
+                  <div class="flex justify-between items-center text-gray-400">
+                    <span class="text-sm font-bold uppercase tracking-widest">Subtotal Bruto</span>
+                    <span id="wizard-subtotal-display" class="font-heading font-bold text-lg">$0</span>
                   </div>
-                  <div
-                    class="flex justify-between text-sm text-red-600 dark:text-red-400"
-                  >
-                    <span>Descuento:</span>
-                    <span id="wizard-descuento-display">-$0</span>
+                  <div class="flex justify-between items-center text-red-400">
+                    <span class="text-sm font-bold uppercase tracking-widest">Descuento aplicado</span>
+                    <span id="wizard-descuento-display" class="font-heading font-bold">-$0</span>
                   </div>
-                  <div
-                    class="flex justify-between text-lg font-semibold pt-2 border-t border-gray-300 dark:border-gray-600"
-                  >
-                    <span class="text-gray-900 dark:text-white">Total:</span>
-                    <span
-                      id="wizard-total-display"
-                      class="text-primary-600 dark:text-primary-400">$0</span
-                    >
+                  <div class="pt-4 border-t border-white/10 flex justify-between items-end">
+                    <div>
+                      <span class="block text-[10px] font-black text-primary-400 uppercase tracking-[0.2em] mb-1">Inversión Final</span>
+                      <span class="text-primary-500 text-2xl font-medium">$</span>
+                    </div>
+                    <span id="wizard-total-display" class="text-4xl md:text-5xl font-heading font-black tracking-tighter">0</span>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Navegación -->
-            <div
-              class="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700"
-            >
-              <Button id="back-to-step-2" variant="secondary" size="md">
-                <svg
-                  class="mr-2 w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 19l-7-7 7-7"></path>
+            <div class="flex justify-between pt-10 mt-10 border-t border-gray-100 dark:border-gray-800">
+              <Button id="back-to-step-2" variant="secondary" class="group">
+                <svg class="mr-2 w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
                 </svg>
-                Anterior
+                <span>Anterior</span>
               </Button>
-              <Button id="next-to-step-4" variant="primary" size="md">
-                Siguiente: Revisar
-                <svg
-                  class="ml-2 w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 5l7 7-7 7"></path>
+              <Button id="next-to-step-4" variant="primary" class="shadow-premium px-10 group">
+                <span>Revisar Propuesta</span>
+                <svg class="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </Button>
             </div>
@@ -559,214 +433,139 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
         </Card>
       </div>
 
-      <!-- Step 4: Revisar y Crear (Hidden initially) -->
-      <div id="step-4" class="wizard-step hidden">
-        <Card>
-          <div class="space-y-6">
-            <div>
-              <h3
-                class="text-lg font-semibold text-gray-900 dark:text-white mb-4"
-              >
-                Revisar y Crear Cotización
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
-                Revisa todos los datos antes de crear la cotización.
-              </p>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <!-- Resumen de información básica -->
-              <div class="space-y-4">
-                <h4 class="font-medium text-gray-900 dark:text-white">
-                  Información del Evento
-                </h4>
-                <div
-                  id="wizard-summary-basic"
-                  class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-2"
-                >
-                  <!-- Se completará con JavaScript -->
+      <!-- Step 4: Revisión -->
+      <div id="step-4" class="wizard-step hidden anime-fade-in">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Resumen de Datos -->
+          <div class="lg:col-span-2 space-y-8">
+            <Card class="shadow-premium rounded-3xl overflow-hidden border-0 bg-white dark:bg-gray-800">
+              <div class="p-8">
+                <div class="flex items-center justify-between mb-8 pb-4 border-b border-gray-50 dark:border-gray-700">
+                  <h3 class="text-2xl font-heading font-extrabold text-gray-900 dark:text-white uppercase tracking-tight">
+                    Confirmación de Propuesta
+                  </h3>
+                  <span class="text-[10px] bg-primary-500 text-white px-3 py-1 rounded-full font-black tracking-widest">PRE-PREVISUALIZACIÓN</span>
+                </div>
+                
+                <div id="wizard-summary-basic" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <!-- Rendered via JS -->
                 </div>
               </div>
+            </Card>
 
-              <!-- Resumen de items y totales -->
-              <div class="space-y-4">
-                <h4 class="font-medium text-gray-900 dark:text-white">
-                  Items y Totales
+            <Card class="shadow-premium rounded-3xl overflow-hidden border-0 bg-white dark:bg-gray-800">
+              <div class="p-8">
+                <h4 class="text-lg font-heading font-black text-gray-900 dark:text-white uppercase tracking-tighter mb-6 border-l-4 border-primary-500 pl-4">
+                  Desglose de Servicios
                 </h4>
-                <div
-                  id="wizard-summary-items"
-                  class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4"
-                >
-                  <!-- Se completará con JavaScript -->
+                <div id="wizard-summary-items" class="space-y-4">
+                  <!-- Rendered via JS -->
                 </div>
               </div>
-            </div>
+            </Card>
 
-            <!-- Observaciones finales -->
-            <div>
-              <Textarea
-                id="wizard-observaciones"
-                name="observaciones"
-                rows={4}
-                value={defaultObservaciones}
-                placeholder="Términos y condiciones, notas especiales..."
-                label="Observaciones y Términos"
-              />
-            </div>
-
-            <!-- Condiciones Comerciales -->
-            <div>
-              <Textarea
-                id="wizard-condiciones"
-                name="condiciones"
-                rows={15}
-                value={defaultCondiciones}
-                placeholder="Edita las condiciones comerciales..."
-                label="Condiciones Comerciales"
-              />
-              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Estas condiciones aparecerán en el PDF de la cotización. Puedes
-                editarlas según el cliente o tipo de evento.
-              </p>
-            </div>
-
-            <!-- Navegación final -->
-            <div
-              class="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700"
-            >
-              <Button id="back-to-step-3" variant="secondary" size="md">
-                <svg
-                  class="mr-2 w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 19l-7-7 7-7"></path>
-                </svg>
-                Anterior
-              </Button>
-              <div class="space-x-2">
-                <!-- Botón de test directo -->
-                <button
-                  id="test-create-quote"
-                  type="button"
-                  class="inline-flex items-center justify-center font-medium rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 shadow-sm px-4 py-2 text-sm"
-                >
-                  🧪 Test
-                </button>
-                <Button id="create-quote-wizard" variant="primary" size="lg">
-                  <svg
-                    class="mr-2 w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                  </svg>
-                  Crear Cotización
-                </Button>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
+              <div class="space-y-4">
+                <label class="block text-sm font-heading font-black text-gray-700 dark:text-gray-300 uppercase tracking-widest">Notas e Info Adicional</label>
+                <textarea
+                  id="wizard-observaciones"
+                  name="observaciones"
+                  rows={4}
+                  value={defaultObservaciones}
+                  class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 text-sm focus:ring-primary-500 focus:border-primary-500 transition-all shadow-sm"
+                  placeholder="Términos y notas especiales..."
+                ></textarea>
+              </div>
+              <div class="space-y-4">
+                <label class="block text-sm font-heading font-black text-gray-700 dark:text-gray-300 uppercase tracking-widest">Condiciones Comerciales</label>
+                <textarea
+                  id="wizard-condiciones"
+                  name="condiciones"
+                  rows={4}
+                  value={defaultCondiciones}
+                  class="w-full rounded-2xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 text-sm focus:ring-primary-500 focus:border-primary-500 transition-all shadow-sm"
+                  placeholder="Edita las condiciones para este PDF..."
+                ></textarea>
               </div>
             </div>
           </div>
-        </Card>
+
+          <!-- Columna Lateral de Acción -->
+          <div class="lg:col-span-1">
+            <div class="sticky top-24 space-y-6">
+              <Card class="bg-gray-900 dark:bg-black text-white rounded-[2.5rem] p-8 shadow-premium-lg border-0 overflow-hidden relative">
+                <div class="absolute -top-10 -right-10 w-40 h-40 bg-primary-600/20 rounded-full blur-3xl"></div>
+                <div class="relative z-10">
+                  <h4 class="text-[10px] font-black text-primary-400 uppercase tracking-[0.3em] mb-6">Acción Final</h4>
+                  <p class="text-sm text-gray-400 mb-8 leading-relaxed">
+                    Al confirmar, se generará la cotización y podrás descargar el PDF oficial.
+                  </p>
+                  
+                  <Button
+                    id="create-quote-wizard"
+                    variant="primary"
+                    class="w-full py-6 rounded-2xl text-base font-black uppercase tracking-widest shadow-lg shadow-primary-500/40 hover:scale-[1.03] transition-all"
+                  >
+                    Generar Cotización
+                  </Button>
+                  
+                  <div class="mt-6 flex items-center justify-center gap-2 group cursor-pointer" id="back-to-step-3">
+                    <span class="text-xs font-bold text-gray-500 group-hover:text-white transition-colors">Volver a editar</span>
+                    <svg class="w-4 h-4 text-gray-600 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5" />
+                    </svg>
+                  </div>
+                </div>
+              </Card>
+
+              <div class="px-6 py-4 bg-primary-50 dark:bg-primary-900/10 rounded-2xl border border-primary-100 dark:border-primary-900/30">
+                <div class="flex items-center gap-3">
+                  <div class="p-2 bg-primary-500 rounded-xl text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h5 class="text-xs font-black text-primary-900 dark:text-primary-100 uppercase tracking-tighter">Validación OK</h5>
+                    <p class="text-[10px] text-primary-700 dark:text-primary-400">Campos obligatorios completos.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Modal para crear item personalizado -->
-  <div
-    id="custom-item-modal"
-    class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50"
-  >
-    <div
-      class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
-    >
-      <div class="mt-3">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-medium text-gray-900">
-            Crear Item Personalizado
-          </h3>
-          <button
-            id="close-custom-modal"
-            class="text-gray-400 hover:text-gray-600"
-          >
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
-        </div>
-
-        <form id="custom-item-form" class="space-y-4">
-          <Input
-            id="custom-item-nombre"
-            name="nombre"
-            required
-            label="Nombre del Item"
-            placeholder="Ej: Servicio especial de audio"
-          />
-
-          <Select
-            id="custom-item-categoria"
-            name="categoria"
-            label="Categoría"
-            options={[]}
-          />
-
-          <Input
-            id="custom-item-precio"
-            name="precio"
-            type="number"
-            min="0"
-            step="0.01"
-            required
-            label="Precio Base"
-            placeholder="0.00"
-          />
-
-          <Textarea
-            id="custom-item-descripcion"
-            name="descripcion"
-            rows={3}
-            label="Descripción"
-            placeholder="Describe el servicio o producto personalizado..."
-          />
-
-          <div class="flex justify-end space-x-3 pt-4">
-            <Button
-              id="cancel-custom-item"
-              type="button"
-              variant="secondary"
-              size="sm"
-            >
-              Cancelar
-            </Button>
-            <Button
-              id="save-custom-item"
-              type="submit"
-              variant="primary"
-              size="sm"
-            >
-              Agregar Item
-            </Button>
+  <div id="custom-item-modal" class="fixed inset-0 z-50 hidden overflow-y-auto anime-fade-in">
+    <div class="flex items-center justify-center min-h-screen p-4">
+      <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"></div>
+      <div class="relative bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-premium-lg w-full max-w-lg overflow-hidden border border-gray-100 dark:border-gray-800">
+        <div class="p-8">
+          <div class="flex items-center justify-between mb-8 pb-4 border-b border-gray-50 dark:border-gray-800">
+            <div>
+              <h3 class="text-2xl font-heading font-black text-gray-900 dark:text-white tracking-tight uppercase">Nuevo Item</h3>
+              <p class="text-[10px] font-bold text-primary-500 uppercase tracking-widest mt-1">Configuración manual de servicio</p>
+            </div>
+            <button id="close-custom-modal" class="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
           </div>
-        </form>
+
+          <form id="custom-item-form" class="space-y-6">
+            <Input id="custom-item-nombre" name="nombre" required label="Nombre del Servicio" placeholder="Ej: Operador de Audio Especializado" />
+            <Select id="custom-item-categoria" name="categoria" label="Especialidad / Categoría" options={[]} />
+            <Input id="custom-item-precio" name="precio" type="number" min="0" step="0.01" required label="Precio Base Unitario" placeholder="0.00" />
+            <Textarea id="custom-item-descripcion" name="descripcion" rows={3} label="Especificaciones Técnicas" placeholder="Detalles del item personalizado..." />
+
+            <div class="flex flex-col sm:flex-row gap-4 pt-6">
+              <Button id="cancel-custom-item" type="button" variant="secondary" class="flex-1 rounded-2xl">Cancelar</Button>
+              <Button id="save-custom-item" type="submit" variant="primary" class="flex-1 rounded-2xl shadow-premium">Crear e Insertar</Button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -1068,39 +867,49 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
         );
 
         return `
-        <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-3 hover:border-primary-300 dark:hover:border-primary-500 transition-colors ${
+        <div class="group relative bg-white dark:bg-gray-800 rounded-3xl p-5 border-2 transition-all duration-300 ${
           isSelected
-            ? "bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-600"
-            : "bg-white dark:bg-gray-800"
+            ? "border-primary-500 dark:border-primary-400 bg-primary-50/30 dark:bg-primary-900/10 shadow-premium"
+            : "border-gray-50 dark:border-gray-700 hover:border-primary-200 dark:hover:border-primary-800 hover:shadow-premium"
         }">
-          <div class="flex items-center justify-between">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div class="flex-1 min-w-0">
-              <h5 class="text-sm font-medium text-gray-900 dark:text-white truncate">${item.nombre}</h5>
-              <p class="text-xs text-gray-500 dark:text-gray-400">${getCategoryName(item.categoriaId)}</p>
-              ${descripcion ? `<p class="text-xs text-gray-600 dark:text-gray-300 mt-1">${descripcion}</p>` : ""}
-              <p class="text-sm font-semibold text-primary-600 dark:text-primary-400 mt-1">$${precio.toLocaleString("es-AR")}</p>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-[10px] font-black text-primary-500 uppercase tracking-widest">${getCategoryName(item.categoriaId)}</span>
+                ${isSelected ? '<span class="text-[10px] font-black bg-primary-500 text-white px-2 py-0.5 rounded-full">SELECCIONADO</span>' : ""}
+              </div>
+              <h5 class="text-base font-heading font-extrabold text-gray-900 dark:text-white leading-tight mb-1">${item.nombre}</h5>
+              ${descripcion ? `<p class="text-xs text-gray-400 dark:text-gray-500 line-clamp-2 mb-3">${descripcion}</p>` : ""}
+              <div class="flex items-baseline gap-1">
+                <span class="text-[10px] font-bold text-gray-400">$</span>
+                <span class="text-lg font-heading font-black text-gray-900 dark:text-white">${precio.toLocaleString("es-AR")}</span>
+              </div>
             </div>
-            <div class="flex items-center space-x-2 ml-3">
+            
+            <div class="flex items-center gap-3">
               ${
                 !isSelected
                   ? `
-                <input
-                  type="number"
-                  id="cantidad-${item.id}"
-                  min="1"
-                  step="0.5"
-                  value="1"
-                  class="w-16 text-xs rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-1"
-                />
+                <div class="flex flex-col items-center">
+                  <span class="text-[8px] font-black text-gray-400 uppercase mb-1 tracking-tighter">CANT.</span>
+                  <input
+                    type="number"
+                    id="cantidad-${item.id}"
+                    min="1"
+                    step="0.5"
+                    value="1"
+                    class="w-14 text-center text-sm font-bold rounded-xl border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 dark:text-white p-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
               `
                   : ""
               }
               <button
                 onclick="${isSelected ? `removeWizardItem('${item.id}')` : `addWizardItem('${item.id}')`}"
-                class="text-xs px-3 py-1 rounded transition-colors ${
+                class="flex-1 sm:flex-none px-6 py-3 rounded-2xl font-heading font-black text-xs uppercase tracking-widest transition-all duration-300 ${
                   isSelected
-                    ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50"
-                    : "bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/50"
+                    ? "bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
+                    : "bg-gray-900 text-white hover:bg-black hover:shadow-premium dark:bg-primary-600 dark:hover:bg-primary-700"
                 }"
               >
                 ${isSelected ? "Quitar" : "Agregar"}
@@ -1137,18 +946,22 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
     selectedContainer.innerHTML = wizardData.selectedItems
       .map(
         (item: any) => `
-      <div class="bg-white dark:bg-gray-800 border border-green-300 dark:border-green-600 rounded-lg p-3">
+      <div class="group bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-primary-100 dark:border-primary-900/30 hover:border-primary-300 transition-all">
         <div class="flex items-center justify-between">
-          <div class="flex-1">
-            <h5 class="text-sm font-medium text-gray-900 dark:text-white">${item.nombre}</h5>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Cantidad: ${item.cantidad} x $${(item.precioBase || 0).toLocaleString("es-AR")}</p>
-            <p class="text-sm font-semibold text-green-600 dark:text-green-400">Total: $${(item.cantidad * (item.precioBase || 0)).toLocaleString("es-AR")}</p>
+          <div class="flex-1 min-w-0">
+            <h5 class="text-sm font-heading font-extrabold text-gray-900 dark:text-white truncate uppercase tracking-tight">${item.nombre}</h5>
+            <div class="flex items-center gap-3 mt-1">
+              <p class="text-[10px] font-bold text-gray-400 uppercase">${item.cantidad} UNID. <span class="mx-1">×</span> $${(item.precioBase || 0).toLocaleString("es-AR")}</p>
+              <div class="h-1 w-1 rounded-full bg-primary-500"></div>
+              <p class="text-sm font-heading font-black text-primary-600 dark:text-primary-400">$${(item.cantidad * (item.precioBase || 0)).toLocaleString("es-AR")}</p>
+            </div>
           </div>
           <button
             onclick="removeWizardItem('${item.id}')"
-            class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
+            class="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
+            title="Quitar"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
             </svg>
           </button>
@@ -1263,71 +1076,68 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
 
     container.innerHTML = wizardData.selectedItems
       .map((item: any, index: number) => {
-        // Use helper function for category name
         const categoriaNombre = getCategoryName(item.categoriaId);
-
-        // Format description like in step 2
         const descripcion = Array.isArray(item.descripcion)
-          ? item.descripcion.join(" • ")
+          ? item.descripcion.join("\n")
           : item.descripcion || "";
 
         return `
-            <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-6 bg-white dark:bg-gray-800 shadow-sm">
-              <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="relative bg-white dark:bg-gray-800 rounded-[2rem] p-8 shadow-premium border border-gray-100 dark:border-gray-700 anime-fade-in" style="animation-delay: ${index * 0.1}s">
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 <!-- Item Info -->
-                <div class="lg:col-span-1">
-                  <h5 class="font-semibold text-gray-900 dark:text-white mb-2 text-lg">${item.nombre}</h5>
-                  <p class="text-sm text-primary-600 dark:text-primary-400 font-medium mb-3">${categoriaNombre}</p>
+                <div class="lg:col-span-5 space-y-4">
+                  <div>
+                    <span class="text-[10px] font-black text-primary-500 uppercase tracking-[0.2em] mb-1 block">${categoriaNombre}</span>
+                    <h5 class="text-2xl font-heading font-black text-gray-900 dark:text-white leading-tight">${item.nombre}</h5>
+                  </div>
                   
-                  <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Descripción personalizada</label>
+                  <div class="space-y-2">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Especificaciones de Entrega / Montaje</label>
                     <textarea
                       id="pricing-descripcion-${index}"
-                      rows="4"
-                      class="w-full text-sm rounded-lg border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500 resize-none font-mono leading-relaxed dark:bg-gray-700 dark:text-white"
+                      rows="3"
+                      class="w-full text-sm rounded-2xl border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:border-primary-500 focus:ring-primary-500 resize-none font-medium leading-relaxed dark:text-gray-200 p-4 transition-all"
                       onchange="updateItemDescription('${item.id}', this.value)"
-                      placeholder="Agrega detalles específicos para este item:&#10;• Especificaciones técnicas&#10;• Ubicación o montaje&#10;• Horarios especiales&#10;• Observaciones importantes"
-                      style="white-space: pre-wrap; line-height: 1.6;"
+                      placeholder="Detalles específicos para este evento..."
+                      style="white-space: pre-wrap;"
                     >${descripcion}</textarea>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      <span class="font-medium">💡 Tip:</span> Usa viñetas (•) o guiones (-) para organizar la información
-                    </p>
                   </div>
                 </div>
                 
                 <!-- Pricing Controls -->
-                <div class="lg:col-span-2">
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cantidad</label>
+                <div class="lg:col-span-7 bg-gray-50 dark:bg-gray-900/50 rounded-[1.5rem] p-6 flex flex-col justify-center">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                    <div class="space-y-2">
+                      <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Cantidad</label>
                       <input
                         type="number"
                         id="pricing-cantidad-${index}"
                         value="${item.cantidad}"
                         min="0.5"
                         step="0.5"
-                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500 text-lg py-2 dark:bg-gray-700 dark:text-white"
+                        class="w-full rounded-xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 focus:border-primary-500 focus:ring-primary-500 text-xl font-heading font-bold py-3 dark:text-white text-center shadow-sm"
                         onchange="updateItemPricing(${index})"
                       />
                     </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Precio Unitario</label>
-                      <input
-                        type="number"
-                        id="pricing-precio-${index}"
-                        value="${item.precioBase || 0}"
-                        min="0"
-                        step="0.01"
-                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500 text-lg py-2 dark:bg-gray-700 dark:text-white"
-                        onchange="updateItemPricing(${index})"
-                      />
+                    <div class="space-y-2">
+                      <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Precio Unitario</label>
+                      <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                        <input
+                          type="number"
+                          id="pricing-precio-${index}"
+                          value="${item.precioBase || 0}"
+                          min="0"
+                          step="0.01"
+                          class="w-full rounded-xl border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 focus:border-primary-500 focus:ring-primary-500 text-xl font-heading font-bold py-3 pl-8 pr-4 dark:text-white shadow-sm"
+                          onchange="updateItemPricing(${index})"
+                        />
+                      </div>
                     </div>
                     <div class="text-right">
-                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subtotal</label>
-                      <div class="bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 rounded-lg p-3 border border-primary-200 dark:border-primary-700">
-                        <span class="text-xl font-bold text-primary-700 dark:text-primary-300">
-                          $<span id="item-total-${index}">${(item.cantidad * (item.precioBase || 0)).toLocaleString("es-AR")}</span>
-                        </span>
+                      <span class="block text-[10px] font-black text-primary-500 uppercase tracking-widest mb-2">Subtotal Item</span>
+                      <div class="text-3xl font-heading font-black text-gray-900 dark:text-white tracking-tighter">
+                        $<span id="item-total-${index}">${(item.cantidad * (item.precioBase || 0)).toLocaleString("es-AR")}</span>
                       </div>
                     </div>
                   </div>
@@ -1541,16 +1351,48 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
       : "No seleccionado";
 
     container.innerHTML = `
-      <div class="space-y-2 text-sm">
-        <div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Cliente:</strong> ${clienteNombre}</div>
-        <div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Título:</strong> ${wizardData.basicInfo.titulo || "Sin título"}</div>
-        <div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Fecha inicio:</strong> ${wizardData.basicInfo.fecha_evento || "No especificada"}</div>
-        <div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Fecha fin:</strong> ${wizardData.basicInfo.fecha_evento_fin || "No especificada"}</div>
-        <div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Lugar:</strong> ${wizardData.basicInfo.lugar_evento || "No especificado"}</div>
-        <div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Duración:</strong> ${wizardData.basicInfo.duracion_dias || 1} día(s)</div>
-        <div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Estado:</strong> ${wizardData.basicInfo.estado || "borrador"}</div>
-        <div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Requiere armado:</strong> ${wizardData.basicInfo.requiere_armado ? "Sí" : "No"}</div>
-        ${wizardData.basicInfo.descripcion ? `<div class="text-gray-700 dark:text-gray-300"><strong class="text-gray-900 dark:text-white">Descripción:</strong> ${wizardData.basicInfo.descripcion}</div>` : ""}
+      <div class="col-span-full md:col-span-1 space-y-6">
+        <div>
+          <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Cliente Principal</span>
+          <p class="text-base font-heading font-black text-gray-900 dark:text-white uppercase tracking-tight">${clienteNombre}</p>
+        </div>
+        <div>
+          <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Identificador del Proyecto</span>
+          <p class="text-base font-heading font-extrabold text-primary-600 dark:text-primary-400">${wizardData.basicInfo.titulo || "PROYECTO SIN TÍTULO"}</p>
+        </div>
+        <div class="flex gap-8">
+          <div>
+            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Estado</span>
+            <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-black rounded-full uppercase tracking-tighter">${wizardData.basicInfo.estado || "borrador"}</span>
+          </div>
+          <div>
+            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Armado</span>
+            <span class="text-sm font-bold">${wizardData.basicInfo.requiere_armado ? "SÍ" : "NO"}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-span-full md:col-span-1 space-y-6">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Fecha Inicio</span>
+            <p class="text-sm font-bold text-gray-800 dark:text-gray-200">${wizardData.basicInfo.fecha_evento || "TBD"}</p>
+          </div>
+          <div>
+            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Fecha Fin</span>
+            <p class="text-sm font-bold text-gray-800 dark:text-gray-200">${wizardData.basicInfo.fecha_evento_fin || "TBD"}</p>
+          </div>
+        </div>
+        <div>
+          <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Locación del Evento</span>
+          <p class="text-sm font-bold text-gray-800 dark:text-gray-200">${wizardData.basicInfo.lugar_evento || "SIN ESPECIFICAR"}</p>
+        </div>
+        ${wizardData.basicInfo.descripcion ? `
+          <div>
+            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Notas de Alcance</span>
+            <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed italic border-l-2 border-gray-100 dark:border-gray-800 pl-3">${wizardData.basicInfo.descripcion}</p>
+          </div>
+        ` : ""}
       </div>
     `;
   }
@@ -1562,15 +1404,18 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
 
     const itemsHtml = wizardData.selectedItems
       .map(
-        (item: any) => `
-      <div class="flex justify-between py-2 border-b border-gray-200 dark:border-gray-600">
-        <div class="flex-1">
-          <div class="font-medium text-gray-900 dark:text-white">${item.nombre}</div>
-          <div class="text-sm text-gray-500 dark:text-gray-400">${item.cantidad} x $${(item.precioBase || 0).toLocaleString("es-AR")}</div>
-        </div>
-        <div class="font-medium text-gray-900 dark:text-white">$${((item.cantidad || 0) * (item.precioBase || 0)).toLocaleString("es-AR")}</div>
-      </div>
-    `
+        (item: any) => {
+          const { displayText } = QuoteHelper.formatItemForDisplay(item);
+          return `
+            <div class="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700 items-start">
+              <div class="flex-1 pr-4">
+                <div class="text-sm">${displayText}</div>
+                <div class="mt-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">${item.cantidad} x $${(item.precioBase || 0).toLocaleString("es-AR")}</div>
+              </div>
+              <div class="font-heading font-black text-gray-900 dark:text-white text-right">$${((item.cantidad || 0) * (item.precioBase || 0)).toLocaleString("es-AR")}</div>
+            </div>
+          `;
+        }
       )
       .join("");
 
@@ -1582,26 +1427,32 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
     };
 
     container.innerHTML = `
-      <div class="space-y-2">
+      <div class="space-y-1">
         ${itemsHtml}
-        <div class="pt-2 mt-4 border-t border-gray-300 dark:border-gray-600">
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-700 dark:text-gray-300">Subtotal:</span>
-            <span class="text-gray-900 dark:text-white">$${pricing.subtotal.toLocaleString("es-AR")}</span>
+        
+        <div class="pt-8 mt-4 space-y-4">
+          <div class="flex justify-between items-center text-sm">
+            <span class="font-black text-gray-400 uppercase tracking-widest">Subtotal Bruto</span>
+            <span class="font-bold text-gray-900 dark:text-white">$${pricing.subtotal.toLocaleString("es-AR")}</span>
           </div>
+          
           ${
             pricing.descuentoPorcentaje > 0
               ? `
-            <div class="flex justify-between text-sm text-red-600 dark:text-red-400">
-              <span>Descuento (${pricing.descuentoPorcentaje}%):</span>
-              <span>-$${pricing.descuentoMonto.toLocaleString("es-AR")}</span>
+            <div class="flex justify-between items-center text-sm">
+              <span class="font-black text-red-500 uppercase tracking-widest">Descuento aplicado (${pricing.descuentoPorcentaje}%)</span>
+              <span class="font-bold text-red-600">-$${pricing.descuentoMonto.toLocaleString("es-AR")}</span>
             </div>
           `
               : ""
           }
-          <div class="flex justify-between text-lg font-semibold pt-2 border-t border-gray-200 dark:border-gray-600">
-            <span class="text-gray-900 dark:text-white">Total:</span>
-            <span class="text-primary-600 dark:text-primary-400">$${pricing.total.toLocaleString("es-AR")}</span>
+          
+          <div class="pt-6 border-t-2 border-gray-900 dark:border-white flex justify-between items-baseline">
+            <span class="text-lg font-heading font-black text-gray-900 dark:text-white uppercase tracking-tighter">Total Inversión</span>
+            <div class="flex flex-col items-end">
+              <span class="text-4xl font-heading font-black text-gray-900 dark:text-white tracking-tighter">$${pricing.total.toLocaleString("es-AR")}</span>
+              <span class="text-[10px] font-bold text-primary-500 uppercase tracking-widest mt-1">IVA Incluido (Final)</span>
+            </div>
           </div>
         </div>
       </div>

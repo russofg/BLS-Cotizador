@@ -1,5 +1,4 @@
-import { db } from '../utils/firebase';
-import { collection, query, getDocs, orderBy, where, limit } from 'firebase/firestore';
+import { adminDb } from '../utils/firebaseAdmin';
 import { cache, CacheKeys, CacheTTL, invalidateRelatedCache } from '../utils/cache';
 
 export interface QuoteAnalytics {
@@ -34,6 +33,7 @@ export interface DashboardAnalytics {
   quotes: QuoteAnalytics;
   clients: ClientAnalytics;
   items: ItemAnalytics;
+  recentQuotes: any[];
   lastUpdated: string;
 }
 
@@ -51,16 +51,52 @@ export class AnalyticsService {
         return cachedData;
       }
 
-      const [quotes, clients, items] = await Promise.all([
-        this.getQuoteAnalytics(),
-        this.getClientAnalytics(),
-        this.getItemAnalytics()
+      // Fetch all required collections ONCE to avoid redundant mass fetches
+      const [quotesSnapshot, clientsSnapshot, itemsSnapshot] = await Promise.all([
+        adminDb.collection('cotizaciones').orderBy('createdAt', 'desc').get(),
+        adminDb.collection('clientes').orderBy('createdAt', 'desc').get(),
+        adminDb.collection('items').orderBy('nombre', 'asc').get()
+      ]);
+      
+      const quotes = quotesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.() || new Date(doc.data().createdAt)
+      }));
+      
+      const clients = clientsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.() || new Date(doc.data().createdAt)
+      }));
+      
+      const items = itemsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      const [quotesAnalytics, clientsAnalytics, itemsAnalytics] = await Promise.all([
+        this.getQuoteAnalytics(quotes),
+        this.getClientAnalytics(clients, quotes),
+        this.getItemAnalytics(items, quotes)
       ]);
 
       const analytics: DashboardAnalytics = {
-        quotes,
-        clients,
-        items,
+        quotes: quotesAnalytics,
+        clients: clientsAnalytics,
+        items: itemsAnalytics,
+        recentQuotes: quotes.slice(0, 5).map(quote => {
+          const q = quote as any;
+          const client = clients.find(c => c.id === (q.clienteId || q.cliente_id));
+          const c = client as any;
+          return {
+            ...q,
+            cliente: client ? {
+              nombre: c.nombre,
+              empresa: c.empresa
+            } : null
+          };
+        }),
         lastUpdated: new Date().toISOString()
       };
 
@@ -75,7 +111,7 @@ export class AnalyticsService {
   /**
    * Obtiene estadísticas de cotizaciones
    */
-  static async getQuoteAnalytics(): Promise<QuoteAnalytics> {
+  static async getQuoteAnalytics(prefetchedQuotes?: any[]): Promise<QuoteAnalytics> {
     try {
       const cacheKey = CacheKeys.analytics('quotes');
       const cachedData = cache.get<QuoteAnalytics>(cacheKey);
@@ -84,13 +120,17 @@ export class AnalyticsService {
       }
 
       // Obtener todas las cotizaciones
-      const quotesQuery = query(collection(db, 'cotizaciones'), orderBy('createdAt', 'desc'));
-      const quotesSnapshot = await getDocs(quotesQuery);
-      const quotes = quotesSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.() || new Date(doc.data().createdAt)
-      }));
+      let quotes;
+      if (prefetchedQuotes) {
+        quotes = prefetchedQuotes;
+      } else {
+        const quotesSnapshot = await adminDb.collection('cotizaciones').orderBy('createdAt', 'desc').get();
+        quotes = quotesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate?.() || new Date(doc.data().createdAt)
+        }));
+      }
 
       const now = new Date();
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -137,7 +177,7 @@ export class AnalyticsService {
   /**
    * Obtiene estadísticas de clientes
    */
-  static async getClientAnalytics(): Promise<ClientAnalytics> {
+  static async getClientAnalytics(prefetchedClients?: any[], prefetchedQuotes?: any[]): Promise<ClientAnalytics> {
     try {
       const cacheKey = CacheKeys.analytics('clients');
       const cachedData = cache.get<ClientAnalytics>(cacheKey);
@@ -146,22 +186,30 @@ export class AnalyticsService {
       }
 
       // Obtener todos los clientes
-      const clientsQuery = query(collection(db, 'clientes'), orderBy('createdAt', 'desc'));
-      const clientsSnapshot = await getDocs(clientsQuery);
-      const clients = clientsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.() || new Date(doc.data().createdAt)
-      }));
+      let clients;
+      if (prefetchedClients) {
+        clients = prefetchedClients;
+      } else {
+        const clientsSnapshot = await adminDb.collection('clientes').orderBy('createdAt', 'desc').get();
+        clients = clientsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate?.() || new Date(doc.data().createdAt)
+        }));
+      }
 
       // Obtener todas las cotizaciones para calcular estadísticas de clientes
-      const quotesQuery = query(collection(db, 'cotizaciones'));
-      const quotesSnapshot = await getDocs(quotesQuery);
-      const quotes = quotesSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.() || new Date(doc.data().createdAt)
-      }));
+      let quotes;
+      if (prefetchedQuotes) {
+        quotes = prefetchedQuotes;
+      } else {
+        const quotesSnapshot = await adminDb.collection('cotizaciones').get();
+        quotes = quotesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate?.() || new Date(doc.data().createdAt)
+        }));
+      }
 
       const now = new Date();
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -228,7 +276,7 @@ export class AnalyticsService {
   /**
    * Obtiene estadísticas de items/productos
    */
-  static async getItemAnalytics(): Promise<ItemAnalytics> {
+  static async getItemAnalytics(prefetchedItems?: any[], prefetchedQuotes?: any[]): Promise<ItemAnalytics> {
     try {
       const cacheKey = CacheKeys.analytics('items');
       const cachedData = cache.get<ItemAnalytics>(cacheKey);
@@ -237,20 +285,28 @@ export class AnalyticsService {
       }
 
       // Obtener todos los items
-      const itemsQuery = query(collection(db, 'items'), orderBy('nombre', 'asc'));
-      const itemsSnapshot = await getDocs(itemsQuery);
-      const items = itemsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      let items;
+      if (prefetchedItems) {
+        items = prefetchedItems;
+      } else {
+        const itemsSnapshot = await adminDb.collection('items').orderBy('nombre', 'asc').get();
+        items = itemsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      }
 
       // Obtener todas las cotizaciones para calcular estadísticas de items
-      const quotesQuery = query(collection(db, 'cotizaciones'));
-      const quotesSnapshot = await getDocs(quotesQuery);
-      const quotes = quotesSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      let quotes;
+      if (prefetchedQuotes) {
+        quotes = prefetchedQuotes;
+      } else {
+        const quotesSnapshot = await adminDb.collection('cotizaciones').get();
+        quotes = quotesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      }
 
       // Calcular estadísticas básicas
       const totalItems = items.length;

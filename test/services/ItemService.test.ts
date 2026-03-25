@@ -5,23 +5,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ItemService } from '../../src/services/ItemService';
 
-// Mock Firebase
-const mockFirestore = {
-  collection: vi.fn(),
-  doc: vi.fn(),
-  getDoc: vi.fn(),
-  getDocs: vi.fn(),
-  addDoc: vi.fn(),
-  updateDoc: vi.fn(),
-  deleteDoc: vi.fn(),
-  query: vi.fn(),
-  where: vi.fn(),
-  orderBy: vi.fn(),
-  limit: vi.fn()
-};
+const mockFirestore = vi.hoisted(() => ({
+  collection: vi.fn().mockReturnThis(),
+  doc: vi.fn().mockReturnThis(),
+  where: vi.fn().mockReturnThis(),
+  orderBy: vi.fn().mockReturnThis(),
+  limit: vi.fn().mockReturnThis(),
+  get: vi.fn(),
+  add: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn()
+}));
 
-vi.mock('../../src/utils/firebase', () => ({
-  db: mockFirestore
+vi.mock('../../src/utils/firebaseAdmin', () => ({
+  adminDb: mockFirestore
 }));
 
 // Mock ValidationHelper
@@ -54,10 +51,7 @@ describe('ItemService', () => {
         }
       ];
 
-      mockFirestore.collection.mockReturnValue('collection');
-      mockFirestore.query.mockReturnValue('query');
-      mockFirestore.orderBy.mockReturnValue('orderBy');
-      mockFirestore.getDocs.mockResolvedValue({
+      mockFirestore.get.mockResolvedValue({
         docs: mockItems
       });
 
@@ -83,11 +77,7 @@ describe('ItemService', () => {
         }
       ];
 
-      mockFirestore.collection.mockReturnValue('collection');
-      mockFirestore.query.mockReturnValue('query');
-      mockFirestore.orderBy.mockReturnValue('orderBy');
-      mockFirestore.where.mockReturnValue('where');
-      mockFirestore.getDocs.mockResolvedValue({
+      mockFirestore.get.mockResolvedValue({
         docs: mockItems
       });
 
@@ -123,10 +113,7 @@ describe('ItemService', () => {
         }
       ];
 
-      mockFirestore.collection.mockReturnValue('collection');
-      mockFirestore.query.mockReturnValue('query');
-      mockFirestore.orderBy.mockReturnValue('orderBy');
-      mockFirestore.getDocs.mockResolvedValue({
+      mockFirestore.get.mockResolvedValue({
         docs: mockItems
       });
 
@@ -162,10 +149,7 @@ describe('ItemService', () => {
         }
       ];
 
-      mockFirestore.collection.mockReturnValue('collection');
-      mockFirestore.query.mockReturnValue('query');
-      mockFirestore.orderBy.mockReturnValue('orderBy');
-      mockFirestore.getDocs.mockResolvedValue({
+      mockFirestore.get.mockResolvedValue({
         docs: mockItems
       });
 
@@ -180,7 +164,7 @@ describe('ItemService', () => {
     it('should return item by ID', async () => {
       const mockItem = {
         id: 'item1',
-        exists: () => true,
+        exists: true,
         data: () => ({
           nombre: 'Item Test',
           categoriaId: 'cat1',
@@ -191,9 +175,7 @@ describe('ItemService', () => {
         })
       };
 
-      mockFirestore.collection.mockReturnValue('collection');
-      mockFirestore.doc.mockReturnValue('doc');
-      mockFirestore.getDoc.mockResolvedValue(mockItem);
+      mockFirestore.get.mockResolvedValue(mockItem);
 
       const result = await ItemService.getById('item1');
 
@@ -205,12 +187,11 @@ describe('ItemService', () => {
     it('should return null for non-existent item', async () => {
       const mockItem = {
         id: 'item1',
-        exists: () => false
+        exists: false,
+        data: () => ({})
       };
 
-      mockFirestore.collection.mockReturnValue('collection');
-      mockFirestore.doc.mockReturnValue('doc');
-      mockFirestore.getDoc.mockResolvedValue(mockItem);
+      mockFirestore.get.mockResolvedValue(mockItem);
 
       const result = await ItemService.getById('nonexistent');
 
@@ -232,9 +213,9 @@ describe('ItemService', () => {
         activo: true
       };
 
-      const mockDocRef = { id: 'new-item-id' };
       const mockDocSnap = {
         id: 'new-item-id',
+        exists: true,
         data: () => ({
           ...itemData,
           createdAt: { toDate: () => new Date('2024-01-15') },
@@ -242,10 +223,13 @@ describe('ItemService', () => {
         })
       };
 
-      mockFirestore.collection.mockReturnValue('collection');
-      mockFirestore.addDoc.mockResolvedValue(mockDocRef);
-      mockFirestore.doc.mockReturnValue('doc');
-      mockFirestore.getDoc.mockResolvedValue(mockDocSnap);
+      const mockDocRef = { 
+        id: 'new-item-id',
+        get: vi.fn().mockResolvedValue(mockDocSnap)
+      };
+
+      mockFirestore.add.mockResolvedValue(mockDocRef);
+      mockFirestore.get.mockResolvedValue(mockDocSnap);
 
       // Mock getByCodigo to return null (no existing item)
       vi.spyOn(ItemService, 'getByCodigo').mockResolvedValue(null);
@@ -269,7 +253,14 @@ describe('ItemService', () => {
 
       const existingItem = {
         id: 'existing-item',
-        codigo: 'EXISTING'
+        codigo: 'EXISTING',
+        nombre: 'Existing Item',
+        categoriaId: 'cat1',
+        precioBase: 100,
+        unidad: 'unidad',
+        activo: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
 
       vi.spyOn(ItemService, 'getByCodigo').mockResolvedValue(existingItem);
@@ -297,21 +288,25 @@ describe('ItemService', () => {
   });
 
   describe('update', () => {
+    beforeEach(async () => {
+      const { ValidationHelper } = await import('../../src/utils/validationHelpers');
+      vi.mocked(ValidationHelper.validateName).mockReturnValue({ isValid: true, errors: [] });
+    });
+
     it('should update existing item', async () => {
       const updates = {
         nombre: 'Item Actualizado',
         precioBase: 200
       };
 
-      mockFirestore.collection.mockReturnValue('collection');
-      mockFirestore.doc.mockReturnValue('doc');
-      mockFirestore.updateDoc.mockResolvedValue(undefined);
+      await expect(ItemService.update('item1', updates)).resolves.not.toThrow();
+      expect(mockFirestore.update).toHaveBeenCalled();
 
       // Mock getByCodigo to return null (no conflict)
       vi.spyOn(ItemService, 'getByCodigo').mockResolvedValue(null);
 
       await expect(ItemService.update('item1', updates)).resolves.not.toThrow();
-      expect(mockFirestore.updateDoc).toHaveBeenCalled();
+      expect(mockFirestore.update).toHaveBeenCalled();
     });
 
     it('should reject update with existing code', async () => {
@@ -321,7 +316,14 @@ describe('ItemService', () => {
 
       const existingItem = {
         id: 'other-item',
-        codigo: 'EXISTING'
+        codigo: 'EXISTING',
+        nombre: 'Other Item',
+        categoriaId: 'cat1',
+        precioBase: 100,
+        unidad: 'unidad',
+        activo: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
 
       vi.spyOn(ItemService, 'getByCodigo').mockResolvedValue(existingItem);
@@ -336,12 +338,8 @@ describe('ItemService', () => {
 
   describe('delete', () => {
     it('should soft delete item', async () => {
-      mockFirestore.collection.mockReturnValue('collection');
-      mockFirestore.doc.mockReturnValue('doc');
-      mockFirestore.updateDoc.mockResolvedValue(undefined);
-
       await expect(ItemService.delete('item1')).resolves.not.toThrow();
-      expect(mockFirestore.updateDoc).toHaveBeenCalledWith('doc', {
+      expect(mockFirestore.update).toHaveBeenCalledWith({
         activo: false,
         updatedAt: expect.any(Date)
       });
@@ -379,10 +377,7 @@ describe('ItemService', () => {
         }
       ];
 
-      mockFirestore.collection.mockReturnValue('collection');
-      mockFirestore.query.mockReturnValue('query');
-      mockFirestore.orderBy.mockReturnValue('orderBy');
-      mockFirestore.getDocs.mockResolvedValue({
+      mockFirestore.get.mockResolvedValue({
         docs: mockItems
       });
 
@@ -425,15 +420,13 @@ describe('ItemService', () => {
         }
       ];
 
-      mockFirestore.collection.mockReturnValue('collection');
-      mockFirestore.query.mockReturnValue('query');
-      mockFirestore.orderBy.mockReturnValue('orderBy');
-      mockFirestore.getDocs.mockResolvedValue({
+      mockFirestore.get.mockResolvedValue({
         docs: mockItems
       });
 
       const result = await ItemService.getStats();
 
+      // Ensure cache was clear so it used our mockItems
       expect(result.total).toBe(2);
       expect(result.activos).toBe(1);
       expect(result.inactivos).toBe(1);

@@ -84,7 +84,8 @@ export class QuoteHelper {
       return `COT-${numeroSecuencial}-${fechaFormateada}-${clienteNombre}-${eventoNombre}`;
     } catch (error) {
       console.error('Error generating quote number:', error);
-      return `COT-001-${DateHelper.getCurrentDateString().replace(/-/g, "")}-CLIENTE-EVENTO`;
+      const fallbackDate = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      return `COT-001-${fallbackDate}-CLIENTE-EVENTO`;
     }
   }
 
@@ -251,37 +252,70 @@ export class QuoteHelper {
   }
 
   /**
-   * Formatea un item para mostrar en la UI
+   * Obtiene la descripción como un array, manejando tanto strings como arrays existentes.
+   * Prioriza el formato de array de Firestore para viñetas perfectas.
    */
-  static formatItemForDisplay(item: QuoteItem): { name: string; description: string; displayText: string } {
-    let itemName = item.nombre || '';
-    let itemDescription = '';
+  static getDescriptionAsArray(descripcion: string | string[] | undefined | null): string[] {
+    if (!descripcion) return [];
     
-    // Manejar descripción que puede ser array o string
-    if (Array.isArray(item.descripcion)) {
-      itemDescription = item.descripcion.join(', ');
-    } else if (item.descripcion) {
-      itemDescription = item.descripcion;
+    if (Array.isArray(descripcion)) {
+      return descripcion.map(d => String(d).trim()).filter(d => d.length > 0);
     }
     
+    // Si es un string, NO dividimos por coma automáticamente porque puede romper frases 
+    // (ej: "Operador responsable, uniformado" no debe separarse).
+    // Dividimos por saltos de línea si existen, de lo contrario tratamos como un único bloque.
+    const text = String(descripcion).trim();
+    if (text.includes('\n')) {
+      return text.split('\n').map(d => d.trim()).filter(d => d.length > 0);
+    }
+    
+    return [text];
+  }
+
+  /**
+   * Formatea un item para mostrar en la UI con soporte para viñetas
+   */
+  static formatItemForDisplay(item: QuoteItem): { name: string; description: string; descriptionArray: string[]; displayText: string } {
+    let itemName = item.nombre || '';
+    const descriptionArray = this.getDescriptionAsArray(item.descripcion);
+    let itemDescription = descriptionArray.join(', ');
+    
     // Si no hay nombre separado, intentar extraer de la descripción
-    if (!itemName && itemDescription) {
-      itemName = itemDescription.split('.')[0] || itemDescription.substring(0, 50) + '...';
+    if (!itemName && descriptionArray.length > 0) {
+      itemName = descriptionArray[0];
+      // Si el nombre fue extraído del primer elemento, lo quitamos del array si hay más
+      if (descriptionArray.length > 1) {
+        // descriptionArray.shift(); // No mutar el original si es posible
+      }
     }
     
     // Asegurar que trabajamos con strings
     itemName = String(itemName || '').trim();
-    itemDescription = String(itemDescription || '').trim();
     
-    // Construir texto de visualización
+    // Construir texto de visualización con viñetas si hay múltiples elementos
     let displayText = '';
     if (itemName) {
       displayText = `<strong>${itemName}</strong>`;
-      if (itemDescription && itemDescription !== itemName) {
-        displayText += `<br><span class="text-gray-600">${itemDescription}</span>`;
+      if (descriptionArray.length > 0) {
+        if (descriptionArray.length === 1 && descriptionArray[0] === itemName) {
+          // No repetir si es igual
+        } else {
+          const listItems = descriptionArray
+            .filter(d => d !== itemName)
+            .map(d => `<li class="ml-4 list-disc">${d}</li>`)
+            .join('');
+          
+          if (listItems) {
+            displayText += `<ul class="mt-1 space-y-0.5">${listItems}</ul>`;
+          }
+        }
       }
-    } else if (itemDescription) {
-      displayText = itemDescription;
+    } else if (descriptionArray.length > 0) {
+      const listItems = descriptionArray
+        .map(d => `<li class="ml-4 list-disc">${d}</li>`)
+        .join('');
+      displayText = `<ul class="mt-1 space-y-0.5">${listItems}</ul>`;
     } else {
       displayText = 'Item sin descripción';
     }
@@ -289,6 +323,7 @@ export class QuoteHelper {
     return {
       name: itemName,
       description: itemDescription,
+      descriptionArray: descriptionArray,
       displayText
     };
   }
@@ -296,11 +331,12 @@ export class QuoteHelper {
   /**
    * Enriquece una cotización con datos del cliente
    */
-  static enrichQuoteWithClient(cotizacion: Quote, clientes: Client[]): Quote & { cliente_nombre: string } {
+  static enrichQuoteWithClient(cotizacion: Quote, clientes: Client[]): Quote & { cliente_nombre: string; cliente?: Client } {
     const cliente = clientes.find(c => c.id === cotizacion.cliente_id || c.id === cotizacion.clienteId);
     
     return {
       ...cotizacion,
+      cliente,
       cliente_nombre: cliente 
         ? `${cliente.nombre}${cliente.empresa ? ` - ${cliente.empresa}` : ""}`
         : "Sin cliente"
@@ -316,7 +352,7 @@ export class QuoteHelper {
     return {
       numero: this.generateQuoteNumber(normalized, cliente),
       titulo: normalized.titulo || 'Sin título',
-      descripcion: normalized.descripcion || '',
+      descripcion: (normalized as any).descripcion || '',
       fecha_evento: DateHelper.safeFormatDate(normalized.fechaEvento || normalized.fecha_evento),
       fecha_evento_fin: DateHelper.safeFormatDate(normalized.fechaEventoFin || normalized.fecha_evento_fin),
       lugar_evento: normalized.lugar_evento || '',
@@ -340,16 +376,34 @@ export class QuoteHelper {
   }
 
   /**
-   * Obtiene el estado de una cotización con formato legible
+   * Obtiene la información de estado de una cotización de forma robusta y normalizada.
+   * Maneja variaciones de género (masculino/femenino) y mayúsculas/minúsculas.
    */
-  static getQuoteStatusDisplay(estado: string): { text: string; class: string } {
-    const statusMap: Record<string, { text: string; class: string }> = {
-      'borrador': { text: 'Borrador', class: 'bg-gray-100 text-gray-800' },
-      'enviado': { text: 'Enviado', class: 'bg-blue-100 text-blue-800' },
-      'aprobado': { text: 'Aprobado', class: 'bg-green-100 text-green-800' },
-      'rechazado': { text: 'Rechazado', class: 'bg-red-100 text-red-800' }
-    };
+  static getQuoteStatusInfo(estado: string): { text: string; variant: 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'secondary'; bgClass: string; textClass: string } {
+    const s = String(estado || 'borrador').toLowerCase().trim();
     
-    return statusMap[estado] || { text: 'Desconocido', class: 'bg-gray-100 text-gray-800' };
+    // Mapeo robusto que incluye variantes comunes
+    if (s.includes('borrador')) {
+      return { text: 'Borrador', variant: 'secondary', bgClass: 'bg-gray-100 dark:bg-gray-700', textClass: 'text-gray-800 dark:text-gray-200' };
+    }
+    
+    if (s.includes('enviad')) { // enviado, enviada
+      return { text: 'Enviado', variant: 'info', bgClass: 'bg-blue-100 dark:bg-blue-900', textClass: 'text-blue-800 dark:text-blue-200' };
+    }
+    
+    if (s.includes('aprob')) { // aprobado, aprobada
+      return { text: 'Aprobado', variant: 'success', bgClass: 'bg-green-100 dark:bg-green-900', textClass: 'text-green-800 dark:text-green-200' };
+    }
+    
+    if (s.includes('recha')) { // rechazado, rechazada
+      return { text: 'Rechazado', variant: 'danger', bgClass: 'bg-red-100 dark:bg-red-900', textClass: 'text-red-800 dark:text-red-200' };
+    }
+    
+    if (s.includes('pendien')) {
+      return { text: 'Pendiente', variant: 'warning', bgClass: 'bg-amber-100 dark:bg-amber-900', textClass: 'text-amber-800 dark:text-amber-200' };
+    }
+    
+    // Caso por defecto
+    return { text: 'Desconocido', variant: 'primary', bgClass: 'bg-gray-100 dark:bg-gray-600', textClass: 'text-gray-800 dark:text-gray-200' };
   }
 }

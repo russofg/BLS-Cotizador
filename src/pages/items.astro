@@ -2,6 +2,7 @@
 import Dashboard from "../layouts/Dashboard.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
 import StatCard from "../components/ui/StatCard.astro";
+import Card from "../components/ui/Card.astro";
 import Button from "../components/ui/Button.astro";
 import Input from "../components/ui/Input.astro";
 import Select from "../components/ui/Select.astro";
@@ -45,7 +46,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M12 6v6m0 0v6m-6h6m-6 0H6"></path>
+              d="M12 4.5v15m7.5-7.5h-15"></path>
           </svg>
           Nuevo Item
         </Button>
@@ -53,7 +54,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
     </PageHeader>
 
     <!-- Status and Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <StatCard
         title="Total Items"
         value="0"
@@ -88,40 +89,34 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
     </div>
 
     <!-- Filters -->
-    <div class="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
-      <div class="px-4 py-4 sm:px-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <Input id="search" placeholder="Buscar items..." label="Buscar" />
-          <Select
-            id="category"
-            label="Categoría"
-            options={[{ value: "", label: "Todas las categorías" }]}
-          />
-          <Select
-            id="status"
-            label="Estado"
-            options={[
-              { value: "", label: "Todos" },
-              { value: "active", label: "Activo" },
-              { value: "inactive", label: "Inactivo" },
-            ]}
-          />
-          <div class="flex items-end">
-            <button
-              type="button"
-              id="clear-filters"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-3 sm:py-2 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 touch-scroll-item"
-            >
-              Limpiar
-            </button>
-          </div>
+    <Card class="mb-8 shadow-premium overflow-visible">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
+        <Input id="search" placeholder="Buscar por nombre o descripción..." label="Buscar items" />
+        <Select
+          id="category"
+          label="Filtrar por categoría"
+          options={[{ value: "", label: "Todas las categorías" }]}
+        />
+        <Select
+          id="status"
+          label="Estado de disponibilidad"
+          options={[
+            { value: "", label: "Todos los estados" },
+            { value: "active", label: "Solo Activos" },
+            { value: "inactive", label: "Solo Inactivos" },
+          ]}
+        />
+        <div class="flex space-x-2">
+          <Button id="clear-filters" variant="secondary" class="flex-1">
+            Limpiar Filtros
+          </Button>
         </div>
       </div>
-    </div>
+    </Card>
 
     <!-- Items Table/Cards Container -->
-    <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
-      <div class="px-4 py-5 sm:p-6">
+    <Card class="shadow-premium overflow-hidden">
+      <div class="">
         <!-- Desktop Table View (hidden on mobile) -->
         <div class="hidden sm:block">
           <div class="flow-root">
@@ -132,43 +127,43 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
                 class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
               >
                 <table
-                  class="min-w-full divide-y divide-gray-300 dark:divide-gray-600"
+                  class="min-w-full divide-y divide-gray-200 dark:divide-gray-700"
                 >
                   <thead>
                     <tr>
                       <th
                         scope="col"
-                        class="py-3.5 pl-4 pr-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-300 sm:pl-0"
+                        class="py-4 pl-4 pr-3 text-left text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 sm:pl-0"
                       >
-                        Item
+                        Item / Servicio
                       </th>
                       <th
                         scope="col"
-                        class="px-3 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-300"
+                        class="px-3 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500"
                       >
                         Categoría
                       </th>
                       <th
                         scope="col"
-                        class="px-3 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-300"
+                        class="px-3 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500"
                       >
                         Precio Base
                       </th>
                       <th
                         scope="col"
-                        class="px-3 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-300"
+                        class="px-3 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500"
                       >
                         Unidad
                       </th>
                       <th
                         scope="col"
-                        class="px-3 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-300"
+                        class="px-3 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500"
                       >
                         Estado
                       </th>
                       <th
                         scope="col"
-                        class="px-3 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-300"
+                        class="px-3 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500"
                       >
                         Acciones
                       </th>
@@ -281,45 +276,35 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
   <!-- Modal para Nuevo Item -->
   <div
     id="item-modal"
-    class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50"
+    class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden overflow-y-auto h-full w-full z-50 transition-all duration-300"
     role="dialog"
     aria-modal="true"
     aria-labelledby="modal-title"
   >
     <div
-      class="relative top-5 sm:top-20 mx-auto p-4 sm:p-5 border dark:border-gray-700 w-11/12 max-w-2xl shadow-lg rounded-md bg-white dark:bg-gray-800 custom-scrollbar"
+      class="relative top-5 sm:top-10 mx-auto p-0 border-0 w-11/12 max-w-2xl shadow-premium rounded-3xl bg-white dark:bg-gray-800 overflow-hidden anime-fade-in"
       role="document"
     >
-      <!-- Close button for mobile -->
-      <button
-        type="button"
-        id="modal-close-btn"
-        class="absolute top-2 right-2 text-gray-400 hover:text-gray-500 sm:hidden"
-        aria-label="Cerrar"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-      </button>
-
-      <div class="mt-3">
+      <div class="px-8 py-6 bg-gray-50 dark:bg-gray-900/40 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
         <h3
-          class="text-xl font-semibold text-gray-900 dark:text-white mb-4 pr-8 sm:pr-0"
+          class="text-2xl font-heading font-extrabold text-gray-900 dark:text-white"
           id="modal-title"
         >
           Nuevo Item
         </h3>
+        <button
+          type="button"
+          id="modal-close-btn"
+          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+          aria-label="Cerrar"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
 
+      <div class="p-8">
         <form id="item-form" class="space-y-6" novalidate>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <!-- Nombre -->
@@ -327,8 +312,8 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
               id="item-nombre"
               name="nombre"
               required
-              label="Nombre del Item"
-              placeholder="Ej: Sistema de Sonido para Cocktail"
+              label="Nombre del Item / Servicio"
+              placeholder="Ej: Sistema de Sonido Pro"
             />
 
             <!-- Categoría -->
@@ -336,8 +321,8 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
               id="item-categoria"
               name="categoria"
               required
-              label="Categoría"
-              placeholder="Seleccionar categoría..."
+              label="Categoría del servicio"
+              placeholder="Seleccionar..."
               options={[]}
             />
 
@@ -347,7 +332,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
               name="precioBase"
               type="number"
               required
-              label="Precio Base"
+              label="Precio Base (AR$)"
               placeholder="0"
               min="0"
               step="0.01"
@@ -358,16 +343,16 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
               id="item-unidad"
               name="unidad"
               required
-              label="Unidad"
+              label="Unidad de medida"
               options={[
-                { value: "servicio", label: "Servicio" },
-                { value: "evento", label: "Evento" },
-                { value: "jornada", label: "Jornada" },
-                { value: "metro", label: "Metro" },
-                { value: "m²", label: "Metro cuadrado" },
-                { value: "hora", label: "Hora" },
-                { value: "día", label: "Día" },
-                { value: "unidad", label: "Unidad" },
+                { value: "servicio", label: "Servicio Completo" },
+                { value: "evento", label: "Por Evento" },
+                { value: "jornada", label: "Por Jornada" },
+                { value: "metro", label: "Por Metro" },
+                { value: "m²", label: "Por Metro cuadrado" },
+                { value: "hora", label: "Por Hora" },
+                { value: "día", label: "Por Día" },
+                { value: "unidad", label: "Por Unidad" },
               ]}
             />
           </div>
@@ -376,68 +361,47 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
           <div class="w-full">
             <label
               for="item-descripcion"
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              class="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2"
             >
-              Descripción
+              Descripción técnica y alcances
             </label>
             <textarea
               id="item-descripcion"
               name="descripcion"
-              rows="4"
-              class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-              placeholder="Describe los detalles técnicos del item..."
-              aria-describedby="descripcion-help"></textarea>
-            <p
-              id="descripcion-help"
-              class="mt-1 text-sm text-gray-500 dark:text-gray-400"
-            >
-              Opcional: Información adicional sobre el item
-            </p>
+              rows="3"
+              class="block w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900/50 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm placeholder:italic"
+              placeholder="Detalla qué incluye este servicio o item..."></textarea>
           </div>
 
           <!-- Estado Activo -->
-          <div class="flex items-center space-x-3 py-2 touch-scroll-item">
+          <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-gray-700 transition-all hover:bg-white dark:hover:bg-gray-800">
             <input
               id="item-activo"
               name="activo"
               type="checkbox"
               checked
-              class="h-5 w-5 sm:h-4 sm:w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              aria-describedby="activo-help"
+              class="h-5 w-5 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded-lg transition-all"
             />
-            <label
-              for="item-activo"
-              class="text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Item activo
-            </label>
-            <p
-              id="activo-help"
-              class="text-sm text-gray-500 dark:text-gray-400"
-            >
-              Los items inactivos no aparecerán en las cotizaciones
-            </p>
+            <div class="ml-3">
+              <label
+                for="item-activo"
+                class="block text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider"
+              >
+                Item activo para cotizaciones
+              </label>
+              <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+                Desactiva este item para ocultarlo temporalmente del catálogo sin eliminarlo.
+              </p>
+            </div>
           </div>
         </form>
 
-        <div
-          class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 gap-3 sm:gap-0 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700"
-        >
-          <Button
-            id="cancel-item-btn"
-            variant="secondary"
-            size="md"
-            class="w-full sm:w-auto touch-scroll-item"
-          >
+        <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 gap-3 sm:gap-0 mt-8">
+          <Button id="cancel-item-btn" variant="secondary" class="w-full sm:w-auto">
             Cancelar
           </Button>
-          <Button
-            id="save-item-btn"
-            variant="primary"
-            size="md"
-            class="w-full sm:w-auto touch-scroll-item"
-          >
-            Guardar Item
+          <Button id="save-item-btn" variant="primary" type="submit" class="w-full sm:w-auto font-bold">
+            Guardar Item en Catálogo
           </Button>
         </div>
       </div>
@@ -593,7 +557,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
           const categoria =
             categoryMap[item.categoriaId] ||
             item.categoriaId ||
-            "Sin categoría";
+            "—";
           const precio = item.precioBase || 0;
           const descripcion = Array.isArray(item.descripcion)
             ? item.descripcion.slice(0, 2).join(" • ") +
@@ -601,39 +565,41 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
             : item.descripcion || "";
 
           return `
-          <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-            <td class="py-4 pl-4 pr-3 text-sm sm:pl-0">
+          <tr class="group hover:bg-gray-50 dark:hover:bg-gray-900/40 transition-colors">
+            <td class="py-5 pl-4 pr-3 text-sm sm:pl-0">
               <div class="flex flex-col">
-                <div class="font-medium text-gray-900 dark:text-white">${item.nombre || "Sin nombre"}</div>
-                <div class="text-gray-500 dark:text-gray-400 text-xs mt-1">${descripcion}</div>
+                <div class="font-heading font-bold text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors">${item.nombre || "Sin nombre"}</div>
+                <div class="text-gray-400 dark:text-gray-500 text-xs mt-0.5 truncate max-w-[200px]">${descripcion}</div>
               </div>
             </td>
-            <td class="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+            <td class="px-3 py-5 text-sm">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-100 dark:border-purple-800">
                 ${categoria}
               </span>
             </td>
-            <td class="px-3 py-4 text-sm text-gray-900 dark:text-white font-medium">
+            <td class="px-3 py-5 text-sm font-heading font-extrabold text-gray-900 dark:text-white">
               $${precio.toLocaleString("es-AR")}
             </td>
-            <td class="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-              ${item.unidad || "servicio"}
+            <td class="px-3 py-5 text-sm">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600">
+                ${item.unidad || "unidad"}
+              </span>
             </td>
-            <td class="px-3 py-4 text-sm">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            <td class="px-3 py-5 text-sm">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                 item.activo
-                  ? "bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200"
-                  : "bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200"
+                  ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-100 dark:border-green-800"
+                  : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-100 dark:border-red-800"
               }">
                 ${item.activo ? "Activo" : "Inactivo"}
               </span>
             </td>
-            <td class="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-              <div class="flex space-x-2">
-                <button class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 edit-item" data-id="${item.id}">
+            <td class="px-3 py-5 text-sm text-gray-500 dark:text-gray-400">
+              <div class="flex space-x-3">
+                <button class="font-bold text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 transition-colors edit-item" data-id="${item.id}">
                   Editar
                 </button>
-                <button class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 delete-item" data-id="${item.id}">
+                <button class="font-bold text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors delete-item" data-id="${item.id}">
                   Eliminar
                 </button>
               </div>
@@ -649,7 +615,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
           const categoria =
             categoryMap[item.categoriaId] ||
             item.categoriaId ||
-            "Sin categoría";
+            "—";
           const precio = item.precioBase || 0;
           const descripcion = Array.isArray(item.descripcion)
             ? item.descripcion.slice(0, 2).join(" • ") +
@@ -657,43 +623,43 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
             : item.descripcion || "";
 
           return `
-          <div class="bg-white dark:bg-gray-700 rounded-lg shadow p-4 touch-scroll-item">
-            <div class="flex justify-between items-start">
+          <div class="group bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 hover:shadow-premium hover:-translate-y-1 transition-all duration-300">
+            <div class="flex justify-between items-start mb-4">
               <div class="flex-1">
-                <h3 class="text-base font-medium text-gray-900 dark:text-white">${item.nombre || "Sin nombre"}</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${descripcion}</p>
+                <h3 class="text-lg font-heading font-bold text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors">${item.nombre || "Sin nombre"}</h3>
+                <span class="inline-flex items-center px-2.5 py-1 mt-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-100 dark:border-purple-800">
+                  ${categoria}
+                </span>
               </div>
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                 item.activo
-                  ? "bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200"
-                  : "bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200"
+                  ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-100 dark:border-green-800"
+                  : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-100 dark:border-red-800"
               }">
                 ${item.activo ? "Activo" : "Inactivo"}
               </span>
             </div>
             
-            <div class="mt-4 grid grid-cols-2 gap-2">
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">${descripcion}</p>
+
+            <div class="grid grid-cols-2 gap-4 mb-5 p-4 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-gray-800">
               <div>
-                <span class="block text-xs text-gray-500 dark:text-gray-400">Categoría</span>
-                <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                  ${categoria}
+                <span class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Precio</span>
+                <span class="text-lg font-heading font-extrabold text-gray-900 dark:text-white">$${precio.toLocaleString("es-AR")}</span>
+              </div>
+              <div>
+                <span class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Unidad</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600">
+                  ${item.unidad || "unidad"}
                 </span>
-              </div>
-              <div>
-                <span class="block text-xs text-gray-500 dark:text-gray-400">Precio Base</span>
-                <span class="text-sm font-medium text-gray-900 dark:text-white">$${precio.toLocaleString("es-AR")}</span>
-              </div>
-              <div>
-                <span class="block text-xs text-gray-500 dark:text-gray-400">Unidad</span>
-                <span class="text-sm text-gray-700 dark:text-gray-300">${item.unidad || "servicio"}</span>
               </div>
             </div>
             
-            <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600 flex justify-end space-x-3">
-              <button class="py-2 px-3 text-sm font-medium text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 edit-item" data-id="${item.id}">
+            <div class="flex justify-end space-x-3 pt-1">
+              <button class="px-4 py-2 text-sm font-bold text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 transition-colors edit-item" data-id="${item.id}">
                 Editar
               </button>
-              <button class="py-2 px-3 text-sm font-medium text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 delete-item" data-id="${item.id}">
+              <button class="px-4 py-2 text-sm font-bold text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors delete-item" data-id="${item.id}">
                 Eliminar
               </button>
             </div>

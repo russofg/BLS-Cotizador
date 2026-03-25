@@ -3,21 +3,8 @@
  * Mantiene compatibilidad con el servicio anterior pero con mejoras
  */
 
-import { db } from '../utils/firebase';
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  orderBy, 
-  limit,
-  QueryDocumentSnapshot
-} from 'firebase/firestore';
+import { adminDb } from '../utils/firebaseAdmin';
+import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { ValidationHelper } from '../utils/validationHelpers';
 
 // Interfaces mejoradas
@@ -88,13 +75,10 @@ export class ConfiguracionService {
         throw new Error('Clave de configuración es requerida');
       }
 
-      const q = query(
-        collection(db, this.COLLECTION_NAME), 
-        where('clave', '==', clave), 
-        limit(1)
-      );
-      
-      const snapshot = await getDocs(q);
+      const snapshot = await adminDb.collection(this.COLLECTION_NAME)
+        .where('clave', '==', clave)
+        .limit(1)
+        .get();
       if (snapshot.empty) {
         return null;
       }
@@ -115,13 +99,10 @@ export class ConfiguracionService {
         throw new Error('Clave de configuración es requerida');
       }
 
-      const q = query(
-        collection(db, this.COLLECTION_NAME), 
-        where('clave', '==', clave), 
-        limit(1)
-      );
-      
-      const snapshot = await getDocs(q);
+      const snapshot = await adminDb.collection(this.COLLECTION_NAME)
+        .where('clave', '==', clave)
+        .limit(1)
+        .get();
       if (snapshot.empty) {
         return null;
       }
@@ -144,18 +125,15 @@ export class ConfiguracionService {
         throw new Error(validation.errors.join(', '));
       }
 
-      const q = query(
-        collection(db, this.COLLECTION_NAME), 
-        where('clave', '==', clave), 
-        limit(1)
-      );
-      
-      const snapshot = await getDocs(q);
+      const snapshot = await adminDb.collection(this.COLLECTION_NAME)
+        .where('clave', '==', clave)
+        .limit(1)
+        .get();
       const now = new Date();
       
       if (snapshot.empty) {
         // Crear nueva configuración
-        await addDoc(collection(db, this.COLLECTION_NAME), {
+        await adminDb.collection(this.COLLECTION_NAME).add({
           clave,
           valor,
           descripcion,
@@ -164,8 +142,7 @@ export class ConfiguracionService {
         });
       } else {
         // Actualizar configuración existente
-        const docRef = doc(db, this.COLLECTION_NAME, snapshot.docs[0].id);
-        await updateDoc(docRef, {
+        await adminDb.collection(this.COLLECTION_NAME).doc(snapshot.docs[0].id).update({
           valor,
           descripcion,
           updatedAt: now
@@ -182,7 +159,7 @@ export class ConfiguracionService {
    */
   static async getAll(filters?: ConfiguracionFilters): Promise<Configuracion[]> {
     try {
-      const snapshot = await getDocs(collection(db, this.COLLECTION_NAME));
+      const snapshot = await adminDb.collection(this.COLLECTION_NAME).get();
       let configuraciones = snapshot.docs.map(doc => this.mapDocumentToConfiguracion(doc));
       
       // Aplicar filtro de búsqueda si existe
@@ -214,18 +191,15 @@ export class ConfiguracionService {
         throw new Error('Clave de configuración es requerida');
       }
 
-      const q = query(
-        collection(db, this.COLLECTION_NAME), 
-        where('clave', '==', clave), 
-        limit(1)
-      );
-      
-      const snapshot = await getDocs(q);
+      const snapshot = await adminDb.collection(this.COLLECTION_NAME)
+        .where('clave', '==', clave)
+        .limit(1)
+        .get();
       if (snapshot.empty) {
         throw new Error('Configuración no encontrada');
       }
       
-      await deleteDoc(doc(db, this.COLLECTION_NAME, snapshot.docs[0].id));
+      await adminDb.collection(this.COLLECTION_NAME).doc(snapshot.docs[0].id).delete();
     } catch (error) {
       console.error('Error deleting configuration:', error);
       throw error;
@@ -319,12 +293,9 @@ export class ConfiguracionService {
       const result: { [clave: string]: string | null } = {};
       
       // Obtener todas las configuraciones de una vez
-      const q = query(
-        collection(db, this.COLLECTION_NAME),
-        where('clave', 'in', claves)
-      );
-      
-      const snapshot = await getDocs(q);
+      const snapshot = await adminDb.collection(this.COLLECTION_NAME)
+        .where('clave', 'in', claves)
+        .get();
       
       // Inicializar todas las claves como null
       claves.forEach(clave => {
@@ -478,8 +449,8 @@ export class ConfiguracionService {
   /**
    * Mapea un documento de Firestore a un objeto Configuracion
    */
-  private static mapDocumentToConfiguracion(doc: QueryDocumentSnapshot): Configuracion {
-    const data = doc.data();
+  private static mapDocumentToConfiguracion(doc: DocumentSnapshot | QueryDocumentSnapshot): Configuracion {
+    const data = doc.data() || {};
     return {
       id: doc.id,
       clave: data.clave || '',

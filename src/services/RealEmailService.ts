@@ -24,7 +24,7 @@ export class RealEmailService {
    * Configurar el transporter de Nodemailer
    */
   static configure(config: EmailConfig): void {
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       host: config.host,
       port: config.port,
       secure: config.secure, // true para puerto 465, false para otros puertos
@@ -45,7 +45,7 @@ export class RealEmailService {
    * Configurar con Gmail (más fácil)
    */
   static configureGmail(email: string, appPassword: string): void {
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: email,
@@ -69,7 +69,7 @@ export class RealEmailService {
       console.log('📧 Sending real email to:', emailData.to);
       
       const info = await this.transporter.sendMail({
-        from: this.transporter.options.auth?.user,
+        from: (this.transporter.options as any).auth?.user,
         to: emailData.to,
         subject: emailData.subject,
         html: emailData.html,

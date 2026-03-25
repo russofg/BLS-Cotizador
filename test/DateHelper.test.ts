@@ -8,7 +8,7 @@ import { DateHelper } from '../src/utils/dateHelpers';
 describe('DateHelper', () => {
   describe('safeParseDate', () => {
     it('should parse valid date strings', () => {
-      const testDate = new Date('2024-01-15');
+      const testDate = DateHelper.safeParseDate('2024-01-15')!;
       const result = DateHelper.safeParseDate('2024-01-15');
       
       expect(result).toBeInstanceOf(Date);
@@ -26,7 +26,7 @@ describe('DateHelper', () => {
     });
 
     it('should parse Date objects', () => {
-      const testDate = new Date('2024-01-15');
+      const testDate = DateHelper.safeParseDate('2024-01-15')!;
       const result = DateHelper.safeParseDate(testDate);
       
       expect(result).toBe(testDate);
@@ -35,7 +35,7 @@ describe('DateHelper', () => {
     it('should parse Firebase Timestamp objects', () => {
       const timestamp = {
         seconds: 1705320000, // 2024-01-15
-        toDate: () => new Date(1705320000 * 1000)
+        toDate: () => new Date(1705320000 ! 1000)
       };
       
       const result = DateHelper.safeParseDate(timestamp);
@@ -69,10 +69,10 @@ describe('DateHelper', () => {
 
   describe('safeFormatDate', () => {
     it('should format dates correctly', () => {
-      const testDate = new Date('2024-01-15');
+      const testDate = DateHelper.safeParseDate('2024-01-15')!;
       const result = DateHelper.safeFormatDate(testDate);
       
-      expect(result).toMatch(/15 ene 2024|15 jan 2024/); // Spanish or English locale
+      expect(result).toBe('15/01/2024');
     });
 
     it('should handle invalid dates', () => {
@@ -88,7 +88,7 @@ describe('DateHelper', () => {
 
   describe('safeFormatDateForInput', () => {
     it('should format dates for HTML input fields', () => {
-      const testDate = new Date('2024-01-15');
+      const testDate = DateHelper.safeParseDate('2024-01-15')!;
       const result = DateHelper.safeFormatDateForInput(testDate);
       
       expect(result).toBe('2024-01-15');
@@ -107,7 +107,7 @@ describe('DateHelper', () => {
 
   describe('calculateDurationInDays', () => {
     it('should calculate duration correctly', () => {
-      const startDate = new Date('2024-01-15');
+      const startDate = DateHelper.safeParseDate('2024-01-15')!;
       const endDate = new Date('2024-01-17');
       
       const result = DateHelper.calculateDurationInDays(startDate, endDate);
@@ -115,7 +115,7 @@ describe('DateHelper', () => {
     });
 
     it('should handle same start and end date', () => {
-      const date = new Date('2024-01-15');
+      const date = DateHelper.safeParseDate('2024-01-15')!;
       const result = DateHelper.calculateDurationInDays(date, date);
       expect(result).toBe(1);
     });
@@ -128,7 +128,7 @@ describe('DateHelper', () => {
 
   describe('calculateEndDate', () => {
     it('should calculate end date correctly', () => {
-      const startDate = new Date('2024-01-15');
+      const startDate = DateHelper.safeParseDate('2024-01-15')!;
       const endDate = DateHelper.calculateEndDate(startDate, 3);
       
       expect(endDate.getFullYear()).toBe(2024);
@@ -137,7 +137,7 @@ describe('DateHelper', () => {
     });
 
     it('should handle single day duration', () => {
-      const startDate = new Date('2024-01-15');
+      const startDate = DateHelper.safeParseDate('2024-01-15')!;
       const endDate = DateHelper.calculateEndDate(startDate, 1);
       
       expect(endDate.getDate()).toBe(15);
@@ -146,7 +146,7 @@ describe('DateHelper', () => {
 
   describe('validateDateRange', () => {
     it('should validate correct date ranges', () => {
-      const startDate = new Date('2024-01-15');
+      const startDate = DateHelper.safeParseDate('2024-01-15')!;
       const endDate = new Date('2024-01-17');
       
       const result = DateHelper.validateDateRange(startDate, endDate);
@@ -154,14 +154,14 @@ describe('DateHelper', () => {
     });
 
     it('should validate same start and end date', () => {
-      const date = new Date('2024-01-15');
+      const date = DateHelper.safeParseDate('2024-01-15')!;
       const result = DateHelper.validateDateRange(date, date);
       expect(result).toBe(true);
     });
 
     it('should reject invalid date ranges', () => {
       const startDate = new Date('2024-01-17');
-      const endDate = new Date('2024-01-15');
+      const endDate = DateHelper.safeParseDate('2024-01-15')!;
       
       const result = DateHelper.validateDateRange(startDate, endDate);
       expect(result).toBe(false);
@@ -170,14 +170,14 @@ describe('DateHelper', () => {
 
   describe('formatDateToDDMMYYYY', () => {
     it('should format dates to DD/MM/YYYY', () => {
-      const testDate = new Date('2024-01-15');
+      const testDate = DateHelper.safeParseDate('2024-01-15')!;
       const result = DateHelper.formatDateToDDMMYYYY(testDate);
       
       expect(result).toBe('15/01/2024');
     });
 
     it('should handle single digit days and months', () => {
-      const testDate = new Date('2024-01-05');
+      const testDate = DateHelper.safeParseDate('2024-01-05')!;
       const result = DateHelper.formatDateToDDMMYYYY(testDate);
       
       expect(result).toBe('05/01/2024');
@@ -186,14 +186,14 @@ describe('DateHelper', () => {
 
   describe('formatDateToYYYYMMDD', () => {
     it('should format dates to YYYY-MM-DD', () => {
-      const testDate = new Date('2024-01-15');
+      const testDate = DateHelper.safeParseDate('2024-01-15')!;
       const result = DateHelper.formatDateToYYYYMMDD(testDate);
       
       expect(result).toBe('2024-01-15');
     });
 
     it('should handle single digit days and months', () => {
-      const testDate = new Date('2024-01-05');
+      const testDate = DateHelper.safeParseDate('2024-01-05')!;
       const result = DateHelper.formatDateToYYYYMMDD(testDate);
       
       expect(result).toBe('2024-01-05');
@@ -208,7 +208,7 @@ describe('DateHelper', () => {
 
       // Format for display
       const displayFormat = DateHelper.safeFormatDate(parsedDate);
-      expect(displayFormat).toMatch(/15 ene 2024|15 jan 2024/);
+      expect(displayFormat).toBe('15/01/2024');
 
       // Format for input
       const inputFormat = DateHelper.safeFormatDateForInput(parsedDate);

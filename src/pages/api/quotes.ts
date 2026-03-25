@@ -3,6 +3,8 @@ import { cotizacionService } from '../../utils/database';
 import { DateHelper } from '../../utils/dateHelpers';
 import { QuoteHelper } from '../../utils/quoteHelpers';
 import { ValidationHelper } from '../../utils/validationHelpers';
+import { checkRateLimit } from '../../utils/rateLimit';
+import { AnalyticsService } from '../../services/AnalyticsService';
 
 /**
  * Cotizador-Online API
@@ -16,8 +18,10 @@ import { ValidationHelper } from '../../utils/validationHelpers';
  * - Centralized validation and date handling
  */
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, request }) => {
   try {
+    const limited = checkRateLimit(request, 'READ', 'quotes');
+    if (limited) return limited;
     // Check if a specific quote ID is requested
     const quoteId = url.searchParams.get('id');
     
@@ -81,6 +85,8 @@ export const GET: APIRoute = async ({ url }) => {
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const limited = checkRateLimit(request, 'WRITE', 'quotes');
+    if (limited) return limited;
     const quoteData = await request.json();
     
     // Validate quote data using centralized validation
@@ -160,6 +166,9 @@ export const POST: APIRoute = async ({ request }) => {
       createdAt: new Date()   // Standard field
     } as any);
     
+    // Invalidate analytics cache
+    AnalyticsService.invalidateCache();
+    
     return new Response(JSON.stringify(newQuote), {
       status: 201,
       headers: {
@@ -181,6 +190,8 @@ export const POST: APIRoute = async ({ request }) => {
 
 export const PUT: APIRoute = async ({ request }) => {
   try {
+    const limited = checkRateLimit(request, 'WRITE', 'quotes');
+    if (limited) return limited;
     const quoteData = await request.json();
     console.log('📥 Datos recibidos para actualización:', quoteData);
     
@@ -364,6 +375,9 @@ export const PUT: APIRoute = async ({ request }) => {
     const updatedQuote = await cotizacionService.getById(quoteData.id);
     console.log('📄 Cotización obtenida después de actualización:', updatedQuote);
     
+    // Invalidate analytics cache
+    AnalyticsService.invalidateCache();
+    
     if (!updatedQuote) {
       throw new Error('No se pudo obtener la cotización actualizada');
     }
@@ -393,6 +407,8 @@ export const PUT: APIRoute = async ({ request }) => {
 
 export const DELETE: APIRoute = async ({ request, url }) => {
   try {
+    const limited = checkRateLimit(request, 'WRITE', 'quotes');
+    if (limited) return limited;
     let id = null;
     
     // Try to get ID from URL parameter first (for GET-style DELETE)
@@ -423,6 +439,9 @@ export const DELETE: APIRoute = async ({ request, url }) => {
 
     console.log('🗑️ Eliminando cotización con ID:', id);
     await cotizacionService.delete(id);
+    
+    // Invalidate analytics cache
+    AnalyticsService.invalidateCache();
     
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

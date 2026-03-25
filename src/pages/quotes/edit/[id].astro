@@ -332,10 +332,17 @@ function safeFormatDate(dateValue: any): string {
                   name="estado"
                   class="mt-1.5 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm py-2"
                 >
-                  <option value="borrador" selected={cotizacion.estado === 'borrador'}>Borrador</option>
-                  <option value="enviado" selected={cotizacion.estado === 'enviado'}>Enviado</option>
-                  <option value="aprobado" selected={cotizacion.estado === 'aprobado'}>Aprobado</option>
-                  <option value="rechazado" selected={cotizacion.estado === 'rechazado'}>Rechazado</option>
+                  {(() => {
+                    const s = String(cotizacion.estado || 'borrador').toLowerCase();
+                    return (
+                      <>
+                        <option value="borrador" selected={s.includes('borrador')}>Borrador</option>
+                        <option value="enviado" selected={s.includes('enviad')}>Enviado</option>
+                        <option value="aprobado" selected={s.includes('aprob')}>Aprobado</option>
+                        <option value="rechazado" selected={s.includes('recha')}>Rechazado</option>
+                      </>
+                    );
+                  })()}
                 </select>
               </div>
             </div>
@@ -353,7 +360,7 @@ function safeFormatDate(dateValue: any): string {
                 class="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-md text-primary-700 bg-primary-100 dark:bg-primary-900 dark:text-primary-200 hover:bg-primary-200 dark:hover:bg-primary-800 w-full sm:w-auto justify-center touch-scroll-item"
               >
                 <svg class="-ml-0.5 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
                 Agregar Item
               </button>
@@ -558,6 +565,8 @@ function safeFormatDate(dateValue: any): string {
   </div>
 
   <script>
+    import { QuoteHelper } from "../../../utils/quoteHelpers";
+    
     document.addEventListener("DOMContentLoaded", function() {
       let itemCounter = 0;
       let allMasterItemsList: any[] = [];
@@ -688,19 +697,7 @@ function safeFormatDate(dateValue: any): string {
         const unidad = itemData.unidad;
         
         // Build display text with name in bold and description below (same as view)
-        let displayText = '';
-        
-        if (itemName) {
-          displayText = `<strong>${itemName}</strong>`;
-          if (itemDescription && itemDescription !== itemName) {
-            displayText += `<br><span class="text-gray-600">${itemDescription}</span>`;
-          }
-        } else if (itemDescription) {
-          // If no name, just show description
-          displayText = itemDescription;
-        } else {
-          displayText = 'Item sin descripción';
-        }
+        const { displayText } = QuoteHelper.formatItemForDisplay(itemData);
 
         // Create item HTML with editable format that maintains visual style (now fully responsive)
         const itemHTML = `
@@ -716,7 +713,7 @@ function safeFormatDate(dateValue: any): string {
                   data-placeholder="Escriba el nombre del item y descripción..."
                   onblur="updateHiddenField(${index})"
                   oninput="updateHiddenField(${index})"
-                ><strong class="dark:text-white">${itemName}</strong>${itemDescription && itemDescription !== itemName ? `<br><span class="text-gray-600 dark:text-gray-400">${itemDescription}</span>` : ''}</div>
+                >${displayText}</div>
                 
                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Tip: Edite directamente el texto. Use <strong>negrita</strong> para el nombre.
@@ -800,7 +797,7 @@ function safeFormatDate(dateValue: any): string {
                     data-placeholder="Escriba el nombre del item y descripción..."
                     onblur="updateHiddenField(${index})"
                     oninput="updateHiddenField(${index})"
-                  ><strong class="dark:text-white">${itemName}</strong>${itemDescription && itemDescription !== itemName ? `<br><span class="text-gray-600 dark:text-gray-400">${itemDescription}</span>` : ''}</div>
+                  >${displayText}</div>
                   <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Tip: Edite directamente el texto. Use <strong>negrita</strong> para el nombre.
                   </div>
@@ -949,45 +946,31 @@ function safeFormatDate(dateValue: any): string {
           const content = contentDiv.innerHTML;
           
           // Extract name from <strong> tags
-          const strongMatch = content.match(/<strong[^>]*>(.*?)<\/strong>/i);
-          const nombre = strongMatch ? strongMatch[1].trim() : '';
+          const strongMatch = contentDiv.querySelector('strong');
+          const nombre = strongMatch ? strongMatch.textContent?.trim() || '' : '';
           
-          // Extract description (everything after the first <br>)
+          // Extract description from <li> tags OR after <br>
           let descripcion = '';
-          const brIndex = content.indexOf('<br>');
-          if (brIndex > -1) {
-            let afterBr = content.substring(brIndex + 4);
-            // Remove span tags but keep content
-            afterBr = afterBr.replace(/<span[^>]*>/gi, '').replace(/<\/span>/gi, '');
-            descripcion = afterBr.trim();
-          }
+          const listItems = contentDiv.querySelectorAll('li');
           
-          // If no br found, check if all content is just the name
-          if (!descripcion && !strongMatch) {
-            // All content might be the description
-            descripcion = contentDiv.textContent?.trim() || '';
+          if (listItems.length > 0) {
+            descripcion = Array.from(listItems).map(li => li.textContent?.trim()).filter(t => t).join('\n');
+          } else {
+            // Fallback to text after br if no list
+            const br = contentDiv.querySelector('br');
+            if (br && br.nextSibling) {
+              descripcion = br.nextSibling.textContent?.trim() || '';
+            } else if (!nombre) {
+              // If no name and no list/br, take all text
+              descripcion = contentDiv.textContent?.trim() || '';
+            }
           }
           
           nombreInput.value = nombre;
           descripcionInput.value = descripcion;
           
-          // Fix dark mode styling for the content
-          const isDarkMode = document.documentElement.classList.contains('dark');
-          
-          // Re-format content to ensure dark mode styling
-          let newContent = '';
-          if (nombre) {
-            newContent = `<strong class="dark:text-white">${nombre}</strong>`;
-            if (descripcion) {
-              newContent += `<br><span class="text-gray-600 dark:text-gray-400">${descripcion}</span>`;
-            }
-          } else if (descripcion) {
-            newContent = `<span class="${isDarkMode ? 'dark:text-white' : ''}">${descripcion}</span>`;
-          }
-          
-          if (newContent) {
-            contentDiv.innerHTML = newContent;
-          }
+          // Do not re-format and overwrite the innerHTML here as it would break the cursor position during typing
+          // Only sync the hidden values
           
           console.log('✅ Updated hidden fields:', { nombre, descripcion });
         }
@@ -1383,7 +1366,7 @@ function safeFormatDate(dateValue: any): string {
               if (descripcion && cantidad > 0 && precio_unitario >= 0) {
                 items.push({
                   nombre: nombre || '',
-                  descripcion: descripcion,
+                  descripcion: (descripcion || '').includes('\n') ? descripcion.split('\n').map(d => d.trim()).filter(d => d) : (descripcion || ''),
                   cantidad: cantidad,
                   precio_unitario: precio_unitario,
                   unidad: unidad,

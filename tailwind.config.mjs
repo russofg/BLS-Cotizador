@@ -4,19 +4,28 @@ export default {
   darkMode: "class", // Enable class-based dark mode
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        heading: ['Outfit', 'system-ui', 'sans-serif'],
+      },
       colors: {
         primary: {
-          50: "var(--color-primary-50, #eff6ff)",
-          100: "var(--color-primary-100, #dbeafe)",
-          200: "var(--color-primary-200, #bfdbfe)",
-          300: "var(--color-primary-300, #93c5fd)",
-          400: "var(--color-primary-400, #60a5fa)",
-          500: "var(--color-primary-500, #3b82f6)",
-          600: "var(--color-primary-600, #2563eb)",
-          700: "var(--color-primary-700, #1d4ed8)",
-          800: "var(--color-primary-800, #1e40af)",
-          900: "var(--color-primary-900, #1e3a8a)",
+          50: "#f0f7ff",
+          100: "#e0effe",
+          200: "#bae0fd",
+          300: "#7cc8fb",
+          400: "#36abf7",
+          500: "#0c8de0",
+          600: "#026fc2",
+          700: "#02599e",
+          800: "#064b81",
+          900: "#0b3f6b",
+          950: "#072848",
         },
+      },
+      boxShadow: {
+        'premium': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+        'premium-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.04)',
       },
       fontSize: {
         xs: ["calc(0.75rem * var(--font-scale, 1))", { lineHeight: "1rem" }],

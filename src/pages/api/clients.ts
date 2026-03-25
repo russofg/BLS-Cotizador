@@ -1,9 +1,13 @@
 import type { APIRoute } from 'astro';
 import { clienteService, cotizacionService } from '../../utils/database';
 import { cache, CacheKeys, CacheTTL } from '../../utils/cache';
+import { checkRateLimit } from '../../utils/rateLimit';
+import { AnalyticsService } from '../../services/AnalyticsService';
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, request }) => {
   try {
+    const limited = checkRateLimit(request, 'READ', 'clients');
+    if (limited) return limited;
     const includeQuoteCount = url.searchParams.get('includeQuoteCount') === 'true';
     
     // Always get fresh data from the service (which has its own cache)
@@ -18,7 +22,7 @@ export const GET: APIRoute = async ({ url }) => {
       // Create a map of client ID to quotes for O(1) lookup
       const quotesByClient = new Map<string, any[]>();
       allQuotes.forEach(quote => {
-        const clientId = quote.clienteId || quote.cliente_id;
+        const clientId = quote.clienteId || (quote as any).cliente_id;
         if (clientId) {
           if (!quotesByClient.has(clientId)) {
             quotesByClient.set(clientId, []);
@@ -89,6 +93,8 @@ export const GET: APIRoute = async ({ url }) => {
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const limited = checkRateLimit(request, 'WRITE', 'clients');
+    if (limited) return limited;
     const clientData = await request.json();
     
     // Validate required fields
@@ -112,6 +118,9 @@ export const POST: APIRoute = async ({ request }) => {
       activo: true,
       createdAt: new Date()
     });
+    
+    // Invalidate analytics cache
+    AnalyticsService.invalidateCache();
     
     return new Response(JSON.stringify(newClient), {
       status: 201,
@@ -137,6 +146,8 @@ export const POST: APIRoute = async ({ request }) => {
 
 export const PUT: APIRoute = async ({ request }) => {
   try {
+    const limited = checkRateLimit(request, 'WRITE', 'clients');
+    if (limited) return limited;
     const clientData = await request.json();
     
     if (!clientData.id) {
@@ -162,6 +173,9 @@ export const PUT: APIRoute = async ({ request }) => {
     // Get updated client
     const updatedClient = await clienteService.getById(clientData.id);
     
+    // Invalidate analytics cache
+    AnalyticsService.invalidateCache();
+    
     return new Response(JSON.stringify(updatedClient), {
       status: 200,
       headers: {
@@ -186,6 +200,8 @@ export const PUT: APIRoute = async ({ request }) => {
 
 export const DELETE: APIRoute = async ({ request }) => {
   try {
+    const limited = checkRateLimit(request, 'WRITE', 'clients');
+    if (limited) return limited;
     const { id } = await request.json();
     
     if (!id) {
@@ -220,6 +236,9 @@ export const DELETE: APIRoute = async ({ request }) => {
     }
 
     await clienteService.delete(id);
+    
+    // Invalidate analytics cache
+    AnalyticsService.invalidateCache();
     
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

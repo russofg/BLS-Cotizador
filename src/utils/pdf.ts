@@ -93,19 +93,19 @@ export interface CotizacionPDFData {
     numero: string
     titulo: string
     descripcion?: string
-    fecha_evento?: string
-    fecha_evento_fin?: string
-    lugar_evento?: string
-    duracion_horas?: number
-    duracion_dias?: number
-    requiere_armado?: boolean
+    fechaEvento?: string | Date
+    fechaEventoFin?: string | Date
+    lugarEvento?: string
+    duracionHoras?: number
+    duracionDias?: number
+    requiereArmado?: boolean
     subtotal: number
     descuento: number
     total: number
     observaciones?: string
     condiciones?: string
-    vigencia_dias: number
-    created_at: string
+    vigenciaDias: number
+    createdAt: string | Date
     estado?: string
   }
   cliente: {
@@ -124,7 +124,7 @@ export interface CotizacionPDFData {
     nombre: string
     descripcion?: string[]
     cantidad: number
-    precio_unitario: number
+    precioUnitario: number
     descuento: number
     subtotal: number
     unidad: string
@@ -153,25 +153,25 @@ export const pdfService = {
       day: 'numeric'
     });
 
-    const fechaEvento = data.cotizacion.fecha_evento 
-      ? parseAndFormatDate(data.cotizacion.fecha_evento)
+    const fechaEvento = data.cotizacion.fechaEvento 
+      ? parseAndFormatDate(String(data.cotizacion.fechaEvento))
       : 'Por confirmar';
 
-    const fechaEventoFin = data.cotizacion.fecha_evento_fin 
-      ? parseAndFormatDate(data.cotizacion.fecha_evento_fin)
-      : (data.cotizacion.fecha_evento 
-          ? parseAndFormatDate(data.cotizacion.fecha_evento)
+    const fechaEventoFin = data.cotizacion.fechaEventoFin 
+      ? parseAndFormatDate(String(data.cotizacion.fechaEventoFin))
+      : (data.cotizacion.fechaEvento 
+          ? parseAndFormatDate(String(data.cotizacion.fechaEvento))
           : 'Por confirmar');
 
-    const duracionEvento = data.cotizacion.duracion_dias 
-      ? `${data.cotizacion.duracion_dias} día(s)${data.cotizacion.requiere_armado ? ' + armado previo' : ''}`
-      : (data.cotizacion.duracion_horas 
-        ? `${data.cotizacion.duracion_horas} horas`
+    const duracionEvento = data.cotizacion.duracionDias 
+      ? `${data.cotizacion.duracionDias} día(s)${data.cotizacion.requiereArmado ? ' + armado previo' : ''}`
+      : (data.cotizacion.duracionHoras 
+        ? `${data.cotizacion.duracionHoras} horas`
         : 'Por definir');
 
     // Calculate totals
     const subtotal = data.items.reduce((sum, item) => sum + item.subtotal, 0);
-    const totalDescuentos = data.items.reduce((sum, item) => sum + (item.cantidad * item.precio_unitario * item.descuento / 100), 0);
+    const totalDescuentos = data.items.reduce((sum, item) => sum + (item.cantidad * item.precioUnitario * item.descuento / 100), 0);
     const total = subtotal - totalDescuentos;
 
     const docDefinition: any = {
@@ -264,11 +264,11 @@ export const pdfService = {
                 { text: fechaEvento, style: 'tableCell' },
                 { text: fechaEventoFin, style: 'tableCell' },
                 { text: duracionEvento, style: 'tableCell' },
-                { text: (data.cotizacion.estado || 'Borrador').toUpperCase(), style: 'tableCell' }
+                { text: (data.cotizacion.estado || 'Borrador').toUpperCase(), style: 'tableCell', color: '#10b981', bold: true }
               ],
               [
                 { text: 'LUGAR', style: 'tableHeader' },
-                { text: data.cotizacion.lugar_evento || 'No especificado', style: 'tableCell', colSpan: 4 },
+                { text: data.cotizacion.lugarEvento || 'No especificado', style: 'tableCell', colSpan: 4 },
                 {},
                 {},
                 {}
@@ -277,12 +277,12 @@ export const pdfService = {
           },
           layout: {
             fillColor: function (rowIndex: number) {
-              return rowIndex === 0 ? '#f8f9fa' : null;
+              return rowIndex === 0 ? '#f8fafc' : null;
             },
-            hLineWidth: function() { return 1; },
-            vLineWidth: function() { return 1; },
-            hLineColor: function() { return '#dee2e6'; },
-            vLineColor: function() { return '#dee2e6'; }
+            hLineWidth: function() { return 0.5; },
+            vLineWidth: function() { return 0.5; },
+            hLineColor: function() { return '#e2e8f0'; },
+            vLineColor: function() { return '#e2e8f0'; }
           },
           margin: [0, 0, 0, 30]
         },
@@ -320,7 +320,7 @@ export const pdfService = {
                 },
                 { text: item.cantidad.toString(), style: 'tableCell', alignment: 'center' },
                 { text: item.unidad || 'und', style: 'tableCell', alignment: 'center' },
-                { text: `$${item.precio_unitario.toLocaleString('es-AR')}`, style: 'tableCell', alignment: 'right' },
+                { text: `$${item.precioUnitario.toLocaleString('es-AR')}`, style: 'tableCell', alignment: 'right' },
                 { text: item.descuento > 0 ? `${item.descuento}%` : '-', style: 'tableCell', alignment: 'center' },
                 { text: `$${item.subtotal.toLocaleString('es-AR')}`, style: 'tableCell', alignment: 'right', bold: true }
               ])
@@ -378,7 +378,6 @@ export const pdfService = {
                     { text: 'CONDICIONES COMERCIALES', style: 'sectionHeader' },
                    
                     { text: `• Fecha de emisión: ${currentDate}`, style: 'conditions' },
-                    ,
                     ...(data.cotizacion.condiciones ? 
                       data.cotizacion.condiciones.split('.').filter(c => c.trim()).map(condicion => ({
                         text: `• ${condicion.trim()}`, style: 'conditions'
@@ -534,14 +533,14 @@ export const pdfService = {
         finalTotalLabel: {
           fontSize: 13,
           bold: true,
-          color: '#1f2937',
+          color: '#1e293b',
           alignment: 'right',
           margin: [0, 8, 8, 8]
         },
         finalTotalValue: {
           fontSize: 13,
           bold: true,
-          color: '#059669',
+          color: '#10b981',
           alignment: 'right',
           margin: [0, 8, 0, 8]
         },

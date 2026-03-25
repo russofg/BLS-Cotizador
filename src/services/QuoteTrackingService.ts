@@ -1,18 +1,7 @@
-import { db } from '../utils/firebase';
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  updateDoc, 
-  query, 
-  where, 
-  orderBy, 
-  limit,
-  QueryDocumentSnapshot
-} from 'firebase/firestore';
+import { adminDb } from '../utils/firebaseAdmin';
+import type { QueryDocumentSnapshot, DocumentSnapshot } from 'firebase-admin/firestore';
 import { cache, CacheTTL, invalidateRelatedCache } from '../utils/cache';
-import { EmailNotificationService, ReminderEmailData } from './EmailNotificationService';
+import { EmailNotificationService, type ReminderEmailData } from './EmailNotificationService';
 
 // Estados de cotización
 export enum QuoteStatus {
@@ -98,14 +87,17 @@ export class QuoteTrackingService {
         return cachedData;
       }
 
-      const quotesQuery = query(
-        collection(db, this.COLLECTION_NAME), 
-        orderBy('createdAt', 'desc')
-      );
-      const quotesSnapshot = await getDocs(quotesQuery);
+      // Fetch all clients first to avoid N+1 queries
+      const clientsSnapshot = await adminDb.collection('clientes').get();
+      const clientsMap = new Map<string, string>();
+      clientsSnapshot.docs.forEach(d => {
+        clientsMap.set(d.id, d.data().nombre || 'Cliente sin nombre');
+      });
+
+      const quotesSnapshot = await adminDb.collection(this.COLLECTION_NAME).orderBy('createdAt', 'desc').get();
       
       const quotes = await Promise.all(
-        quotesSnapshot.docs.map(doc => this.mapDocumentToQuoteTracking(doc))
+        quotesSnapshot.docs.map(doc => this.mapDocumentToQuoteTracking(doc, clientsMap))
       );
 
       cache.set(cacheKey, quotes, this.CACHE_TTL);
@@ -127,10 +119,9 @@ export class QuoteTrackingService {
         return cachedData;
       }
 
-      const docRef = doc(db, this.COLLECTION_NAME, id);
-      const docSnap = await getDoc(docRef);
+      const docSnap = await adminDb.collection(this.COLLECTION_NAME).doc(id).get();
       
-      if (!docSnap.exists()) {
+      if (!docSnap.exists) {
         return null;
       }
 
@@ -199,8 +190,7 @@ export class QuoteTrackingService {
       }
 
       // Actualizar en Firebase
-      const docRef = doc(db, this.COLLECTION_NAME, id);
-      await updateDoc(docRef, updateData);
+      await adminDb.collection(this.COLLECTION_NAME).doc(id).update(updateData);
 
       // Invalidar caché
       this.invalidateCache(id);
@@ -311,8 +301,7 @@ export class QuoteTrackingService {
         updatedAt: new Date()
       };
 
-      const docRef = doc(db, this.COLLECTION_NAME, quoteId);
-      await updateDoc(docRef, updateData);
+      await adminDb.collection(this.COLLECTION_NAME).doc(quoteId).update(updateData);
 
       this.invalidateCache(quoteId);
     } catch (error) {
@@ -362,8 +351,7 @@ export class QuoteTrackingService {
         updatedAt: new Date()
       };
 
-      const docRef = doc(db, this.COLLECTION_NAME, quoteId);
-      await updateDoc(docRef, updateData);
+      await adminDb.collection(this.COLLECTION_NAME).doc(quoteId).update(updateData);
 
       // NO enviar email inmediatamente - se enviará cuando llegue la hora programada
       console.log('📅 Recordatorio programado para:', fecha.toLocaleString());
@@ -402,20 +390,25 @@ export class QuoteTrackingService {
   /**
    * Mapea un documento de Firebase a QuoteTracking
    */
-  private static async mapDocumentToQuoteTracking(doc: QueryDocumentSnapshot): Promise<QuoteTracking> {
-    const data = doc.data();
+  private static async mapDocumentToQuoteTracking(quoteDoc: DocumentSnapshot, clientsMap?: Map<string, string>): Promise<QuoteTracking> {
+    const data = quoteDoc.data();
+    if (!data) throw new Error('Document is empty');
     
     // Obtener información del cliente
     let clienteNombre = 'Cliente desconocido';
     try {
-      if (data.clienteId) {
-        const clienteQuery = query(
-          collection(db, 'clientes'),
-          where('__name__', '==', data.clienteId)
-        );
-        const clienteSnapshot = await getDocs(clienteQuery);
-        if (!clienteSnapshot.empty) {
-          clienteNombre = clienteSnapshot.docs[0].data().nombre || clienteNombre;
+      if (data.clienteId || data.cliente_id) {
+        const clientId = data.clienteId || data.cliente_id;
+        
+        // Usar mapa pre-cargado si existe (evita N+1 queries)
+        if (clientsMap && clientsMap.has(clientId)) {
+          clienteNombre = clientsMap.get(clientId)!;
+        } else {
+          // Fallback a consulta individual
+          const docSnap = await adminDb.collection('clientes').doc(clientId).get();
+          if (docSnap.exists) {
+            clienteNombre = docSnap.data()!.nombre || clienteNombre;
+          }
         }
       }
     } catch (error) {
@@ -433,12 +426,22 @@ export class QuoteTrackingService {
     const diasVencimiento = Math.ceil((fechaVencimiento.getTime() - ahora.getTime()) / (1000 * 60 * 60 * 24));
 
     return {
-      id: doc.id,
-      numero: data.numero || `COT-${doc.id}`,
+      id: quoteDoc.id,
+      numero: data.numero || `COT-${quoteDoc.id}`,
       clienteId: data.clienteId || data.cliente_id,
       clienteNombre,
       titulo: data.titulo || data.descripcion || 'Sin título',
-      estado: data.estado || QuoteStatus.BORRADOR,
+      estado: (() => {
+        const s = String(data.estado || '').toLowerCase();
+        if (s.includes('borrador')) return QuoteStatus.BORRADOR;
+        if (s.includes('enviad')) return QuoteStatus.ENVIADA;
+        if (s.includes('aprob')) return QuoteStatus.APROBADA;
+        if (s.includes('recha')) return QuoteStatus.RECHAZADA;
+        if (s.includes('revis')) return QuoteStatus.REVISADA;
+        if (s.includes('vencid')) return QuoteStatus.VENCIDA;
+        if (s.includes('convert')) return QuoteStatus.CONVERTIDA;
+        return (data.estado as QuoteStatus) || QuoteStatus.BORRADOR;
+      })(),
       fechaCreacion,
       fechaEnvio: data.fechaEnvio?.toDate?.() || data.fechaEnvio,
       fechaRevision: data.fechaRevision?.toDate?.() || data.fechaRevision,

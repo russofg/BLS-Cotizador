@@ -4,7 +4,7 @@ import { cotizacionService, clienteService } from "../../../utils/database";
 import { DateHelper } from "../../../utils/dateHelpers";
 import { QuoteHelper } from "../../../utils/quoteHelpers";
 import ScrollbarStyles from "../../../components/ScrollbarStyles.astro";
-import { DEFAULT_QUOTE_TEXTS } from "../../../config/company";
+import { DEFAULT_QUOTE_TEXTS, COMPANY_INFO } from "../../../config/company";
 
 // Valores por defecto para los campos de texto
 const defaultObservaciones = DEFAULT_QUOTE_TEXTS.observaciones;
@@ -140,17 +140,14 @@ if (cotizacion && cotizacion.items) {
             <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
               <p class="mt-1">
-                <span class={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                  cotizacion.estado === 'borrador' ? 'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200' :
-                  cotizacion.estado === 'enviado' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' :
-                  cotizacion.estado === 'aprobado' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' :
-                  'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
-                }`}>
-                  {cotizacion.estado === 'borrador' ? 'Borrador' :
-                   cotizacion.estado === 'enviado' ? 'Enviado' :
-                   cotizacion.estado === 'aprobado' ? 'Aprobado' :
-                   cotizacion.estado === 'rechazado' ? 'Rechazado' : 'Desconocido'}
-                </span>
+                {(() => {
+                  const statusInfo = QuoteHelper.getQuoteStatusInfo(cotizacion.estado);
+                  return (
+                    <span class={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusInfo.bgClass} ${statusInfo.textClass}`}>
+                      {statusInfo.text}
+                    </span>
+                  );
+                })()}
               </p>
             </div>
             
@@ -274,35 +271,7 @@ if (cotizacion && cotizacion.items) {
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
                   {itemsToShow.map((item: any) => {
-                    // Prioritize nombre over descripcion, then fallback to other fields
-                    let itemName = item.nombre || item.name || '';
-                    let itemDescription = '';
-                    
-                    // Handle array descriptions (from real catalog items)
-                    if (Array.isArray(item.descripcion)) {
-                      itemDescription = item.descripcion.join(', ');
-                    } else {
-                      itemDescription = item.descripcion || '';
-                    }
-                    
-                    // Ensure we're working with strings
-                    itemName = String(itemName || '').trim();
-                    itemDescription = String(itemDescription || '').trim();
-                    
-                    // Build display text with name in bold and description below
-                    let displayText = '';
-                    
-                    if (itemName) {
-                      displayText = `<strong class="dark:text-white">${itemName}</strong>`;
-                      if (itemDescription && itemDescription !== itemName) {
-                        displayText += `<br><span class="text-gray-600 dark:text-gray-400">${itemDescription}</span>`;
-                      }
-                    } else if (itemDescription) {
-                      // If no name, just show description
-                      displayText = `<span class="dark:text-white">${itemDescription}</span>`;
-                    } else {
-                      displayText = '<span class="dark:text-white">Item sin descripción</span>';
-                    }
+                    const { displayText } = QuoteHelper.formatItemForDisplay(item);
                     
                     const cantidad = item.cantidad || item.quantity || 1;
                     const precioUnitario = item.precio_unitario || item.precio || item.price || 0;
@@ -340,20 +309,7 @@ if (cotizacion && cotizacion.items) {
             <!-- Mobile card view (visible only on small screens) -->
             <div class="sm:hidden space-y-4">
               {itemsToShow.map((item: any) => {
-                // Prioritize nombre over descripcion, then fallback to other fields
-                let itemName = item.nombre || item.name || '';
-                let itemDescription = '';
-                
-                // Handle array descriptions (from real catalog items)
-                if (Array.isArray(item.descripcion)) {
-                  itemDescription = item.descripcion.join(', ');
-                } else {
-                  itemDescription = item.descripcion || '';
-                }
-                
-                // Ensure we're working with strings
-                itemName = String(itemName || '').trim();
-                itemDescription = String(itemDescription || '').trim();
+                const { displayText } = QuoteHelper.formatItemForDisplay(item);
                 
                 const cantidad = item.cantidad || item.quantity || 1;
                 const precioUnitario = item.precio_unitario || item.precio || item.price || 0;
@@ -361,12 +317,7 @@ if (cotizacion && cotizacion.items) {
                 
                 return (
                   <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-md shadow-sm">
-                    {itemName && (
-                      <h4 class="font-medium text-gray-900 dark:text-gray-200 mb-1">{itemName}</h4>
-                    )}
-                    {itemDescription && itemDescription !== itemName && (
-                      <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">{itemDescription}</p>
-                    )}
+                    <div class="text-sm text-gray-900 dark:text-white" set:html={displayText}></div>
                     <div class="grid grid-cols-3 gap-2 mt-3">
                       <div>
                         <span class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cantidad</span>
@@ -414,7 +365,7 @@ if (cotizacion && cotizacion.items) {
             <div class="text-center py-10">
               <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
                 <svg class="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
                 </svg>
               </div>
               <p class="text-center text-gray-500 dark:text-gray-400">No hay items en esta cotización</p>
@@ -430,41 +381,26 @@ if (cotizacion && cotizacion.items) {
   )}
 </Dashboard>
 
-<script define:vars={{ cotizacion, cliente, itemsToShow, defaultObservaciones, defaultCondiciones }}>
+<script define:vars={{ cotizacion, cliente, itemsToShow, COMPANY_INFO, defaultObservaciones, defaultCondiciones }}>
   // Make data available globally for export functions
   window.cotizacion = cotizacion;
   window.cliente = cliente;
   window.itemsToShow = itemsToShow;
+  window.COMPANY_INFO = COMPANY_INFO;
   window.defaultObservaciones = defaultObservaciones;
   window.defaultCondiciones = defaultCondiciones;
 </script>
 
 <script>
   document.addEventListener("DOMContentLoaded", async () => {
-    // Configuración de la empresa (sincronizada con /src/config/company.ts)
-    const empresaInfo = {
-      nombre: 'BLS Servicios Audiovisuales',
-      direccion: 'Catamarca 809, CABA, Argentina',
-      telefono: '+54 11 5183 4646',
-      email: 'info@blsnet.com.ar',
-      website: 'www.blsnet.com.ar'
-    };
 
     // Get cotization data from the page (these are available as global variables)
     const getCotizacionData = () => {
-      const cotizacionData = (window as any).cotizacion || {};
-      const clienteData = (window as any).cliente || {};
-      const itemsData = (window as any).itemsToShow || [];
-      const defaultObs = (window as any).defaultObservaciones || '';
-      const defaultCond = (window as any).defaultCondiciones || '';
-      console.log('🔍 Debug detailed items:', JSON.stringify(itemsData, null, 2));
-      
       return {
-        cotizacion: cotizacionData,
-        cliente: clienteData,
-        items: itemsData,
-        defaultObservaciones: defaultObs,
-        defaultCondiciones: defaultCond
+        cotizacion: (window as any).cotizacion || {},
+        cliente: (window as any).cliente || {},
+        items: (window as any).itemsToShow || [],
+        empresa: (window as any).COMPANY_INFO || {}
       };
     };
 
@@ -474,224 +410,21 @@ if (cotizacion && cotizacion.items) {
         const { exportService } = await import("../../../utils/export");
         const { notifications } = await import("../../../utils/notifications");
         
-        const data = getCotizacionData();
-        if (!data.cotizacion || !data.cotizacion.id) {
+        const rawData = getCotizacionData();
+        if (!rawData.cotizacion || !rawData.cotizacion.id) {
           notifications.error('Error', 'No se pudo obtener los datos de la cotización');
           return;
         }
         
-        // Prepare export data matching the expected interface
-        const exportData = {
-          cotizacion: {
-            numero: data.cotizacion.numeroMejorado || data.cotizacion.numero || 'Sin número',
-            titulo: data.cotizacion.titulo || 'Sin título',
-            descripcion: data.cotizacion.descripcion || '',
-            fecha_evento: (() => {
-              // Use the same safe date formatting logic for fecha_evento
-              const fechaInicio = data.cotizacion.fecha_evento || data.cotizacion.fechaEvento;
-              if (fechaInicio) {
-                try {
-                  // Handle Firebase Timestamp objects
-                  if (fechaInicio && typeof fechaInicio === 'object' && fechaInicio.toDate) {
-                    const date = fechaInicio.toDate();
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                  
-                  // Handle Firebase Timestamp objects with seconds property
-                  if (fechaInicio && typeof fechaInicio === 'object' && typeof fechaInicio.seconds === 'number') {
-                    const date = new Date(fechaInicio.seconds * 1000);
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                  
-                  // Handle string dates
-                  if (typeof fechaInicio === 'string') {
-                    if (fechaInicio.includes('/')) return fechaInicio; // Already formatted
-                    
-                    let dateToFormat;
-                    if (fechaInicio.includes('T') || fechaInicio.includes('Z')) {
-                      dateToFormat = new Date(fechaInicio);
-                    } else {
-                      dateToFormat = new Date(fechaInicio + 'T12:00:00');
-                    }
-                    
-                    if (!isNaN(dateToFormat.getTime())) {
-                      const day = dateToFormat.getDate().toString().padStart(2, '0');
-                      const month = (dateToFormat.getMonth() + 1).toString().padStart(2, '0');
-                      const year = dateToFormat.getFullYear();
-                      return `${day}/${month}/${year}`;
-                    }
-                  }
-                  
-                  // Try to create a Date object for other types
-                  const date = new Date(fechaInicio);
-                  if (!isNaN(date.getTime())) {
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                } catch (error) {
-                  console.error('Error formatting fecha_evento for PDF:', fechaInicio, error);
-                }
-              }
-              return ''; // Return empty string if no valid date found
-            })(),
-            fecha_evento_fin: (() => {
-              // Use the same safe date formatting logic from the server side
-              const fechaFin = data.cotizacion.fecha_evento_fin || data.cotizacion.fechaEventoFin;
-              if (fechaFin) {
-                try {
-                  // Handle Firebase Timestamp objects
-                  if (fechaFin && typeof fechaFin === 'object' && fechaFin.toDate) {
-                    const date = fechaFin.toDate();
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                  
-                  // Handle Firebase Timestamp objects with seconds property
-                  if (fechaFin && typeof fechaFin === 'object' && typeof fechaFin.seconds === 'number') {
-                    const date = new Date(fechaFin.seconds * 1000);
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                  
-                  // Handle string dates
-                  if (typeof fechaFin === 'string') {
-                    if (fechaFin.includes('/')) return fechaFin; // Already formatted
-                    
-                    let dateToFormat;
-                    if (fechaFin.includes('T') || fechaFin.includes('Z')) {
-                      dateToFormat = new Date(fechaFin);
-                    } else {
-                      dateToFormat = new Date(fechaFin + 'T12:00:00');
-                    }
-                    
-                    if (!isNaN(dateToFormat.getTime())) {
-                      const day = dateToFormat.getDate().toString().padStart(2, '0');
-                      const month = (dateToFormat.getMonth() + 1).toString().padStart(2, '0');
-                      const year = dateToFormat.getFullYear();
-                      return `${day}/${month}/${year}`;
-                    }
-                  }
-                  
-                  // Try to create a Date object for other types
-                  const date = new Date(fechaFin);
-                  if (!isNaN(date.getTime())) {
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                } catch (error) {
-                  console.error('Error formatting fecha_evento_fin for PDF:', fechaFin, error);
-                }
-              }
-              
-              // Fallback to fecha_evento if fecha_evento_fin is not available
-              const fechaInicio = data.cotizacion.fecha_evento || data.cotizacion.fechaEvento;
-              if (fechaInicio) {
-                try {
-                  // Apply same formatting logic to fecha_evento as fallback
-                  if (fechaInicio && typeof fechaInicio === 'object' && fechaInicio.toDate) {
-                    const date = fechaInicio.toDate();
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                  
-                  if (fechaInicio && typeof fechaInicio === 'object' && typeof fechaInicio.seconds === 'number') {
-                    const date = new Date(fechaInicio.seconds * 1000);
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                  
-                  if (typeof fechaInicio === 'string') {
-                    if (fechaInicio.includes('/')) return fechaInicio;
-                    
-                    let dateToFormat;
-                    if (fechaInicio.includes('T') || fechaInicio.includes('Z')) {
-                      dateToFormat = new Date(fechaInicio);
-                    } else {
-                      dateToFormat = new Date(fechaInicio + 'T12:00:00');
-                    }
-                    
-                    if (!isNaN(dateToFormat.getTime())) {
-                      const day = dateToFormat.getDate().toString().padStart(2, '0');
-                      const month = (dateToFormat.getMonth() + 1).toString().padStart(2, '0');
-                      const year = dateToFormat.getFullYear();
-                      return `${day}/${month}/${year}`;
-                    }
-                  }
-                  
-                  const date = new Date(fechaInicio);
-                  if (!isNaN(date.getTime())) {
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                } catch (error) {
-                  console.error('Error formatting fecha_evento as fallback for PDF:', fechaInicio, error);
-                }
-              }
-              
-              return ''; // Return empty string if no valid date found
-            })(),
-            lugar_evento: data.cotizacion.lugar_evento || '',
-            duracion_horas: data.cotizacion.duracion_horas || (data.cotizacion.duracion_dias * 24) || 24,
-            duracion_dias: data.cotizacion.duracion_dias || Math.ceil((data.cotizacion.duracion_horas || 24) / 24),
-            requiere_armado: data.cotizacion.requiere_armado || false,
-            subtotal: parseFloat(data.cotizacion.subtotal) || 0,
-            descuento: parseFloat(data.cotizacion.descuentoGeneral || data.cotizacion.descuento) || 0,
-            total: parseFloat(data.cotizacion.total) || 0,
-            observaciones: data.cotizacion.observaciones || 'Este presupuesto incluye nuestro SISTEMA DE COBERTURA DE BACK ESTRUCTURAL para equipo técnico.\n\nLos importes detallados no incluyen I.V.A.',
-            condiciones: data.cotizacion.condiciones || 'Validez de la oferta: La validez de esta oferta es de 20 días.\n\nNOTA IMPORTANTE\n\nLOS VALORES ESTAN CONTEMPLADOS AL MES DE NOVIEMBRE DE 2024\n\nSERAN AJUSTADOS MENSUALMENTE SEGÚN IPC (INDICE DE PRECIOS AL CONSUMIDOR)\n\nCondiciones de Pago y confirmación del servicio:\n\nEl pago deberá cancelarse de la siguiente manera: 50% como reserva del equipamiento y el saldo restante a 10 días del evento. Podrá efectuarse en efectivo, transferencia bancaria o mediante la emisión de cheque. \nPor favor remitir datos de la empresa y contacto de pago a proveedores para una correcta facturación. \n\nCancelación de los servicios:\n\nSin cargo hasta 48 Hs antes del evento.\nSi se cancela 24 Hs. antes se deberá abonar el 50% del total del presupuesto.\nTodos los adicionales que no se encuentren cotizados en el presente presupuesto serán cotizados por separado y serán incluidos en la facturación al momento del detalle final. \n\nCondiciones de reserva:\n\nLa confirmación del evento por parte de BLS – Servicios Audiovisuales dependerá de la disponibilidad del servicio al momento de la aceptación formal del presupuesto por parte del cliente.',
-            vigencia_dias: data.cotizacion.vigencia_dias || 30,
-            created_at: data.cotizacion.created_at || new Date().toISOString(),
-            estado: data.cotizacion.estado || 'pendiente'
-          },
-          cliente: {
-            nombre: data.cliente?.nombre || 'Cliente sin nombre',
-            empresa: data.cliente?.empresa || '',
-            email: data.cliente?.email || '',
-            telefono: data.cliente?.telefono || '',
-            direccion: data.cliente?.direccion || ''
-          },
-          items: (data.items || []).map((item: any) => {
-            const cantidad = parseFloat(item.cantidad || item.quantity) || 1;
-            const precioUnitario = parseFloat(item.precio_unitario || item.precio || item.price) || 0;
-            const descuento = parseFloat(item.descuento || item.discount) || 0;
-            const subtotalItem = parseFloat(item.total || item.subtotal) || (cantidad * precioUnitario * (1 - descuento/100));
-            
-            return {
-              nombre: item.nombre || item.name || 'Artículo sin nombre',
-              descripcion: Array.isArray(item.descripcion) ? item.descripcion : (item.descripcion ? [item.descripcion] : []),
-              cantidad: cantidad,
-              precio_unitario: precioUnitario,
-              descuento: descuento,
-              subtotal: subtotalItem,
-              unidad: item.unidad || item.unit || 'und',
-              observaciones: item.observaciones || item.notes || ''
-            };
-          }),
-          empresa: empresaInfo
-        };
+        // Use centralized prepareExportData for consistency
+        const exportData = exportService.prepareExportData(
+          rawData.cotizacion, 
+          rawData.cliente, 
+          rawData.items,
+          rawData.empresa
+        );
         
         await exportService.exportCotizacion(exportData, 'pdf');
-        
       } catch (error) {
         console.error('Export PDF error:', error);
         const { notifications } = await import("../../../utils/notifications");
@@ -705,224 +438,21 @@ if (cotizacion && cotizacion.items) {
         const { exportService } = await import("../../../utils/export");
         const { notifications } = await import("../../../utils/notifications");
         
-        const data = getCotizacionData();
-        if (!data.cotizacion || !data.cotizacion.id) {
+        const rawData = getCotizacionData();
+        if (!rawData.cotizacion || !rawData.cotizacion.id) {
           notifications.error('Error', 'No se pudo obtener los datos de la cotización');
           return;
         }
         
-        // Prepare export data matching the expected interface (same as PDF)
-        const exportData = {
-          cotizacion: {
-            numero: data.cotizacion.numeroMejorado || data.cotizacion.numero || 'Sin número',
-            titulo: data.cotizacion.titulo || 'Sin título',
-            descripcion: data.cotizacion.descripcion || '',
-            fecha_evento: (() => {
-              // Use the same safe date formatting logic for fecha_evento
-              const fechaInicio = data.cotizacion.fecha_evento || data.cotizacion.fechaEvento;
-              if (fechaInicio) {
-                try {
-                  // Handle Firebase Timestamp objects
-                  if (fechaInicio && typeof fechaInicio === 'object' && fechaInicio.toDate) {
-                    const date = fechaInicio.toDate();
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                  
-                  // Handle Firebase Timestamp objects with seconds property
-                  if (fechaInicio && typeof fechaInicio === 'object' && typeof fechaInicio.seconds === 'number') {
-                    const date = new Date(fechaInicio.seconds * 1000);
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                  
-                  // Handle string dates
-                  if (typeof fechaInicio === 'string') {
-                    if (fechaInicio.includes('/')) return fechaInicio; // Already formatted
-                    
-                    let dateToFormat;
-                    if (fechaInicio.includes('T') || fechaInicio.includes('Z')) {
-                      dateToFormat = new Date(fechaInicio);
-                    } else {
-                      dateToFormat = new Date(fechaInicio + 'T12:00:00');
-                    }
-                    
-                    if (!isNaN(dateToFormat.getTime())) {
-                      const day = dateToFormat.getDate().toString().padStart(2, '0');
-                      const month = (dateToFormat.getMonth() + 1).toString().padStart(2, '0');
-                      const year = dateToFormat.getFullYear();
-                      return `${day}/${month}/${year}`;
-                    }
-                  }
-                  
-                  // Try to create a Date object for other types
-                  const date = new Date(fechaInicio);
-                  if (!isNaN(date.getTime())) {
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                } catch (error) {
-                  console.error('Error formatting fecha_evento for Excel:', fechaInicio, error);
-                }
-              }
-              return ''; // Return empty string if no valid date found
-            })(),
-            fecha_evento_fin: (() => {
-              // Use the same safe date formatting logic from the server side
-              const fechaFin = data.cotizacion.fecha_evento_fin || data.cotizacion.fechaEventoFin;
-              if (fechaFin) {
-                try {
-                  // Handle Firebase Timestamp objects
-                  if (fechaFin && typeof fechaFin === 'object' && fechaFin.toDate) {
-                    const date = fechaFin.toDate();
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                  
-                  // Handle Firebase Timestamp objects with seconds property
-                  if (fechaFin && typeof fechaFin === 'object' && typeof fechaFin.seconds === 'number') {
-                    const date = new Date(fechaFin.seconds * 1000);
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                  
-                  // Handle string dates
-                  if (typeof fechaFin === 'string') {
-                    if (fechaFin.includes('/')) return fechaFin; // Already formatted
-                    
-                    let dateToFormat;
-                    if (fechaFin.includes('T') || fechaFin.includes('Z')) {
-                      dateToFormat = new Date(fechaFin);
-                    } else {
-                      dateToFormat = new Date(fechaFin + 'T12:00:00');
-                    }
-                    
-                    if (!isNaN(dateToFormat.getTime())) {
-                      const day = dateToFormat.getDate().toString().padStart(2, '0');
-                      const month = (dateToFormat.getMonth() + 1).toString().padStart(2, '0');
-                      const year = dateToFormat.getFullYear();
-                      return `${day}/${month}/${year}`;
-                    }
-                  }
-                  
-                  // Try to create a Date object for other types
-                  const date = new Date(fechaFin);
-                  if (!isNaN(date.getTime())) {
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                } catch (error) {
-                  console.error('Error formatting fecha_evento_fin for Excel:', fechaFin, error);
-                }
-              }
-              
-              // Fallback to fecha_evento if fecha_evento_fin is not available
-              const fechaInicio = data.cotizacion.fecha_evento || data.cotizacion.fechaEvento;
-              if (fechaInicio) {
-                try {
-                  // Apply same formatting logic to fecha_evento as fallback
-                  if (fechaInicio && typeof fechaInicio === 'object' && fechaInicio.toDate) {
-                    const date = fechaInicio.toDate();
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                  
-                  if (fechaInicio && typeof fechaInicio === 'object' && typeof fechaInicio.seconds === 'number') {
-                    const date = new Date(fechaInicio.seconds * 1000);
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                  
-                  if (typeof fechaInicio === 'string') {
-                    if (fechaInicio.includes('/')) return fechaInicio;
-                    
-                    let dateToFormat;
-                    if (fechaInicio.includes('T') || fechaInicio.includes('Z')) {
-                      dateToFormat = new Date(fechaInicio);
-                    } else {
-                      dateToFormat = new Date(fechaInicio + 'T12:00:00');
-                    }
-                    
-                    if (!isNaN(dateToFormat.getTime())) {
-                      const day = dateToFormat.getDate().toString().padStart(2, '0');
-                      const month = (dateToFormat.getMonth() + 1).toString().padStart(2, '0');
-                      const year = dateToFormat.getFullYear();
-                      return `${day}/${month}/${year}`;
-                    }
-                  }
-                  
-                  const date = new Date(fechaInicio);
-                  if (!isNaN(date.getTime())) {
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }
-                } catch (error) {
-                  console.error('Error formatting fecha_evento as fallback for Excel:', fechaInicio, error);
-                }
-              }
-              
-              return ''; // Return empty string if no valid date found
-            })(),
-            lugar_evento: data.cotizacion.lugar_evento || '',
-            duracion_horas: data.cotizacion.duracion_horas || (data.cotizacion.duracion_dias * 24) || 24,
-            duracion_dias: data.cotizacion.duracion_dias || Math.ceil((data.cotizacion.duracion_horas || 24) / 24),
-            requiere_armado: data.cotizacion.requiere_armado || false,
-            subtotal: parseFloat(data.cotizacion.subtotal) || 0,
-            descuento: parseFloat(data.cotizacion.descuentoGeneral || data.cotizacion.descuento) || 0,
-            total: parseFloat(data.cotizacion.total) || 0,
-            observaciones: data.cotizacion.observaciones || 'Este presupuesto incluye nuestro SISTEMA DE COBERTURA DE BACK ESTRUCTURAL para equipo técnico.\n\nLos importes detallados no incluyen I.V.A.',
-            condiciones: data.cotizacion.condiciones || 'Validez de la oferta: La validez de esta oferta es de 20 días.\n\nNOTA IMPORTANTE\n\nLOS VALORES ESTAN CONTEMPLADOS AL MES DE NOVIEMBRE DE 2024\n\nSERAN AJUSTADOS MENSUALMENTE SEGÚN IPC (INDICE DE PRECIOS AL CONSUMIDOR)\n\nCondiciones de Pago y confirmación del servicio:\n\nEl pago deberá cancelarse de la siguiente manera: 50% como reserva del equipamiento y el saldo restante a 10 días del evento. Podrá efectuarse en efectivo, transferencia bancaria o mediante la emisión de cheque. \nPor favor remitir datos de la empresa y contacto de pago a proveedores para una correcta facturación. \n\nCancelación de los servicios:\n\nSin cargo hasta 48 Hs antes del evento.\nSi se cancela 24 Hs. antes se deberá abonar el 50% del total del presupuesto.\nTodos los adicionales que no se encuentren cotizados en el presente presupuesto serán cotizados por separado y serán incluidos en la facturación al momento del detalle final. \n\nCondiciones de reserva:\n\nLa confirmación del evento por parte de BLS – Servicios Audiovisuales dependerá de la disponibilidad del servicio al momento de la aceptación formal del presupuesto por parte del cliente.',
-            vigencia_dias: data.cotizacion.vigencia_dias || 30,
-            created_at: data.cotizacion.created_at || new Date().toISOString(),
-            estado: data.cotizacion.estado || 'pendiente'
-          },
-          cliente: {
-            nombre: data.cliente?.nombre || 'Cliente sin nombre',
-            empresa: data.cliente?.empresa || '',
-            email: data.cliente?.email || '',
-            telefono: data.cliente?.telefono || '',
-            direccion: data.cliente?.direccion || ''
-          },
-          items: (data.items || []).map((item: any) => {
-            const cantidad = parseFloat(item.cantidad || item.quantity) || 1;
-            const precioUnitario = parseFloat(item.precio_unitario || item.precio || item.price) || 0;
-            const descuento = parseFloat(item.descuento || item.discount) || 0;
-            const subtotalItem = parseFloat(item.total || item.subtotal) || (cantidad * precioUnitario * (1 - descuento/100));
-            
-            return {
-              nombre: item.nombre || item.name || 'Artículo sin nombre',
-              descripcion: Array.isArray(item.descripcion) ? item.descripcion : (item.descripcion ? [item.descripcion] : []),
-              cantidad: cantidad,
-              precio_unitario: precioUnitario,
-              descuento: descuento,
-              subtotal: subtotalItem,
-              unidad: item.unidad || item.unit || 'und',
-              observaciones: item.observaciones || item.notes || ''
-            };
-          }),
-          empresa: empresaInfo
-        };
+        // Use centralized prepareExportData for consistency
+        const exportData = exportService.prepareExportData(
+          rawData.cotizacion, 
+          rawData.cliente, 
+          rawData.items,
+          rawData.empresa
+        );
         
         await exportService.exportCotizacion(exportData, 'excel');
-        
       } catch (error) {
         console.error('Export Excel error:', error);
         const { notifications } = await import("../../../utils/notifications");

@@ -3,22 +3,8 @@
  * Mantiene compatibilidad con el servicio anterior pero con mejoras
  */
 
-import { db } from '../utils/firebase';
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  orderBy, 
-  limit,
-  startAfter,
-  QueryDocumentSnapshot
-} from 'firebase/firestore';
+import { adminDb } from '../utils/firebaseAdmin';
+import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { ValidationHelper } from '../utils/validationHelpers';
 import { cache, CacheKeys, CacheTTL, invalidateRelatedCache } from '../utils/cache';
 
@@ -110,22 +96,22 @@ export class ItemService {
         return cachedData;
       }
 
-      let q = query(collection(db, this.COLLECTION_NAME), orderBy('nombre', 'asc'));
+      let q: FirebaseFirestore.Query = adminDb.collection(this.COLLECTION_NAME).orderBy('nombre', 'asc');
       
       // Aplicar filtros
       if (filters?.categoria) {
-        q = query(q, where('categoriaId', '==', filters.categoria));
+        q = q.where('categoriaId', '==', filters.categoria);
       }
       
       if (filters?.activo !== undefined) {
-        q = query(q, where('activo', '==', filters.activo));
+        q = q.where('activo', '==', filters.activo);
       }
       
       if (filters?.unidad) {
-        q = query(q, where('unidad', '==', filters.unidad));
+        q = q.where('unidad', '==', filters.unidad);
       }
       
-      const snapshot = await getDocs(q);
+      const snapshot = await q.get();
       let items = snapshot.docs.map(doc => this.mapDocumentToItem(doc));
       
       // Aplicar filtros de precio (no se pueden hacer en Firestore directamente)
@@ -156,7 +142,7 @@ export class ItemService {
       return items;
     } catch (error) {
       console.error('Error getting all items:', error);
-      throw new Error('Error al obtener los items');
+      throw error;
     }
   }
 
@@ -176,8 +162,8 @@ export class ItemService {
         return cachedData;
       }
 
-      const docSnap = await getDoc(doc(db, this.COLLECTION_NAME, id));
-      if (!docSnap.exists()) {
+      const docSnap = await adminDb.collection(this.COLLECTION_NAME).doc(id).get();
+      if (!docSnap.exists) {
         return null;
       }
       
@@ -189,7 +175,7 @@ export class ItemService {
       return item;
     } catch (error) {
       console.error('Error getting item by ID:', error);
-      throw new Error('Error al obtener el item');
+      throw error;
     }
   }
 
@@ -213,14 +199,14 @@ export class ItemService {
       }
 
       const now = new Date();
-      const docRef = await addDoc(collection(db, this.COLLECTION_NAME), {
+      const docRef = await adminDb.collection(this.COLLECTION_NAME).add({
         ...itemData,
         activo: itemData.activo ?? true,
         createdAt: now,
         updatedAt: now
       });
       
-      const docSnap = await getDoc(docRef);
+      const docSnap = await docRef.get();
       const newItem = this.mapDocumentToItem(docSnap);
       
       // Invalidate related cache
@@ -256,8 +242,7 @@ export class ItemService {
         }
       }
 
-      const docRef = doc(db, this.COLLECTION_NAME, id);
-      await updateDoc(docRef, {
+      await adminDb.collection(this.COLLECTION_NAME).doc(id).update({
         ...updates,
         updatedAt: new Date()
       });
@@ -296,7 +281,7 @@ export class ItemService {
         throw new Error('ID de item es requerido');
       }
 
-      await deleteDoc(doc(db, this.COLLECTION_NAME, id));
+      await adminDb.collection(this.COLLECTION_NAME).doc(id).delete();
     } catch (error) {
       console.error('Error permanently deleting item:', error);
       throw error;
@@ -327,7 +312,7 @@ export class ItemService {
         .slice(0, limitCount);
     } catch (error) {
       console.error('Error searching items:', error);
-      throw new Error('Error al buscar items');
+      throw error;
     }
   }
 
@@ -340,13 +325,10 @@ export class ItemService {
         return null;
       }
 
-      const q = query(
-        collection(db, this.COLLECTION_NAME), 
-        where('codigo', '==', codigo.toUpperCase()),
-        limit(1)
-      );
-      
-      const snapshot = await getDocs(q);
+      const snapshot = await adminDb.collection(this.COLLECTION_NAME)
+        .where('codigo', '==', codigo.toUpperCase())
+        .limit(1)
+        .get();
       if (snapshot.empty) {
         return null;
       }
@@ -354,7 +336,7 @@ export class ItemService {
       return this.mapDocumentToItem(snapshot.docs[0]);
     } catch (error) {
       console.error('Error getting item by codigo:', error);
-      throw new Error('Error al buscar item por código');
+      throw error;
     }
   }
 
@@ -375,7 +357,7 @@ export class ItemService {
       return this.getAll(filters);
     } catch (error) {
       console.error('Error getting items by categoria:', error);
-      throw new Error('Error al obtener items por categoría');
+      throw error;
     }
   }
 
@@ -416,7 +398,7 @@ export class ItemService {
       };
     } catch (error) {
       console.error('Error getting item stats:', error);
-      throw new Error('Error al obtener estadísticas de items');
+      throw error;
     }
   }
 
@@ -448,11 +430,11 @@ export class ItemService {
       const categorias = await Promise.all(
         categoriaIds.map(async (categoriaId) => {
           try {
-            const categoriaDoc = await getDoc(doc(db, 'categorias', categoriaId));
-            if (categoriaDoc.exists()) {
+            const categoriaDoc = await adminDb.collection('categorias').doc(categoriaId).get();
+            if (categoriaDoc.exists) {
               return {
                 id: categoriaDoc.id,
-                nombre: categoriaDoc.data().nombre || 'Sin categoría'
+                nombre: categoriaDoc.data()?.nombre || 'Sin categoría'
               };
             }
           } catch (error) {
@@ -469,7 +451,7 @@ export class ItemService {
       }));
     } catch (error) {
       console.error('Error getting items with categoria:', error);
-      throw new Error('Error al obtener items con categoría');
+      throw error;
     }
   }
 
@@ -541,8 +523,8 @@ export class ItemService {
   /**
    * Mapea un documento de Firestore a un objeto Item
    */
-  private static mapDocumentToItem(doc: QueryDocumentSnapshot): Item {
-    const data = doc.data();
+  private static mapDocumentToItem(doc: DocumentSnapshot | QueryDocumentSnapshot): Item {
+    const data = doc.data() || {};
     return {
       id: doc.id,
       categoriaId: data.categoriaId || '',

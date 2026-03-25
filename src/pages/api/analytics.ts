@@ -1,8 +1,11 @@
 import type { APIRoute } from 'astro';
 import { AnalyticsService } from '../../services/AnalyticsService';
+import { checkRateLimit } from '../../utils/rateLimit';
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, request }) => {
   try {
+    const limited = checkRateLimit(request, 'READ', 'analytics');
+    if (limited) return limited;
     const type = url.searchParams.get('type') || 'dashboard';
     
     let analytics;

@@ -59,10 +59,10 @@ export class EmailConfigService {
    */
   static isConfigured(): boolean {
     const config = this.getConfig();
-    return config.enabled && 
+    return !!(config.enabled && 
            config.smtpHost && 
            config.smtpUser && 
-           config.fromEmail;
+           config.fromEmail);
   }
 
   /**

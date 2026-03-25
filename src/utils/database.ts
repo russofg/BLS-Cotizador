@@ -1,17 +1,9 @@
-import { db } from './firebase'
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  orderBy, 
-  limit
-} from 'firebase/firestore'
+import { adminDb } from './firebaseAdmin';
+import { CategoriaService } from '../services/CategoriaService';
+import { ItemService } from '../services/ItemService';
+import { ConfiguracionService } from '../services/ConfiguracionService';
+import { ClienteService } from '../services/ClienteService';
+import { CotizacionService } from '../services/CotizacionService';
 
 // Types
 export interface Categoria {
@@ -114,74 +106,53 @@ export interface Configuracion {
   updatedAt: Date
 }
 
-// Categorías Service - Mantener compatibilidad mientras migramos gradualmente
+// Categorías Service
 export const categoriaService = {
   async getAll(): Promise<Categoria[]> {
-    // Usar el nuevo servicio mejorado internamente
-    const { CategoriaService } = await import('../services/CategoriaService');
     return CategoriaService.getAll();
   },
 
   async create(categoria: Omit<Categoria, 'id'>): Promise<Categoria> {
-    // Usar el nuevo servicio mejorado internamente
-    const { CategoriaService } = await import('../services/CategoriaService');
     return CategoriaService.create(categoria);
   },
 
   async update(id: string, updates: Partial<Categoria>): Promise<void> {
-    // Usar el nuevo servicio mejorado internamente
-    const { CategoriaService } = await import('../services/CategoriaService');
     return CategoriaService.update(id, updates);
   },
 
   async delete(id: string): Promise<void> {
-    // Usar el nuevo servicio mejorado internamente
-    const { CategoriaService } = await import('../services/CategoriaService');
     return CategoriaService.delete(id);
   }
 }
 
-// Items Service - Mantener compatibilidad mientras migramos gradualmente
+// Items Service
 export const itemService = {
   async getAll(filters?: { categoria?: string; activo?: boolean }): Promise<Item[]> {
-    // Usar el nuevo servicio mejorado internamente
-    const { ItemService } = await import('../services/ItemService');
     return ItemService.getAll(filters);
   },
 
   async getById(id: string): Promise<Item | null> {
-    // Usar el nuevo servicio mejorado internamente
-    const { ItemService } = await import('../services/ItemService');
     return ItemService.getById(id);
   },
 
   async create(item: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>): Promise<Item> {
-    // Usar el nuevo servicio mejorado internamente
-    const { ItemService } = await import('../services/ItemService');
     return ItemService.create(item);
   },
 
   async update(id: string, updates: Partial<Item>): Promise<void> {
-    // Usar el nuevo servicio mejorado internamente
-    const { ItemService } = await import('../services/ItemService');
     return ItemService.update(id, updates);
   },
 
   async delete(id: string): Promise<void> {
-    // Usar el nuevo servicio mejorado internamente
-    const { ItemService } = await import('../services/ItemService');
     return ItemService.delete(id);
   },
 
   async search(searchTerm: string): Promise<Item[]> {
-    // Usar el nuevo servicio mejorado internamente
-    const { ItemService } = await import('../services/ItemService');
     return ItemService.search(searchTerm);
   }
 }
 
-// Clientes Service - Mantener compatibilidad mientras migramos gradualmente
-import { ClienteService } from '../services/ClienteService';
+// Clientes Service
 
 export const clienteService = {
   async getAll(): Promise<Cliente[]> {
@@ -213,85 +184,37 @@ export const clienteService = {
 // Cotizaciones Service
 export const cotizacionService = {
   async getAll(): Promise<Cotizacion[]> {
-    const q = query(collection(db, 'cotizaciones'), orderBy('createdAt', 'desc'))
-    const snapshot = await getDocs(q)
-    
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      fecha: doc.data().fecha?.toDate(),
-      fechaEvento: doc.data().fechaEvento?.toDate(),
-      validoHasta: doc.data().validoHasta?.toDate(),
-      createdAt: doc.data().createdAt?.toDate(),
-      updatedAt: doc.data().updatedAt?.toDate()
-    })) as Cotizacion[]
+    return CotizacionService.getAll() as unknown as Promise<Cotizacion[]>;
   },
 
   async getById(id: string): Promise<Cotizacion | null> {
-    const docSnap = await getDoc(doc(db, 'cotizaciones', id))
-    if (!docSnap.exists()) return null
-    
-    return {
-      id: docSnap.id,
-      ...docSnap.data(),
-      fecha: docSnap.data().fecha?.toDate(),
-      fechaEvento: docSnap.data().fechaEvento?.toDate(),
-      validoHasta: docSnap.data().validoHasta?.toDate(),
-      createdAt: docSnap.data().createdAt?.toDate(),
-      updatedAt: docSnap.data().updatedAt?.toDate()
-    } as Cotizacion
+    return CotizacionService.getById(id) as unknown as Promise<Cotizacion | null>;
   },
 
   async create(cotizacion: Omit<Cotizacion, 'id' | 'createdAt' | 'updatedAt'>): Promise<Cotizacion> {
-    const now = new Date()
-    const docRef = await addDoc(collection(db, 'cotizaciones'), {
-      ...cotizacion,
-      createdAt: now,
-      updatedAt: now
-    })
-    
-    const docSnap = await getDoc(docRef)
-    return {
-      id: docRef.id,
-      ...docSnap.data(),
-      fecha: docSnap.data()?.fecha?.toDate(),
-      fechaEvento: docSnap.data()?.fechaEvento?.toDate(),
-      validoHasta: docSnap.data()?.validoHasta?.toDate(),
-      createdAt: docSnap.data()?.createdAt?.toDate(),
-      updatedAt: docSnap.data()?.updatedAt?.toDate()
-    } as Cotizacion
+    return CotizacionService.create(cotizacion) as unknown as Promise<Cotizacion>;
   },
 
   async update(id: string, updates: Partial<Cotizacion>): Promise<void> {
-    const docRef = doc(db, 'cotizaciones', id)
-    await updateDoc(docRef, {
-      ...updates,
-      updatedAt: new Date()
-    })
+    return CotizacionService.update(id, updates);
   },
 
   async delete(id: string): Promise<void> {
-    await deleteDoc(doc(db, 'cotizaciones', id))
+    return CotizacionService.delete(id);
   }
 }
 
-// Configuración Service - Mantener compatibilidad mientras migramos gradualmente
+// Configuración Service
 export const configuracionService = {
   async get(clave: string): Promise<string | null> {
-    // Usar el nuevo servicio mejorado internamente
-    const { ConfiguracionService } = await import('../services/ConfiguracionService');
     return ConfiguracionService.get(clave);
   },
 
   async set(clave: string, valor: string, descripcion?: string): Promise<void> {
-    // Usar el nuevo servicio mejorado internamente
-    const { ConfiguracionService } = await import('../services/ConfiguracionService');
     return ConfiguracionService.set(clave, valor, descripcion);
   },
 
   async getAll(): Promise<Configuracion[]> {
-    // Usar el nuevo servicio mejorado internamente
-    const { ConfiguracionService } = await import('../services/ConfiguracionService');
     return ConfiguracionService.getAll();
   }
 }
@@ -300,59 +223,52 @@ export const configuracionService = {
 export const statsService = {
   async getDashboardStats() {
     try {
-      console.log('Starting getDashboardStats...')
+      console.log('Starting getDashboardStats with Admin SDK...')
       
       // Get total quotes
-      const cotizacionesSnapshot = await getDocs(collection(db, 'cotizaciones'))
+      const cotizacionesSnapshot = await adminDb.collection('cotizaciones').get()
       const totalCotizaciones = cotizacionesSnapshot.size
       
       // Get pending quotes
-      const pendingQuery = query(
-        collection(db, 'cotizaciones'), 
-        where('estado', 'in', ['borrador', 'enviada'])
-      )
-      const pendingSnapshot = await getDocs(pendingQuery)
+      const pendingSnapshot = await adminDb.collection('cotizaciones')
+        .where('estado', 'in', ['borrador', 'enviada'])
+        .get()
       const cotizacionesPendientes = pendingSnapshot.size
       
       // Get active items
-      const activeItemsQuery = query(
-        collection(db, 'items'), 
-        where('activo', '==', true)
-      )
-      const activeItemsSnapshot = await getDocs(activeItemsQuery)
+      const activeItemsSnapshot = await adminDb.collection('items')
+        .where('activo', '==', true)
+        .get()
       const itemsActivos = activeItemsSnapshot.size
       
       // Get total clients
-      const clientesSnapshot = await getDocs(collection(db, 'clientes'))
+      const clientesSnapshot = await adminDb.collection('clientes').get()
       const totalClientes = clientesSnapshot.size
       
       // Get recent quotes with client data
-      const recentQuery = query(
-        collection(db, 'cotizaciones'),
-        orderBy('createdAt', 'desc'),
-        limit(5)
-      )
-      const recentSnapshot = await getDocs(recentQuery)
+      const recentSnapshot = await adminDb.collection('cotizaciones')
+        .orderBy('createdAt', 'desc')
+        .limit(5)
+        .get()
       
       const cotizacionesRecientes = await Promise.all(
         recentSnapshot.docs.map(async (docSnap) => {
-          const data = docSnap.data()
+          const data = docSnap.data() || {}
           const cotizacion: any = {
             id: docSnap.id,
             ...data,
-            fecha: data.fecha?.toDate(),
-            fechaEvento: data.fechaEvento?.toDate(),
-            validoHasta: data.validoHasta?.toDate(),
-            createdAt: data.createdAt?.toDate(),
-            updatedAt: data.updatedAt?.toDate()
+            fecha: data.fecha?.toDate?.() || (data.fecha ? new Date(data.fecha) : null),
+            fechaEvento: data.fechaEvento?.toDate?.() || (data.fechaEvento ? new Date(data.fechaEvento) : null),
+            validoHasta: data.validoHasta?.toDate?.() || (data.validoHasta ? new Date(data.validoHasta) : null),
+            createdAt: data.createdAt?.toDate?.() || (data.createdAt ? new Date(data.createdAt) : null),
+            updatedAt: data.updatedAt?.toDate?.() || (data.updatedAt ? new Date(data.updatedAt) : null)
           }
           
           // Get client data
-          // Check both cliente_id and clienteId fields for compatibility
           const clientId = data.cliente_id || data.clienteId;
           if (clientId) {
-            const clienteDoc = await getDoc(doc(db, 'clientes', clientId))
-            if (clienteDoc.exists()) {
+            const clienteDoc = await adminDb.collection('clientes').doc(clientId).get()
+            if (clienteDoc.exists) {
               cotizacion.cliente = {
                 id: clienteDoc.id,
                 ...clienteDoc.data()

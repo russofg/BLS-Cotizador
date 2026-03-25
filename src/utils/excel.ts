@@ -21,10 +21,10 @@ export const excelService = {
         ['Título del Evento', data.cotizacion.titulo],
         ['Descripción', data.cotizacion.descripcion || 'Sin descripción'],
         ['Estado', data.cotizacion.estado || 'Borrador'],
-        ['Fecha del Evento', data.cotizacion.fecha_evento || 'Por confirmar'],
-        ['Duración (horas)', data.cotizacion.duracion_horas || 'Por definir'],
-        ['Vigencia (días)', data.cotizacion.vigencia_dias],
-        ['Fecha de Creación', new Date(data.cotizacion.created_at).toLocaleDateString('es-AR')],
+        ['Fecha del Evento', data.cotizacion.fechaEvento || 'Por confirmar'],
+        ['Duración (horas)', data.cotizacion.duracionHoras || 'Por definir'],
+        ['Vigencia (días)', data.cotizacion.vigenciaDias],
+        ['Fecha de Creación', new Date(data.cotizacion.createdAt).toLocaleDateString('es-AR')],
         [''],
         ['INFORMACIÓN DEL CLIENTE'],
         [''],
@@ -76,7 +76,7 @@ export const excelService = {
         item.nombre,
         item.cantidad,
         item.unidad || 'und',
-        item.precio_unitario,
+        item.precioUnitario,
         item.descuento,
         item.subtotal,
         item.observaciones || ''
@@ -89,7 +89,7 @@ export const excelService = {
           item.nombre,
           item.cantidad,
           item.unidad || 'und',
-          item.precio_unitario,
+          item.precioUnitario,
           item.descuento,
           item.subtotal,
           item.observaciones || ''
@@ -114,7 +114,7 @@ export const excelService = {
       // Calculate totals
       const subtotal = data.items.reduce((sum, item) => sum + item.subtotal, 0);
       const totalDescuentos = data.items.reduce((sum, item) => 
-        sum + (item.cantidad * item.precio_unitario * item.descuento / 100), 0);
+        sum + (item.cantidad * item.precioUnitario * item.descuento / 100), 0);
       const total = subtotal - totalDescuentos;
 
       // Add totals
@@ -149,7 +149,7 @@ export const excelService = {
         ...data.items.map(item => [
           item.nombre,
           item.cantidad,
-          item.precio_unitario,
+          item.precioUnitario,
           `${item.descuento}%`,
           item.subtotal
         ]),
@@ -159,7 +159,7 @@ export const excelService = {
         ['', '', '', 'TOTAL FINAL:', total],
         [''],
         ['CONDICIONES'],
-        ['Validez de cotización', `${data.cotizacion.vigencia_dias} días`],
+        ['Validez de cotización', `${data.cotizacion.vigenciaDias} días`],
         ['Observaciones', data.cotizacion.observaciones || DEFAULT_QUOTE_TEXTS.observaciones]
       ];
 
@@ -215,7 +215,7 @@ export const excelService = {
         item.nombre,
         item.cantidad,
         item.unidad || 'und',
-        item.precio_unitario,
+        item.precioUnitario,
         item.descuento,
         item.subtotal
       ]);
