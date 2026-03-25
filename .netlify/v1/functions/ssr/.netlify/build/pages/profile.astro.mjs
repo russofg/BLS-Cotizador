@@ -1,7 +1,7 @@
 /* empty css                                   */
 import { c as createComponent, d as createAstro, m as maybeRenderHead, f as addAttribute, j as renderScript, r as renderTemplate, i as renderComponent } from '../chunks/astro/server_B0jxGkjM.mjs';
 import 'piccolore';
-import { $ as $$Dashboard } from '../chunks/Dashboard_B-pf1Dyi.mjs';
+import { $ as $$Dashboard } from '../chunks/Dashboard_BaYgvqpS.mjs';
 import { $ as $$PageHeader } from '../chunks/PageHeader_DzmpkV0U.mjs';
 import { $ as $$Card } from '../chunks/Card_DppfKCyF.mjs';
 import { $ as $$Button } from '../chunks/Button_Qb3BKv6-.mjs';

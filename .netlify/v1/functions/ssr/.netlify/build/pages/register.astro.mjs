@@ -1,7 +1,7 @@
 /* empty css                                   */
 import { c as createComponent, i as renderComponent, j as renderScript, r as renderTemplate, m as maybeRenderHead } from '../chunks/astro/server_B0jxGkjM.mjs';
 import 'piccolore';
-import { $ as $$Base } from '../chunks/Base_DaFcxdZo.mjs';
+import { $ as $$Base } from '../chunks/Base_Cc4AJ1Q9.mjs';
 import { $ as $$Button } from '../chunks/Button_Qb3BKv6-.mjs';
 import { $ as $$Input } from '../chunks/Input_Dg7Aa5ZU.mjs';
 /* empty css                                    */

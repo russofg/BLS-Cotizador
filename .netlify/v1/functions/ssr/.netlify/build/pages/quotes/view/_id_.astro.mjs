@@ -1,7 +1,7 @@
 /* empty css                                         */
 import { c as createComponent, d as createAstro, r as renderTemplate, j as renderScript, n as defineScriptVars, i as renderComponent, m as maybeRenderHead, f as addAttribute, u as unescapeHTML } from '../../../chunks/astro/server_B0jxGkjM.mjs';
 import 'piccolore';
-import { $ as $$Dashboard } from '../../../chunks/Dashboard_B-pf1Dyi.mjs';
+import { $ as $$Dashboard } from '../../../chunks/Dashboard_BaYgvqpS.mjs';
 import { a as cotizacionService, c as clienteService } from '../../../chunks/database_DkOv4JpX.mjs';
 import { D as DateHelper } from '../../../chunks/dateHelpers_DuxKPoxD.mjs';
 import { Q as QuoteHelper } from '../../../chunks/quoteHelpers_BMbd_S8Y.mjs';
