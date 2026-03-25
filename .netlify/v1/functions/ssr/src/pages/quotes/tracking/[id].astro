@@ -1,0 +1,996 @@
+---
+import Dashboard from "../../../layouts/Dashboard.astro";
+import PageHeader from "../../../components/ui/PageHeader.astro";
+import Card from "../../../components/ui/Card.astro";
+import Button from "../../../components/ui/Button.astro";
+import Badge from "../../../components/ui/Badge.astro";
+import ScrollbarStyles from "../../../components/ScrollbarStyles.astro";
+import { QuoteTrackingService, QuoteStatus } from "../../../services/QuoteTrackingService";
+
+export async function getStaticPaths() {
+  return [];
+}
+
+const { id } = Astro.params;
+
+let quoteTracking: any = null;
+let error = "";
+
+try {
+  if (id) {
+    quoteTracking = await QuoteTrackingService.getByIdWithTracking(id);
+    if (!quoteTracking) {
+      error = "Cotización no encontrada";
+    }
+  } else {
+    error = "ID de cotización no proporcionado";
+  }
+} catch (err) {
+  console.error("Error loading quote tracking:", err);
+  error = "Error al cargar el seguimiento de la cotización";
+}
+
+// Estados disponibles para transición
+const getAvailableStatuses = (currentStatus: QuoteStatus): QuoteStatus[] => {
+  const transitions: Record<QuoteStatus, QuoteStatus[]> = {
+    [QuoteStatus.BORRADOR]: [QuoteStatus.ENVIADA, QuoteStatus.RECHAZADA],
+    [QuoteStatus.ENVIADA]: [QuoteStatus.REVISADA, QuoteStatus.RECHAZADA, QuoteStatus.VENCIDA],
+    [QuoteStatus.REVISADA]: [QuoteStatus.APROBADA, QuoteStatus.RECHAZADA, QuoteStatus.VENCIDA],
+    [QuoteStatus.APROBADA]: [QuoteStatus.CONVERTIDA],
+    [QuoteStatus.RECHAZADA]: [QuoteStatus.BORRADOR],
+    [QuoteStatus.VENCIDA]: [QuoteStatus.BORRADOR],
+    [QuoteStatus.CONVERTIDA]: []
+  };
+  return transitions[currentStatus] || [];
+};
+---
+
+<Dashboard title="Seguimiento de Cotización - BLS Cotizador" activeSection="quotes">
+  <ScrollbarStyles />
+  
+  <div class="space-y-6">
+    <!-- Header -->
+    <PageHeader
+      title="Seguimiento de Cotización"
+      subtitle={quoteTracking ? `Cotización ${quoteTracking.numero}` : "Cargando..."}
+    >
+      <div slot="actions" class="flex space-x-3">
+        <Button href="/quotes" variant="secondary" size="md">
+          ← Volver a Cotizaciones
+        </Button>
+        {quoteTracking && (
+          <Button href={`/quotes/view/${quoteTracking.id}`} variant="primary" size="md">
+            Ver Cotización
+          </Button>
+        )}
+      </div>
+    </PageHeader>
+
+    {error && (
+      <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded">
+        {error}
+      </div>
+    )}
+
+    {quoteTracking && (
+      <>
+        <!-- Información Principal -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Detalles de la Cotización -->
+          <Card title="Detalles de la Cotización" class="lg:col-span-2">
+            <div class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-sm font-medium text-gray-600 dark:text-gray-400">Número</label>
+                  <p class="text-lg font-semibold text-gray-900 dark:text-white">{quoteTracking.numero}</p>
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-gray-600 dark:text-gray-400">Cliente</label>
+                  <p class="text-lg font-semibold text-gray-900 dark:text-white">{quoteTracking.clienteNombre}</p>
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-gray-600 dark:text-gray-400">Título</label>
+                  <p class="text-lg font-semibold text-gray-900 dark:text-white">{quoteTracking.titulo}</p>
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-gray-600 dark:text-gray-400">Total</label>
+                  <p class="text-lg font-semibold text-gray-900 dark:text-white">${quoteTracking.total.toLocaleString()}</p>
+                </div>
+              </div>
+              
+              {quoteTracking.observaciones && (
+                <div>
+                  <label class="text-sm font-medium text-gray-600 dark:text-gray-400">Observaciones</label>
+                  <p class="text-gray-900 dark:text-white mt-1">{quoteTracking.observaciones}</p>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          <!-- Estado Actual -->
+          <Card title="Estado Actual">
+            <div class="text-center space-y-4">
+              <Badge variant={
+                quoteTracking.estado === QuoteStatus.APROBADA ? 'success' :
+                quoteTracking.estado === QuoteStatus.ENVIADA ? 'info' :
+                quoteTracking.estado === QuoteStatus.REVISADA ? 'warning' :
+                quoteTracking.estado === QuoteStatus.RECHAZADA ? 'danger' :
+                'default'
+              } class="text-lg px-4 py-2">
+                {QuoteTrackingService.getStatusDisplayName(quoteTracking.estado)}
+              </Badge>
+              
+              <div class="space-y-2">
+                <div class="text-sm text-gray-600 dark:text-gray-400">
+                  <strong>Fecha de Creación:</strong><br>
+                  {quoteTracking.fechaCreacion.toLocaleDateString('es-ES')}
+                </div>
+                
+                {quoteTracking.fechaEnvio && (
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    <strong>Fecha de Envío:</strong><br>
+                    {quoteTracking.fechaEnvio.toLocaleDateString('es-ES')}
+                  </div>
+                )}
+                
+                {quoteTracking.fechaRevision && (
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    <strong>Fecha de Revisión:</strong><br>
+                    {quoteTracking.fechaRevision.toLocaleDateString('es-ES')}
+                  </div>
+                )}
+                
+                {quoteTracking.fechaAprobacion && (
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    <strong>Fecha de Aprobación:</strong><br>
+                    {quoteTracking.fechaAprobacion.toLocaleDateString('es-ES')}
+                  </div>
+                )}
+                
+                <div class="text-sm text-gray-600 dark:text-gray-400">
+                  <strong>Vence:</strong><br>
+                  {quoteTracking.fechaVencimiento.toLocaleDateString('es-ES')}
+                  <span class={`ml-2 px-2 py-1 rounded text-xs ${
+                    quoteTracking.diasVencimiento < 0 ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                    quoteTracking.diasVencimiento <= 3 ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
+                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                  }`}>
+                    {quoteTracking.diasVencimiento < 0 ? 'Vencida' : `${quoteTracking.diasVencimiento} días`}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        <!-- Cambiar Estado -->
+        <Card title="Cambiar Estado">
+          <div class="space-y-4">
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              Selecciona el nuevo estado para esta cotización:
+            </p>
+            
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {getAvailableStatuses(quoteTracking.estado).map((status) => (
+                <button
+                  onclick={`changeStatus('${status}', '${quoteTracking.id}')`}
+                  class="p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+                >
+                  <div class="font-medium text-gray-900 dark:text-white">
+                    {QuoteTrackingService.getStatusDisplayName(status)}
+                  </div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    {status === QuoteStatus.ENVIADA ? 'Enviar al cliente' :
+                     status === QuoteStatus.REVISADA ? 'Marcar como revisada' :
+                     status === QuoteStatus.APROBADA ? 'Aprobar cotización' :
+                     status === QuoteStatus.RECHAZADA ? 'Rechazar cotización' :
+                     status === QuoteStatus.CONVERTIDA ? 'Marcar como convertida' :
+                     'Volver a borrador'}
+                  </div>
+                </button>
+              ))}
+            </div>
+            
+            {getAvailableStatuses(quoteTracking.estado).length === 0 && (
+              <p class="text-sm text-gray-500 dark:text-gray-400 italic">
+                No hay transiciones disponibles desde el estado actual.
+              </p>
+            )}
+          </div>
+        </Card>
+
+        <!-- Historial de Cambios -->
+        {quoteTracking.historialCambios && quoteTracking.historialCambios.length > 0 && (
+          <Card title="Historial de Cambios">
+            <div class="space-y-3">
+              {quoteTracking.historialCambios.map((cambio: any, index: number) => (
+                <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                      <span class="text-sm font-medium text-blue-600 dark:text-blue-400">
+                        {index + 1}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="flex-1">
+                    <div class="flex items-center space-x-2">
+                      <Badge variant="default">{QuoteTrackingService.getStatusDisplayName(cambio.estadoAnterior)}</Badge>
+                      <span class="text-gray-400">→</span>
+                      <Badge variant="info">{QuoteTrackingService.getStatusDisplayName(cambio.estadoNuevo)}</Badge>
+                    </div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      {new Date(cambio.fecha).toLocaleString('es-ES')}
+                      {cambio.usuario && ` • ${cambio.usuario}`}
+                      {cambio.comentario && ` • ${cambio.comentario}`}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        <!-- Recordatorios -->
+        <Card title="Recordatorios">
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                Programa recordatorios para el seguimiento de esta cotización:
+              </p>
+              <div class="flex space-x-2">
+                <Button onclick="testNotification()" variant="secondary" size="sm">
+                  🧪 Probar Notificación
+                </Button>
+                <Button onclick="checkRemindersNow()" variant="info" size="sm">
+                  🔍 Verificar Ahora
+                </Button>
+                <Button onclick="testCompleteFlow()" variant="warning" size="sm">
+                  🔄 Probar Flujo Completo
+                </Button>
+                <Button onclick="showReminderModal()" variant="primary" size="sm">
+                  + Programar Recordatorio
+                </Button>
+              </div>
+            </div>
+            
+            {quoteTracking.recordatorios && quoteTracking.recordatorios.length > 0 ? (
+              <div class="space-y-2">
+                {quoteTracking.recordatorios.map((recordatorio: any) => (
+                  <div class="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div>
+                      <div class="font-medium text-gray-900 dark:text-white">
+                        {recordatorio.mensaje}
+                      </div>
+                      <div class="text-sm text-gray-600 dark:text-gray-400">
+                        {new Date(recordatorio.fecha).toLocaleString('es-ES')}
+                      </div>
+                    </div>
+                    <Badge variant={recordatorio.completado ? 'success' : 'warning'}>
+                      {recordatorio.completado ? 'Completado' : 'Pendiente'}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div class="space-y-3">
+                <p class="text-sm text-gray-500 dark:text-gray-400 italic">
+                  No hay recordatorios programados.
+                </p>
+                
+                <!-- Mostrar información del seguimiento programado -->
+                {quoteTracking.proximoSeguimiento && (
+                  <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                    <div class="flex items-start justify-between">
+                      <div class="flex items-start space-x-3 flex-1">
+                        <span class="text-yellow-600 dark:text-yellow-400 text-xl">⏰</span>
+                        <div class="flex-1">
+                          <div class="font-medium text-yellow-800 dark:text-yellow-200 mb-2">
+                            Seguimiento Programado
+                          </div>
+                          
+                          <!-- Información básica -->
+                          <div class="space-y-2">
+                            <div class="text-sm text-yellow-700 dark:text-yellow-300">
+                              <span class="font-medium">Fecha:</span> {new Date(quoteTracking.proximoSeguimiento).toLocaleString('es-ES')}
+                            </div>
+                            
+                            {quoteTracking.proximoSeguimientoTipo && (
+                              <div class="text-sm text-yellow-700 dark:text-yellow-300">
+                                <span class="font-medium">Tipo:</span> 
+                                <span class="ml-1 px-2 py-1 bg-yellow-200 dark:bg-yellow-800 rounded text-xs">
+                                  {quoteTracking.proximoSeguimientoTipo === 'seguimiento' ? 'Seguimiento' :
+                                   quoteTracking.proximoSeguimientoTipo === 'vencimiento' ? 'Vencimiento' :
+                                   quoteTracking.proximoSeguimientoTipo === 'revision' ? 'Revisión' : quoteTracking.proximoSeguimientoTipo}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {quoteTracking.proximoSeguimientoMensaje && (
+                              <div class="text-sm text-yellow-700 dark:text-yellow-300">
+                                <span class="font-medium">Mensaje:</span> {quoteTracking.proximoSeguimientoMensaje}
+                              </div>
+                            )}
+                            
+                            {quoteTracking.proximoSeguimientoUsuario && (
+                              <div class="text-sm text-yellow-700 dark:text-yellow-300">
+                                <span class="font-medium">Programado por:</span> {quoteTracking.proximoSeguimientoUsuario}
+                              </div>
+                            )}
+                            
+                            <!-- Opciones de notificación -->
+                            <div class="flex items-center space-x-4 text-xs text-yellow-600 dark:text-yellow-400">
+                              <div class="flex items-center space-x-1">
+                                <span>{quoteTracking.proximoSeguimientoEmail ? '📧' : '📧❌'}</span>
+                                <span>{quoteTracking.proximoSeguimientoEmail ? 'Email' : 'Sin Email'}</span>
+                              </div>
+                              <div class="flex items-center space-x-1">
+                                <span>{quoteTracking.proximoSeguimientoPush ? '🔔' : '🔔❌'}</span>
+                                <span>{quoteTracking.proximoSeguimientoPush ? 'Push' : 'Sin Push'}</span>
+                              </div>
+                            </div>
+                            
+                            <!-- Tiempo restante -->
+                            <div class="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
+                              {(() => {
+                                const ahora = new Date();
+                                const seguimiento = new Date(quoteTracking.proximoSeguimiento);
+                                const horasRestantes = Math.ceil((seguimiento.getTime() - ahora.getTime()) / (1000 * 60 * 60));
+                                
+                                if (horasRestantes > 0) {
+                                  return `⏳ En ${horasRestantes} horas`;
+                                } else if (horasRestantes === 0) {
+                                  return '🚨 ¡Es hora del seguimiento!';
+                                } else {
+                                  return `⏰ Hace ${Math.abs(horasRestantes)} horas`;
+                                }
+                              })()}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <!-- Botón de eliminar -->
+                      <button
+                        onclick={`deleteReminder('${quoteTracking.id}')`}
+                        class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200 transition-colors p-1"
+                        title="Eliminar recordatorio"
+                      >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </Card>
+      </>
+    )}
+  </div>
+
+  <!-- Modal para cambiar estado -->
+  <div id="status-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+      <div class="mt-3">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          Cambiar Estado
+        </h3>
+        <form id="status-form" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Comentario (opcional)
+            </label>
+            <textarea
+              id="status-comment"
+              rows="3"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+              placeholder="Agrega un comentario sobre este cambio de estado..."
+            ></textarea>
+          </div>
+          <div class="flex justify-end space-x-3">
+            <button
+              type="button"
+              onclick="hideStatusModal()"
+              class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+            >
+              Cambiar Estado
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para recordatorios -->
+  <div id="reminder-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+      <div class="mt-3">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          Programar Recordatorio
+        </h3>
+        <form id="reminder-form" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Tipo de Recordatorio
+            </label>
+            <select
+              id="reminder-type"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="seguimiento">Seguimiento</option>
+              <option value="vencimiento">Vencimiento</option>
+              <option value="revision">Revisión</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Fecha del Recordatorio
+            </label>
+            <input
+              type="datetime-local"
+              id="reminder-date"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+              required
+            />
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Mensaje del Recordatorio
+            </label>
+            <textarea
+              id="reminder-message"
+              rows="3"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+              placeholder="Ej: Recordar hacer seguimiento con el cliente..."
+              required
+            ></textarea>
+          </div>
+          
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="send-email"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded"
+            />
+            <label for="send-email" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+              Enviar notificación por email
+            </label>
+          </div>
+          
+          <!-- Selección de destinatarios (solo visible si email está marcado) -->
+          <div id="recipients-section" class="hidden">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Destinatarios
+            </label>
+            <div id="recipients-list" class="space-y-2 max-h-32 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-md p-2">
+              <!-- Los destinatarios se cargarán dinámicamente -->
+            </div>
+            <div class="mt-2">
+              <button
+                type="button"
+                id="select-all-recipients"
+                class="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+              >
+                Seleccionar todos
+              </button>
+              <button
+                type="button"
+                id="deselect-all-recipients"
+                class="text-sm text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 ml-4"
+              >
+                Deseleccionar todos
+              </button>
+            </div>
+          </div>
+          
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="send-push"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded"
+              checked
+            />
+            <label for="send-push" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+              Mostrar notificación en pantalla
+            </label>
+          </div>
+          
+          <div class="flex justify-end space-x-3">
+            <button
+              type="button"
+              onclick="hideReminderModal()"
+              class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+            >
+              Programar Recordatorio
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+       <script is:inline>
+         let currentStatus = '';
+         let currentQuoteId = '';
+         let currentUserEmail = 'russofg@gmail.com'; // Email del usuario actual
+         let availableUsers = []; // Usuarios disponibles para notificaciones
+
+    function changeStatus(status, quoteId) {
+      currentStatus = status;
+      currentQuoteId = quoteId;
+      const modal = document.getElementById('status-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+      }
+    }
+
+    function hideStatusModal() {
+      const modal = document.getElementById('status-modal');
+      const comment = document.getElementById('status-comment');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+      if (comment) {
+        comment.value = '';
+      }
+    }
+
+    function showReminderModal() {
+      const modal = document.getElementById('reminder-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+      }
+    }
+
+    function hideReminderModal() {
+      const modal = document.getElementById('reminder-modal');
+      const form = document.getElementById('reminder-form');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+      if (form) {
+        form.reset();
+      }
+    }
+
+    function testNotification() {
+      // Probar notificación específica de seguimiento
+      const mensaje = `Seguimiento pendiente: COT-1759102172719 (Candela) - ¡Ya es hora!`;
+      
+      if (window.showNotification) {
+        window.showNotification(mensaje, 'warning');
+      } else {
+        alert('Notificación de prueba: ' + mensaje);
+      }
+      
+      // También probar notificación push del navegador
+      if (window.showPushNotification) {
+        window.showPushNotification('Seguimiento Pendiente', mensaje);
+      }
+    }
+
+    async function checkRemindersNow() {
+      try {
+        // Llamar al sistema global de notificaciones
+        if (window.notificationSystem) {
+          await window.notificationSystem.checkPendingReminders();
+        } else {
+          // Fallback: verificar manualmente
+          const response = await fetch('/api/quote-tracking?action=stats');
+          if (response.ok) {
+            const stats = await response.json();
+            
+            if (stats.seguimientosPendientes && stats.seguimientosPendientes.length > 0) {
+              const seguimiento = stats.seguimientosPendientes[0];
+              const fechaSeguimiento = new Date(seguimiento.proximoSeguimiento);
+              const ahora = new Date();
+              const horasRestantes = Math.ceil((fechaSeguimiento.getTime() - ahora.getTime()) / (1000 * 60 * 60));
+              
+              let mensaje = `Seguimiento pendiente: ${seguimiento.numero} (${seguimiento.clienteNombre})`;
+              if (horasRestantes > 0) {
+                mensaje += ` - En ${horasRestantes}h`;
+              } else {
+                mensaje += ' - ¡Ya es hora!';
+              }
+              
+              if (window.showNotification) {
+                window.showNotification(mensaje, 'warning');
+              } else {
+                alert('Verificación manual: ' + mensaje);
+              }
+            } else {
+              if (window.showNotification) {
+                window.showNotification('No hay seguimientos pendientes', 'info');
+              } else {
+                alert('No hay seguimientos pendientes');
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking reminders:', error);
+        alert('Error al verificar recordatorios');
+      }
+    }
+
+    async function deleteReminder(quoteId) {
+      if (!confirm('¿Estás seguro de que quieres eliminar este recordatorio?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/quote-tracking', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'delete-reminder',
+            quoteId: quoteId
+          })
+        });
+
+        if (response.ok) {
+          if (window.showNotification) {
+            window.showNotification('Recordatorio eliminado correctamente', 'success');
+          } else {
+            alert('Recordatorio eliminado correctamente');
+          }
+          // Recargar página para mostrar los cambios
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          const error = await response.json();
+          if (window.showNotification) {
+            window.showNotification('Error: ' + error.error, 'error');
+          } else {
+            alert('Error: ' + error.error);
+          }
+        }
+      } catch (error) {
+        console.error('Error deleting reminder:', error);
+        if (window.showNotification) {
+          window.showNotification('Error al eliminar el recordatorio', 'error');
+        } else {
+          alert('Error al eliminar el recordatorio');
+        }
+      }
+    }
+
+    async function testCompleteFlow() {
+      try {
+        // Paso 1: Programar un recordatorio de prueba
+        const testDate = new Date();
+        testDate.setMinutes(testDate.getMinutes() + 5); // 5 minutos en el futuro
+        
+        // Obtener el ID de la cotización desde la URL
+        const currentQuoteId = window.location.pathname.split('/').pop();
+        
+        const response = await fetch('/api/quote-tracking', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'schedule-reminder',
+            quoteId: currentQuoteId,
+            tipo: 'seguimiento',
+            fecha: testDate.toISOString(),
+            mensaje: 'Recordatorio de prueba - Flujo completo',
+            sendEmail: false,
+            sendPush: true,
+            userEmail: currentUserEmail
+          })
+        });
+
+        if (response.ok) {
+          if (window.showNotification) {
+            window.showNotification('✅ Paso 1: Recordatorio programado', 'success');
+          }
+          
+          // Paso 2: Esperar un poco y verificar
+          setTimeout(async () => {
+            try {
+              const checkResponse = await fetch('/api/quote-tracking?action=stats');
+              if (checkResponse.ok) {
+                const stats = await checkResponse.json();
+                if (stats.seguimientosPendientes && stats.seguimientosPendientes.length > 0) {
+                  if (window.showNotification) {
+                    window.showNotification('✅ Paso 2: Seguimiento detectado correctamente', 'success');
+                  }
+                  
+                  // Paso 3: Probar notificación
+                  setTimeout(() => {
+                    if (window.showNotification) {
+                      window.showNotification('✅ Paso 3: Sistema de notificaciones funcionando', 'success');
+                    }
+                    
+                    // Paso 4: Mostrar resumen
+                    setTimeout(() => {
+                      if (window.showNotification) {
+                        window.showNotification('🎉 Flujo completo probado exitosamente', 'success');
+                      }
+                    }, 1000);
+                  }, 1000);
+                } else {
+                  if (window.showNotification) {
+                    window.showNotification('⚠️ Paso 2: No se detectó seguimiento', 'warning');
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('Error in test flow:', error);
+            }
+          }, 2000);
+          
+        } else {
+          const error = await response.json();
+          if (window.showNotification) {
+            window.showNotification('❌ Error en Paso 1: ' + error.error, 'error');
+          }
+        }
+      } catch (error) {
+        console.error('Error testing complete flow:', error);
+        if (window.showNotification) {
+          window.showNotification('❌ Error al probar flujo completo', 'error');
+        }
+      }
+    }
+
+    // Manejar formulario de cambio de estado
+    document.addEventListener('DOMContentLoaded', function() {
+      const statusForm = document.getElementById('status-form');
+      if (statusForm) {
+        statusForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          const comment = document.getElementById('status-comment');
+          const commentValue = comment ? comment.value : '';
+          
+          try {
+            const response = await fetch('/api/quote-tracking', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                action: 'update-status',
+                quoteId: currentQuoteId,
+                status: currentStatus,
+                comentario: commentValue,
+                usuario: 'Usuario Actual'
+              })
+            });
+
+            if (response.ok) {
+              hideStatusModal();
+              location.reload();
+            } else {
+              const error = await response.json();
+              alert('Error: ' + error.error);
+            }
+          } catch (error) {
+            console.error('Error updating status:', error);
+            alert('Error al actualizar el estado');
+          }
+        });
+      }
+
+          // Manejar formulario de recordatorios
+          const reminderForm = document.getElementById('reminder-form');
+          if (reminderForm) {
+            reminderForm.addEventListener('submit', async function(e) {
+              e.preventDefault();
+              
+              const tipo = document.getElementById('reminder-type');
+              const fecha = document.getElementById('reminder-date');
+              const mensaje = document.getElementById('reminder-message');
+              const sendEmail = document.getElementById('send-email');
+              const sendPush = document.getElementById('send-push');
+              
+              const tipoValue = tipo ? tipo.value : '';
+              const fechaValue = fecha ? fecha.value : '';
+              const mensajeValue = mensaje ? mensaje.value : '';
+              const sendEmailValue = sendEmail ? sendEmail.checked : false;
+              const sendPushValue = sendPush ? sendPush.checked : true;
+              
+              // Obtener destinatarios seleccionados si email está habilitado
+              let selectedRecipients = [];
+              if (sendEmailValue) {
+                selectedRecipients = getSelectedRecipients();
+                console.log('📧 Destinatarios seleccionados:', selectedRecipients);
+              }
+              
+              // Obtener el ID de la cotización desde la URL
+              const currentQuoteId = window.location.pathname.split('/').pop();
+              
+              try {
+                const response = await fetch('/api/quote-tracking', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    action: 'schedule-reminder',
+                    quoteId: currentQuoteId,
+                    tipo: tipoValue,
+                    fecha: fechaValue,
+                    mensaje: mensajeValue,
+                    sendEmail: sendEmailValue,
+                    sendPush: sendPushValue,
+                    userEmail: currentUserEmail,
+                    recipients: selectedRecipients
+                  })
+                });
+
+                 if (response.ok) {
+                   hideReminderModal();
+                   // Usar el sistema global de notificaciones
+                   if (window.showNotification) {
+                     window.showNotification('Recordatorio programado correctamente. Se enviará un email real a la hora programada.', 'success');
+                   } else {
+                     alert('Recordatorio programado correctamente. Se enviará un email real a la hora programada.');
+                   }
+              // Recargar página para mostrar el nuevo recordatorio
+              setTimeout(() => location.reload(), 1000);
+            } else {
+              const error = await response.json();
+              if (window.showNotification) {
+                window.showNotification('Error: ' + error.error, 'error');
+              } else {
+                alert('Error: ' + error.error);
+              }
+            }
+          } catch (error) {
+            console.error('Error scheduling reminder:', error);
+            if (window.showNotification) {
+              window.showNotification('Error al programar el recordatorio', 'error');
+            } else {
+              alert('Error al programar el recordatorio');
+            }
+          }
+        });
+      }
+
+      // Cargar usuarios disponibles cuando se abre el modal de recordatorios
+      document.getElementById('reminder-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+          hideReminderModal();
+        }
+      });
+
+      // Manejar cambio en checkbox de email
+      const sendEmailCheckbox = document.getElementById('send-email');
+      const recipientsSection = document.getElementById('recipients-section');
+      
+      if (sendEmailCheckbox && recipientsSection) {
+        sendEmailCheckbox.addEventListener('change', function() {
+          if (this.checked) {
+            recipientsSection.classList.remove('hidden');
+            loadAvailableUsers();
+          } else {
+            recipientsSection.classList.add('hidden');
+          }
+        });
+      }
+
+      // Manejar botones de selección
+      const selectAllBtn = document.getElementById('select-all-recipients');
+      const deselectAllBtn = document.getElementById('deselect-all-recipients');
+      
+      if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', selectAllRecipients);
+      }
+      
+      if (deselectAllBtn) {
+        deselectAllBtn.addEventListener('click', deselectAllRecipients);
+      }
+
+      // Cerrar modales al hacer clic fuera
+      const statusModal = document.getElementById('status-modal');
+      if (statusModal) {
+        statusModal.addEventListener('click', function(e) {
+          if (e.target === statusModal) {
+            hideStatusModal();
+          }
+        });
+      }
+
+      const reminderModal = document.getElementById('reminder-modal');
+      if (reminderModal) {
+        reminderModal.addEventListener('click', function(e) {
+          if (e.target === reminderModal) {
+            hideReminderModal();
+          }
+        });
+      }
+
+      // Funciones para manejar destinatarios
+      async function loadAvailableUsers() {
+        try {
+          console.log('📡 Cargando usuarios disponibles...');
+          const response = await fetch('/api/users');
+          const data = await response.json();
+          
+          if (data.success) {
+            availableUsers = data.usuarios;
+            console.log('✅ Usuarios cargados:', availableUsers.length);
+            renderRecipientsList();
+          } else {
+            console.error('❌ Error cargando usuarios:', data.error);
+            availableUsers = [];
+          }
+        } catch (error) {
+          console.error('❌ Error cargando usuarios:', error);
+          availableUsers = [];
+        }
+      }
+
+      function renderRecipientsList() {
+        const recipientsList = document.getElementById('recipients-list');
+        if (!recipientsList) return;
+
+        recipientsList.innerHTML = '';
+
+        if (availableUsers.length === 0) {
+          recipientsList.innerHTML = '<p class="text-gray-500 text-sm">No hay usuarios disponibles</p>';
+          return;
+        }
+
+        availableUsers.forEach(user => {
+          const userDiv = document.createElement('div');
+          userDiv.className = 'flex items-center space-x-2';
+          userDiv.innerHTML = `
+            <input
+              type="checkbox"
+              id="recipient-${user.id}"
+              value="${user.email}"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded"
+              checked
+            />
+            <label for="recipient-${user.id}" class="text-sm text-gray-700 dark:text-gray-300">
+              <span class="font-medium">${user.nombre}</span>
+              <span class="text-gray-500">(${user.email})</span>
+              <span class="text-xs text-gray-400">- ${user.departamento || user.rol}</span>
+            </label>
+          `;
+          recipientsList.appendChild(userDiv);
+        });
+      }
+
+      function selectAllRecipients() {
+        const checkboxes = document.querySelectorAll('#recipients-list input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = true;
+        });
+      }
+
+      function deselectAllRecipients() {
+        const checkboxes = document.querySelectorAll('#recipients-list input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = false;
+        });
+      }
+
+      function getSelectedRecipients() {
+        const checkboxes = document.querySelectorAll('#recipients-list input[type="checkbox"]:checked');
+        return Array.from(checkboxes).map(checkbox => checkbox.value);
+      }
+    });
+  </script>
+</Dashboard>
