@@ -252,24 +252,109 @@ export class QuoteHelper {
   }
 
   /**
-   * Obtiene la descripción como un array, manejando tanto strings como arrays existentes.
-   * Prioriza el formato de array de Firestore para viñetas perfectas.
+   * Quita viñeta duplicada al inicio de una línea (PDF/UI agregan "• " aparte).
    */
-  static getDescriptionAsArray(descripcion: string | string[] | undefined | null): string[] {
-    if (!descripcion) return [];
-    
+  private static stripLeadingBullet(line: string): string {
+    return line.replace(/^[•\u2022\-*]\s*/u, '').trim();
+  }
+
+  /**
+   * Parte un texto en líneas para bullets: \n primero; si hay varios "•" en una sola tira, también separa.
+   * No parte por comas (evita romper frases con comas).
+   */
+  private static splitDescriptionPlainText(text: string): string[] {
+    const t = text.trim();
+    if (!t) return [];
+
+    if (/[\r\n]/.test(t)) {
+      return t
+        .split(/\r?\n/)
+        .map((line) => this.stripLeadingBullet(line))
+        .filter((line) => line.length > 0);
+    }
+
+    const bulletPattern = /(?:•|\u2022)/g;
+    const matches = t.match(bulletPattern);
+    if (matches && matches.length >= 2) {
+      return t
+        .split(/\s*(?:•|\u2022)\s*/)
+        .map((line) => this.stripLeadingBullet(line))
+        .filter((line) => line.length > 0);
+    }
+
+    return [];
+  }
+
+  /**
+   * Líneas para mostrar condiciones u observaciones como lista en la vista (no parte por comas).
+   * Prioriza saltos de línea; si es una sola línea, separa por ". " en oraciones.
+   */
+  static getCondicionesLines(condiciones: string | string[] | undefined | null): string[] {
+    if (condiciones === undefined || condiciones === null) return [];
+    if (Array.isArray(condiciones)) {
+      return condiciones.map((c) => String(c).trim()).filter((c) => c.length > 0);
+    }
+    const t = String(condiciones).trim();
+    if (!t) return [];
+    if (/[\r\n]/.test(t)) {
+      return t
+        .split(/\r?\n+/)
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0);
+    }
+    return t
+      .split(/\.\s+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+  }
+
+  /**
+   * Obtiene la descripción como un array (una entrada = un bullet en PDF).
+   * Acepta array Firestore, string con saltos de línea, string con varios "•", u objeto con claves numéricas.
+   */
+  static getDescriptionAsArray(
+    descripcion: string | string[] | Record<string, unknown> | undefined | null
+  ): string[] {
+    if (descripcion === undefined || descripcion === null) return [];
+
+    if (typeof descripcion === 'object' && !Array.isArray(descripcion)) {
+      const keys = Object.keys(descripcion).filter((k) => /^\d+$/.test(k));
+      if (keys.length > 0) {
+        return keys
+          .sort((a, b) => Number(a) - Number(b))
+          .map((k) => String((descripcion as Record<string, unknown>)[k] ?? '').trim())
+          .filter((s) => s.length > 0)
+          .flatMap((s) => {
+            const parts = this.splitDescriptionPlainText(s);
+            return parts.length > 0 ? parts : [s];
+          });
+      }
+      return [];
+    }
+
     if (Array.isArray(descripcion)) {
-      return descripcion.map(d => String(d).trim()).filter(d => d.length > 0);
+      const out: string[] = [];
+      for (const entry of descripcion) {
+        const s = String(entry ?? '').trim();
+        if (!s) continue;
+        const parts = this.splitDescriptionPlainText(s);
+        if (parts.length > 0) {
+          out.push(...parts);
+        } else {
+          out.push(s);
+        }
+      }
+      return out;
     }
-    
-    // Si es un string, NO dividimos por coma automáticamente porque puede romper frases 
-    // (ej: "Operador responsable, uniformado" no debe separarse).
-    // Dividimos por saltos de línea si existen, de lo contrario tratamos como un único bloque.
+
     const text = String(descripcion).trim();
-    if (text.includes('\n')) {
-      return text.split('\n').map(d => d.trim()).filter(d => d.length > 0);
+    if (!text) return [];
+
+    const parts = this.splitDescriptionPlainText(text);
+    if (parts.length > 0) {
+      return parts;
     }
-    
+
     return [text];
   }
 
@@ -366,7 +451,7 @@ export class QuoteHelper {
       estado: normalized.estado || 'borrador',
       items: this.normalizeItems(normalized.items).map(item => ({
         nombre: item.nombre || 'Artículo sin nombre',
-        descripcion: Array.isArray(item.descripcion) ? item.descripcion : (item.descripcion ? [item.descripcion] : []),
+        descripcion: this.getDescriptionAsArray(item.descripcion as any),
         cantidad: parseFloat(String(item.cantidad || 0)) || 1,
         precio_unitario: parseFloat(String(item.precio_unitario || item.precioBase || 0)) || 0,
         unidad: item.unidad || 'servicio',

@@ -1879,13 +1879,15 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
         ...wizardData.basicInfo,
         items: wizardData.selectedItems.map((item: any) => {
           console.log("🔍 Procesando item para envío:", item);
+          const descLines = QuoteHelper.getDescriptionAsArray(item.descripcion);
           return {
             item_id: item.id,
             nombre: item.nombre, // Incluir el nombre del item
             cantidad: item.cantidad,
             precio_unitario: item.precioBase,
             descuento: 0,
-            descripcion: item.descripcion || item.nombre || "", // Usar el nombre como descripción si no hay descripción personalizada
+            // Array por línea/bullet; el título del servicio va en `nombre`, no se repite en descripción
+            descripcion: descLines,
           };
         }),
         descuento_general: parseFloat(

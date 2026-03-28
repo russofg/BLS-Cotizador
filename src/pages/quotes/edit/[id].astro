@@ -667,7 +667,7 @@ function safeFormatDate(dateValue: any): string {
         
         // Get the description, handling arrays
         if (Array.isArray(itemData.descripcion)) {
-          itemDescription = itemData.descripcion.join(', ');
+          itemDescription = itemData.descripcion.join('\n');
         } else if (itemData.descripcion) {
           itemDescription = itemData.descripcion;
         }
@@ -1366,7 +1366,7 @@ function safeFormatDate(dateValue: any): string {
               if (descripcion && cantidad > 0 && precio_unitario >= 0) {
                 items.push({
                   nombre: nombre || '',
-                  descripcion: (descripcion || '').includes('\n') ? descripcion.split('\n').map(d => d.trim()).filter(d => d) : (descripcion || ''),
+                  descripcion: QuoteHelper.getDescriptionAsArray(descripcion || ''),
                   cantidad: cantidad,
                   precio_unitario: precio_unitario,
                   unidad: unidad,

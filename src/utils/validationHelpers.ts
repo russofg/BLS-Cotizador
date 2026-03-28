@@ -206,8 +206,12 @@ export class ValidationHelper {
   static validateQuoteItem(itemData: any): ValidationResult {
     const errors: string[] = [];
     
-    // Validar descripción
-    if (!itemData.descripcion || itemData.descripcion.trim().length === 0) {
+    // Validar descripción (string o array desde Firestore / formularios)
+    const descRaw = itemData.descripcion;
+    const descText = Array.isArray(descRaw)
+      ? descRaw.map((d: unknown) => String(d ?? '').trim()).filter(Boolean).join(' ')
+      : String(descRaw ?? '').trim();
+    if (!descText) {
       errors.push('Descripción del item es obligatoria');
     }
     

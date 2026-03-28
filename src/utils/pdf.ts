@@ -1,5 +1,6 @@
 // PDF Service with better error handling
 import { DEFAULT_QUOTE_TEXTS } from '../config/company';
+import { QuoteHelper } from './quoteHelpers';
 
 // Helper function to safely parse and format dates for PDF
 function parseAndFormatDate(dateValue: string): string {
@@ -312,9 +313,15 @@ export const pdfService = {
                 {
                   stack: [
                     { text: item.nombre, style: 'itemName' },
-                    ...(item.descripcion && item.descripcion.length > 0 ? 
-                      item.descripcion.map(desc => ({ text: `• ${desc}`, style: 'itemDescription' })) : []
-                    ),
+                    ...((): { text: string; style: string }[] => {
+                      const lines = QuoteHelper.getDescriptionAsArray(item.descripcion as any);
+                      return lines.map((desc) => {
+                        const clean = String(desc)
+                          .replace(/^[•\u2022\-*]\s*/u, '')
+                          .trim();
+                        return { text: `• ${clean}`, style: 'itemDescription' };
+                      });
+                    })(),
                     ...(item.observaciones ? [{ text: `Obs: ${item.observaciones}`, style: 'itemObservations' }] : [])
                   ]
                 },

@@ -396,6 +396,8 @@ function safeFormatDate(dateValue: any): string {
   )}
 
   <script>
+    import { QuoteHelper } from "../../../utils/quoteHelpers";
+
     document.addEventListener("DOMContentLoaded", function() {
       let itemCounter = 0;
       let allMasterItemsList = [];
@@ -481,9 +483,9 @@ function safeFormatDate(dateValue: any): string {
           unidad: 'servicio'
         };
 
-        // Normalizar descripción - puede ser array o string
+        // Una línea del textarea = un bullet en PDF (mismo criterio que array Firestore)
         if (Array.isArray(itemData.descripcion)) {
-          itemData.descripcion = itemData.descripcion.join(' • ');
+          itemData.descripcion = itemData.descripcion.join('\n');
         } else if (typeof itemData.descripcion !== 'string') {
           itemData.descripcion = itemData.descripcion ? itemData.descripcion.toString() : '';
         }
@@ -665,16 +667,19 @@ function safeFormatDate(dateValue: any): string {
             
             itemRows.forEach(function(row) {
               const index = row.getAttribute('data-index');
-              const descripcion = formData.get('items[' + index + '][descripcion]');
+              const descripcionRaw = formData.get('items[' + index + '][descripcion]');
+              const descripcion = QuoteHelper.getDescriptionAsArray(
+                typeof descripcionRaw === 'string' ? descripcionRaw : String(descripcionRaw ?? '')
+              );
               const cantidad = parseFloat(formData.get('items[' + index + '][cantidad]') || '0');
               const precio_unitario = parseFloat(formData.get('items[' + index + '][precio_unitario]') || '0');
               const unidad = formData.get('items[' + index + '][unidad]');
               const item_id = formData.get('items[' + index + '][item_id]');
               const precio_original = formData.get('items[' + index + '][precio_original]');
               
-              if (descripcion && cantidad > 0 && precio_unitario >= 0) {
+              if (descripcion.length > 0 && cantidad > 0 && precio_unitario >= 0) {
                 items.push({
-                  descripcion: descripcion,
+                  descripcion,
                   cantidad: cantidad,
                   precio_unitario: precio_unitario,
                   unidad: unidad,

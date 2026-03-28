@@ -6,6 +6,15 @@ import pwa from "@vite-pwa/astro";
 
 // https://astro.build/config
 export default defineConfig({
+  vite: {
+    optimizeDeps: {
+      include: [
+        "pdfmake/build/pdfmake",
+        "pdfmake/build/vfs_fonts",
+        "sweetalert2",
+      ],
+    },
+  },
   integrations: [
     tailwind(),
     pwa({

@@ -235,9 +235,11 @@ if (cotizacion && cotizacion.items) {
             {(cotizacion.condiciones || cotizacion.condiciones === '') && (
               <div class="md:col-span-2 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md border border-blue-200 dark:border-blue-800">
                 <label class="block text-sm font-medium text-blue-700 dark:text-blue-300">Condiciones Comerciales</label>
-                <p class="mt-1 text-sm text-gray-900 dark:text-gray-200 whitespace-pre-wrap">
-                  {cotizacion.condiciones || defaultCondiciones}
-                </p>
+                <ul class="mt-2 list-disc pl-5 space-y-1.5 text-sm text-gray-900 dark:text-gray-200">
+                  {QuoteHelper.getCondicionesLines(cotizacion.condiciones || defaultCondiciones).map((line) => (
+                    <li>{line}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
@@ -392,74 +394,66 @@ if (cotizacion && cotizacion.items) {
 </script>
 
 <script>
-  document.addEventListener("DOMContentLoaded", async () => {
+  /** Import estático: evita fetch a /src/utils/export.ts en dev (errores 504 Outdated Optimize Dep con import dinámico). */
+  import { exportService } from "../../../utils/export";
+  import { notifications } from "../../../utils/notifications";
 
-    // Get cotization data from the page (these are available as global variables)
+  document.addEventListener("DOMContentLoaded", () => {
     const getCotizacionData = () => {
       return {
         cotizacion: (window as any).cotizacion || {},
         cliente: (window as any).cliente || {},
         items: (window as any).itemsToShow || [],
-        empresa: (window as any).COMPANY_INFO || {}
+        empresa: (window as any).COMPANY_INFO || {},
       };
     };
 
-    // Export PDF handler
-    document.getElementById('export-pdf-btn')?.addEventListener('click', async () => {
+    document.getElementById("export-pdf-btn")?.addEventListener("click", async () => {
       try {
-        const { exportService } = await import("../../../utils/export");
-        const { notifications } = await import("../../../utils/notifications");
-        
         const rawData = getCotizacionData();
         if (!rawData.cotizacion || !rawData.cotizacion.id) {
-          notifications.error('Error', 'No se pudo obtener los datos de la cotización');
+          notifications.error("Error", "No se pudo obtener los datos de la cotización");
           return;
         }
-        
-        // Use centralized prepareExportData for consistency
         const exportData = exportService.prepareExportData(
-          rawData.cotizacion, 
-          rawData.cliente, 
+          rawData.cotizacion,
+          rawData.cliente,
           rawData.items,
           rawData.empresa
         );
-        
-        await exportService.exportCotizacion(exportData, 'pdf');
+        await exportService.exportCotizacion(exportData, "pdf");
       } catch (error) {
-        console.error('Export PDF error:', error);
-        const { notifications } = await import("../../../utils/notifications");
-        notifications.error('Error', 'Error al exportar PDF: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+        console.error("Export PDF error:", error);
+        notifications.error(
+          "Error",
+          "Error al exportar PDF: " + (error instanceof Error ? error.message : "Error desconocido")
+        );
       }
     });
 
-    // Export Excel handler
-    document.getElementById('export-excel-btn')?.addEventListener('click', async () => {
+    document.getElementById("export-excel-btn")?.addEventListener("click", async () => {
       try {
-        const { exportService } = await import("../../../utils/export");
-        const { notifications } = await import("../../../utils/notifications");
-        
         const rawData = getCotizacionData();
         if (!rawData.cotizacion || !rawData.cotizacion.id) {
-          notifications.error('Error', 'No se pudo obtener los datos de la cotización');
+          notifications.error("Error", "No se pudo obtener los datos de la cotización");
           return;
         }
-        
-        // Use centralized prepareExportData for consistency
         const exportData = exportService.prepareExportData(
-          rawData.cotizacion, 
-          rawData.cliente, 
+          rawData.cotizacion,
+          rawData.cliente,
           rawData.items,
           rawData.empresa
         );
-        
-        await exportService.exportCotizacion(exportData, 'excel');
+        await exportService.exportCotizacion(exportData, "excel");
       } catch (error) {
-        console.error('Export Excel error:', error);
-        const { notifications } = await import("../../../utils/notifications");
-        notifications.error('Error', 'Error al exportar Excel: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+        console.error("Export Excel error:", error);
+        notifications.error(
+          "Error",
+          "Error al exportar Excel: " + (error instanceof Error ? error.message : "Error desconocido")
+        );
       }
     });
-    
-    console.log('✅ Export buttons initialized');
+
+    console.log("✅ Export buttons initialized");
   });
 </script>
