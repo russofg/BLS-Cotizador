@@ -2,6 +2,7 @@ import { adminDb } from '../utils/firebaseAdmin';
 import type { QueryDocumentSnapshot, DocumentSnapshot } from 'firebase-admin/firestore';
 import { cache, CacheTTL, invalidateRelatedCache } from '../utils/cache';
 import { EmailNotificationService, type ReminderEmailData } from './EmailNotificationService';
+import { QuoteHelper } from '../utils/quoteHelpers';
 
 // Estados de cotización
 export enum QuoteStatus {
@@ -452,7 +453,7 @@ export class QuoteTrackingService {
 
     return {
       id: quoteDoc.id,
-      numero: data.numero || `COT-${quoteDoc.id}`,
+      numero: QuoteHelper.getDisplayQuoteNumber({ id: quoteDoc.id, ...data }),
       clienteId: data.clienteId || data.cliente_id,
       clienteNombre,
       titulo: data.titulo || data.descripcion || 'Sin título',

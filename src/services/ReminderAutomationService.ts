@@ -3,6 +3,7 @@
  * El runtime real debe invocarlo una vez por ejecución (por ejemplo, desde Netlify Scheduled Functions).
  */
 import { getAdminDb } from '../utils/firebaseAdmin';
+import { QuoteHelper } from '../utils/quoteHelpers';
 import { RealEmailService } from "./RealEmailService";
 import { UserManagementService } from "./UserManagementService";
 import {
@@ -123,6 +124,36 @@ async function resolveReminderRecipients(data: Record<string, any>): Promise<{
   };
 }
 
+async function resolveClientDisplayName(
+  adminDb: ReturnType<typeof getAdminDb>,
+  data: Record<string, any>
+): Promise<string> {
+  if (typeof data.clienteNombre === "string" && data.clienteNombre.trim()) {
+    return data.clienteNombre.trim();
+  }
+
+  const clientId = data.clienteId || data.cliente_id;
+  if (!clientId) {
+    return "Cliente";
+  }
+
+  try {
+    const clientDoc = await adminDb.collection("clientes").doc(String(clientId)).get();
+    if (!clientDoc.exists) {
+      return "Cliente";
+    }
+
+    const clientData = clientDoc.data() || {};
+    if (typeof clientData.nombre === "string" && clientData.nombre.trim()) {
+      return clientData.nombre.trim();
+    }
+  } catch (error) {
+    console.warn("⚠️ [AUTO] No se pudo resolver el nombre del cliente:", error);
+  }
+
+  return "Cliente";
+}
+
 export interface ReminderProcessingSummary {
   status: "processed" | "skipped" | "error";
   checkedCount: number;
@@ -189,6 +220,7 @@ export class ReminderAutomationService {
       for (const docSnapshot of snapshot.docs) {
         const data = docSnapshot.data() || {};
         const reminderDate = normalizeReminderDate(data.proximoSeguimiento);
+        const quoteNumber = QuoteHelper.getDisplayQuoteNumber({ id: docSnapshot.id, ...data });
 
         if (!reminderDate) {
           console.warn(`⚠️ [AUTO] Recordatorio inválido en ${docSnapshot.id}; se mantiene pendiente.`);
@@ -203,11 +235,12 @@ export class ReminderAutomationService {
         }
 
         dueCount++;
-        console.log(`📅 [AUTO] Procesando recordatorio para ${data.numero || docSnapshot.id}:`);
+        console.log(`📅 [AUTO] Procesando recordatorio para ${quoteNumber}:`);
         console.log(`   Tipo: ${data.proximoSeguimientoTipo}`);
         console.log(`   Mensaje: ${data.proximoSeguimientoMensaje}`);
         console.log(`   Fecha programada: ${reminderDate.toLocaleString()}`);
-        console.log(`   Cliente: ${data.clienteNombre || "Sin cliente"}`);
+        const clientDisplayName = await resolveClientDisplayName(adminDb, data);
+        console.log(`   Cliente: ${clientDisplayName}`);
 
         try {
           const { recipients, source } = await resolveReminderRecipients(data);
@@ -215,7 +248,7 @@ export class ReminderAutomationService {
           if (recipients.length === 0) {
             skippedCount++;
             console.warn(
-              `⚠️ [AUTO] Sin destinatarios para ${data.numero || docSnapshot.id}. Se mantiene pendiente.`
+              `⚠️ [AUTO] Sin destinatarios para ${quoteNumber}. Se mantiene pendiente.`
             );
             continue;
           }
@@ -231,8 +264,8 @@ export class ReminderAutomationService {
             try {
               const success = await RealEmailService.sendReminderEmail(
                 recipient,
-                data.numero,
-                data.clienteNombre || "Cliente",
+                quoteNumber,
+                clientDisplayName,
                 data.proximoSeguimientoMensaje || "Recordatorio programado",
                 reminderDate
               );
@@ -255,13 +288,13 @@ export class ReminderAutomationService {
               updatedAt: new Date(),
             });
 
-            console.log(`✅ [AUTO] Recordatorio procesado y limpiado para ${data.numero || docSnapshot.id}`);
+            console.log(`✅ [AUTO] Recordatorio procesado y limpiado para ${quoteNumber}`);
             continue;
           }
 
           failedCount++;
           console.warn(
-            `⚠️ [AUTO] No se pudo enviar ningún email para ${data.numero || docSnapshot.id}. Se mantiene pendiente.`
+            `⚠️ [AUTO] No se pudo enviar ningún email para ${quoteNumber}. Se mantiene pendiente.`
           );
         } catch (emailError) {
           failedCount++;

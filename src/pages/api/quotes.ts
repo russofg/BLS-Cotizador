@@ -138,10 +138,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     const allExisting = await cotizacionService.getAll();
     const year = new Date().getFullYear();
-    const numeroAsignado =
-      quoteData.numero && String(quoteData.numero).trim()
-        ? String(quoteData.numero).trim()
-        : QuoteHelper.computeNextQuoteNumberForYear(allExisting, year);
+    const numeroAsignado = QuoteHelper.computeNextQuoteNumberForYear(allExisting, year);
 
     // Create the new quote with all necessary fields
     const newQuote = await cotizacionService.create({

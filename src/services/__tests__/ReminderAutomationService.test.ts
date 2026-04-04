@@ -34,6 +34,9 @@ class MockSmtpConfigError extends Error {
 }
 
 vi.mock("../../utils/firebaseAdmin", () => ({
+  getAdminDb: () => ({
+    collection: collectionMock,
+  }),
   adminDb: {
     collection: collectionMock,
   },
@@ -131,7 +134,7 @@ describe("ReminderAutomationService.processDueRemindersOnce", () => {
     expect(sendReminderEmailMock).toHaveBeenNthCalledWith(
       1,
       "uno@example.com",
-      "COT-001",
+      expect.stringMatching(/^\d{4}-\d{4}$/),
       "Cliente Demo",
       "Llamar mañana",
       expect.any(Date)
@@ -139,7 +142,7 @@ describe("ReminderAutomationService.processDueRemindersOnce", () => {
     expect(sendReminderEmailMock).toHaveBeenNthCalledWith(
       2,
       "dos@example.com",
-      "COT-001",
+      expect.stringMatching(/^\d{4}-\d{4}$/),
       "Cliente Demo",
       "Llamar mañana",
       expect.any(Date)
@@ -195,7 +198,7 @@ describe("ReminderAutomationService.processDueRemindersOnce", () => {
     expect(sendReminderEmailMock).toHaveBeenNthCalledWith(
       1,
       "team.one@example.com",
-      "COT-002",
+      expect.stringMatching(/^\d{4}-\d{4}$/),
       "Cliente Fallback",
       "Revisar propuesta",
       expect.any(Date)
@@ -203,7 +206,7 @@ describe("ReminderAutomationService.processDueRemindersOnce", () => {
     expect(sendReminderEmailMock).toHaveBeenNthCalledWith(
       2,
       "team.two@example.com",
-      "COT-002",
+      expect.stringMatching(/^\d{4}-\d{4}$/),
       "Cliente Fallback",
       "Revisar propuesta",
       expect.any(Date)
