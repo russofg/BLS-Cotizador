@@ -904,6 +904,14 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
             hideModal();
           }
         });
+        
+      // Auto-open modal if specified in URL 
+      if (new URLSearchParams(window.location.search).get('action') === 'new') {
+        const titleEl = document.getElementById("modal-title");
+        if(titleEl) titleEl.textContent = "Nuevo Cliente";
+        showModal();
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     });
   </script>
 </Dashboard>

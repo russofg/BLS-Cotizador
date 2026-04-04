@@ -1081,6 +1081,12 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
           }
         }
       });
+      
+      // Auto-open modal if specified in URL 
+      if (new URLSearchParams(window.location.search).get('action') === 'new') {
+        showModal("Nuevo Item");
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     });
   </script>
 </Dashboard>
