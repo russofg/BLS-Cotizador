@@ -52,10 +52,11 @@ export class AnalyticsService {
       }
 
       // Fetch all required collections ONCE to avoid redundant mass fetches
-      const [quotesSnapshot, clientsSnapshot, itemsSnapshot] = await Promise.all([
+      const [quotesSnapshot, clientsSnapshot, itemsSnapshot, categoriesSnapshot] = await Promise.all([
         adminDb.collection('cotizaciones').orderBy('createdAt', 'desc').get(),
         adminDb.collection('clientes').orderBy('createdAt', 'desc').get(),
-        adminDb.collection('items').orderBy('nombre', 'asc').get()
+        adminDb.collection('items').orderBy('nombre', 'asc').get(),
+        adminDb.collection('categorias').get()
       ]);
       
       const quotes = quotesSnapshot.docs.map(doc => ({
@@ -75,10 +76,15 @@ export class AnalyticsService {
         ...doc.data()
       }));
 
+      const categoriesRaw = categoriesSnapshot.docs.reduce((acc, doc) => {
+        acc[doc.id] = doc.data().nombre;
+        return acc;
+      }, {} as Record<string, string>);
+
       const [quotesAnalytics, clientsAnalytics, itemsAnalytics] = await Promise.all([
         this.getQuoteAnalytics(quotes),
         this.getClientAnalytics(clients, quotes),
-        this.getItemAnalytics(items, quotes)
+        this.getItemAnalytics(items, quotes, categoriesRaw)
       ]);
 
       const analytics: DashboardAnalytics = {
@@ -276,7 +282,7 @@ export class AnalyticsService {
   /**
    * Obtiene estadísticas de items/productos
    */
-  static async getItemAnalytics(prefetchedItems?: any[], prefetchedQuotes?: any[]): Promise<ItemAnalytics> {
+  static async getItemAnalytics(prefetchedItems?: any[], prefetchedQuotes?: any[], prefetchedCategories?: Record<string, string>): Promise<ItemAnalytics> {
     try {
       const cacheKey = CacheKeys.analytics('items');
       const cachedData = cache.get<ItemAnalytics>(cacheKey);
@@ -343,7 +349,20 @@ export class AnalyticsService {
         .slice(0, 10);
 
       // Items por categoría
-      const itemsByCategory = this.calculateItemsByCategory(items);
+      // Fallback categories load just in case prefetchedCategories wasn't provided
+      let categoriesMap = prefetchedCategories;
+      if (!categoriesMap) {
+        try {
+          const catSnap = await adminDb.collection('categorias').get();
+          categoriesMap = catSnap.docs.reduce((acc, doc) => {
+            acc[doc.id] = doc.data().nombre;
+            return acc;
+          }, {} as Record<string, string>);
+        } catch(e) {
+          categoriesMap = {};
+        }
+      }
+      const itemsByCategory = this.calculateItemsByCategory(items, categoriesMap);
 
       const analytics: ItemAnalytics = {
         totalItems,
@@ -419,12 +438,18 @@ export class AnalyticsService {
   /**
    * Calcula items por categoría
    */
-  private static calculateItemsByCategory(items: any[]): Array<{ category: string; count: number }> {
+  private static calculateItemsByCategory(items: any[], categoriesMap?: Record<string, string>): Array<{ category: string; count: number }> {
     const categoryMap = new Map<string, number>();
     
     items.forEach(item => {
-      const category = item.categoria || 'Sin categoría';
-      categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
+      let categoryName = 'Sin categoría';
+      if (item.categoriaId && categoriesMap && categoriesMap[item.categoriaId]) {
+        categoryName = categoriesMap[item.categoriaId];
+      } else if (item.categoria) {
+        categoryName = item.categoria;
+      }
+      
+      categoryMap.set(categoryName, (categoryMap.get(categoryName) || 0) + 1);
     });
 
     return Array.from(categoryMap.entries())

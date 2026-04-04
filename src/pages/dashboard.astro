@@ -263,9 +263,9 @@ try {
                       </span>
                     </td>
                     <td class="px-8 py-5">
-                      <button class="text-gray-500 hover:text-primary-400 transition-colors">
-                        <span class="material-symbols-outlined select-none">more_vert</span>
-                      </button>
+                      <a href={`/quotes/view/${cotizacion.id}`} class="text-gray-500 hover:text-primary-400 transition-colors inline-block">
+                        <span class="material-symbols-outlined select-none block">more_vert</span>
+                      </a>
                     </td>
                   </tr>
                 );
@@ -285,14 +285,14 @@ try {
         <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] p-8 space-y-6">
           <h3 class="text-xl font-bold tracking-tight text-white">Acciones Rápidas</h3>
           <div class="grid grid-cols-1 gap-4">
-            <a href="/clients/new" class="flex items-center justify-between p-4 rounded-lg bg-surface-container/50 hover:bg-primary-600 group transition-all duration-300 cursor-pointer border border-transparent hover:border-primary-500/30">
+            <a href="/clients" class="flex items-center justify-between p-4 rounded-lg bg-surface-container/50 hover:bg-primary-600 group transition-all duration-300 cursor-pointer border border-transparent hover:border-primary-500/30">
               <div class="flex items-center gap-3">
                 <span class="material-symbols-outlined text-primary-500 group-hover:text-white select-none">person_add</span>
                 <span class="text-sm font-semibold text-gray-300 group-hover:text-white">Agregar Cliente</span>
               </div>
               <span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity text-white select-none">arrow_forward</span>
             </a>
-            <a href="/items/new" class="flex items-center justify-between p-4 rounded-lg bg-surface-container/50 hover:bg-primary-600 group transition-all duration-300 cursor-pointer border border-transparent hover:border-primary-500/30">
+            <a href="/items" class="flex items-center justify-between p-4 rounded-lg bg-surface-container/50 hover:bg-primary-600 group transition-all duration-300 cursor-pointer border border-transparent hover:border-primary-500/30">
               <div class="flex items-center gap-3">
                 <span class="material-symbols-outlined text-primary-500 group-hover:text-white select-none">add_box</span>
                 <span class="text-sm font-semibold text-gray-300 group-hover:text-white">Crear Ítem</span>
