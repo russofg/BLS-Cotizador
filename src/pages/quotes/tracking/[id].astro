@@ -7,6 +7,19 @@ import Badge from "../../../components/ui/Badge.astro";
 import ScrollbarStyles from "../../../components/ScrollbarStyles.astro";
 import { QuoteTrackingService, QuoteStatus } from "../../../services/QuoteTrackingService";
 
+const ARGENTINA_TIMEZONE = "America/Argentina/Buenos_Aires";
+const formatArgentinaDateTime = (value: string | Date) =>
+  new Intl.DateTimeFormat("es-AR", {
+    timeZone: ARGENTINA_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(new Date(value));
+
 export async function getStaticPaths() {
   return [];
 }
@@ -291,7 +304,7 @@ const getAvailableStatuses = (currentStatus: QuoteStatus): QuoteStatus[] => {
                           <!-- Información básica -->
                           <div class="space-y-2">
                             <div class="text-sm text-yellow-700 dark:text-yellow-300">
-                              <span class="font-medium">Fecha:</span> {new Date(quoteTracking.proximoSeguimiento).toLocaleString('es-ES')}
+                              <span class="font-medium">Fecha:</span> {formatArgentinaDateTime(quoteTracking.proximoSeguimiento)}
                             </div>
                             
                             {quoteTracking.proximoSeguimientoTipo && (

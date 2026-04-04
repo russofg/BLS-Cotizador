@@ -19,6 +19,20 @@ export interface EmailData {
 
 export class RealEmailService {
   private static transporter: nodemailer.Transporter | null = null;
+  private static readonly ARGENTINA_TIMEZONE = 'America/Argentina/Buenos_Aires';
+
+  private static formatArgentinaDateTime(date: Date): string {
+    return new Intl.DateTimeFormat('es-AR', {
+      timeZone: RealEmailService.ARGENTINA_TIMEZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).format(date);
+  }
 
   /**
    * Configurar el transporter de Nodemailer
@@ -114,6 +128,7 @@ export class RealEmailService {
     reminderDate: Date
   ): Promise<boolean> {
     const subject = `Recordatorio: Seguimiento - ${quoteNumber}`;
+    const formattedReminderDate = RealEmailService.formatArgentinaDateTime(reminderDate);
     
     const html = `
       <!DOCTYPE html>
@@ -153,7 +168,7 @@ export class RealEmailService {
             <div class="reminder-box">
               <h4>💬 Mensaje del Recordatorio</h4>
               <p>${reminderMessage}</p>
-              <p><strong>Fecha programada:</strong> ${reminderDate.toLocaleString('es-ES')}</p>
+              <p><strong>Fecha programada:</strong> ${formattedReminderDate}</p>
             </div>
             
             <p>Por favor, revisa el estado de esta cotización y realiza el seguimiento correspondiente.</p>
@@ -177,7 +192,7 @@ export class RealEmailService {
       Tipo: Seguimiento
       
       Mensaje: ${reminderMessage}
-      Fecha programada: ${reminderDate.toLocaleString('es-ES')}
+      Fecha programada: ${formattedReminderDate}
       
       Por favor, revisa el estado de esta cotización y realiza el seguimiento correspondiente.
       
