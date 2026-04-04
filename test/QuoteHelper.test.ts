@@ -8,7 +8,22 @@ import { QuoteHelper } from '../src/utils/quoteHelpers';
 // Mock DateHelper
 vi.mock('../src/utils/dateHelpers', () => ({
   DateHelper: {
-    safeParseDate: vi.fn((date) => date ? new Date(date) : null),
+    safeParseDate: vi.fn((date) => {
+      if (!date) return null;
+      const parsed = date instanceof Date ? date : new Date(date);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }),
+    calculateEndDate: vi.fn((startDate, durationDays) => {
+      const endDate = new Date(startDate);
+      endDate.setUTCDate(endDate.getUTCDate() + durationDays - 1);
+      return endDate;
+    }),
+    safeFormatDateForInput: vi.fn((date) => {
+      if (!date) return '';
+      const parsed = date instanceof Date ? date : new Date(date);
+      if (isNaN(parsed.getTime())) return '';
+      return parsed.toISOString().slice(0, 10);
+    }),
     formatDateToYYYYMMDD: vi.fn((date) => {
       if (!date) return '';
       const year = date.getFullYear();
@@ -241,13 +256,15 @@ describe('QuoteHelper', () => {
   describe('calculateEndDateIfMissing', () => {
     it('should calculate end date when missing', () => {
       const cotizacion = {
-        fechaEvento: '2024-01-15',
-        duracionDias: 3
+        fecha_evento: '2024-01-15',
+        duracion_dias: 3
       };
 
       const result = QuoteHelper.calculateEndDateIfMissing(cotizacion);
       
-      expect(result.fechaEventoFin).toBeDefined();
+      expect(result.fecha_evento_fin).toBe('2024-01-17');
+      expect(result.fechaEventoFin).toBeInstanceOf(Date);
+      expect((result.fechaEventoFin as Date).toISOString().slice(0, 10)).toBe('2024-01-17');
     });
 
     it('should not modify existing end date', () => {

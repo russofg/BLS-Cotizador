@@ -1,5 +1,21 @@
 ---
 import Base from "../layouts/Base.astro";
+
+let activeItemsCount: number | null = null;
+let totalQuotesCount: number | null = null;
+
+try {
+  const { itemService, cotizacionService } = await import("../utils/database");
+  const [activeItems, quotes] = await Promise.all([
+    itemService.getAll({ activo: true }),
+    cotizacionService.getAll(),
+  ]);
+
+  activeItemsCount = activeItems.length;
+  totalQuotesCount = quotes.length;
+} catch (error) {
+  console.error("Error loading landing stats:", error);
+}
 ---
 
 <Base title="BLS Cotizador - Sistema de Cotizaciones">
@@ -45,15 +61,15 @@ import Base from "../layouts/Base.astro";
         <div class="grid grid-cols-2 gap-4 mt-6">
           <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
             <h3 class="font-medium text-gray-900 dark:text-gray-100">Items</h3>
-            <p class="text-2xl font-bold text-primary-600 dark:text-primary-400" id="items-count">
-              <span class="inline-block h-7 w-12 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span>
+            <p class="text-2xl font-bold text-primary-600 dark:text-primary-400">
+              {activeItemsCount ?? "—"}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">servicios activos</p>
           </div>
           <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
             <h3 class="font-medium text-gray-900 dark:text-gray-100">Cotizaciones</h3>
-            <p class="text-2xl font-bold text-primary-600 dark:text-primary-400" id="quotes-count">
-              <span class="inline-block h-7 w-12 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span>
+            <p class="text-2xl font-bold text-primary-600 dark:text-primary-400">
+              {totalQuotesCount ?? "—"}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">totales</p>
           </div>
@@ -62,29 +78,3 @@ import Base from "../layouts/Base.astro";
     </div>
   </div>
 </Base>
-
-<script>
-  import { db } from "../utils/firebase";
-  import { collection, getDocs, query, where } from "firebase/firestore";
-
-  document.addEventListener("DOMContentLoaded", async () => {
-    const itemsCountEl = document.getElementById("items-count");
-    const quotesCountEl = document.getElementById("quotes-count");
-
-    try {
-      // Fetch real counts from Firebase
-      const [itemsSnapshot, quotesSnapshot] = await Promise.all([
-        getDocs(query(collection(db, "items"), where("activo", "==", true))),
-        getDocs(collection(db, "cotizaciones")),
-      ]);
-
-      if (itemsCountEl) itemsCountEl.textContent = String(itemsSnapshot.size);
-      if (quotesCountEl) quotesCountEl.textContent = String(quotesSnapshot.size);
-    } catch (error) {
-      console.error("Error loading stats:", error);
-      if (itemsCountEl) itemsCountEl.textContent = "—";
-      if (quotesCountEl) quotesCountEl.textContent = "—";
-    }
-  });
-</script>
-

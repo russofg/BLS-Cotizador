@@ -4,24 +4,27 @@
  */
 import { adminDb } from '../utils/firebaseAdmin';
 import { RealEmailService } from "./RealEmailService";
+import {
+  SmtpConfigError,
+  getSmtpRuntimeConfig,
+  getSmtpRuntimeLogContext,
+} from "./SmtpRuntimeConfig";
 
 // Configurar email service una sola vez
 let emailServiceConfigured = false;
 
 function configureEmailService() {
   if (!emailServiceConfigured) {
-    RealEmailService.configure({
-      host: "smtp.hostinger.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: "info@serviciosbls.com",
-        pass: "Pincharrata160$",
-      },
-    });
+    RealEmailService.configure(getSmtpRuntimeConfig());
     emailServiceConfigured = true;
-    console.log("📧 Email service configurado para automatización");
+    console.log("📧 Email service configurado para automatización", getSmtpRuntimeLogContext());
   }
+
+  return true;
+}
+
+function isSmtpConfigError(error: unknown): error is SmtpConfigError {
+  return error instanceof SmtpConfigError;
 }
 
 export class ReminderAutomationService {
@@ -41,7 +44,20 @@ export class ReminderAutomationService {
     console.log("🚀 Iniciando servicio de automatización de recordatorios...");
     console.log("⏰ Se ejecutará cada minuto");
     
-    configureEmailService();
+    try {
+      configureEmailService();
+    } catch (error) {
+      if (isSmtpConfigError(error)) {
+        console.warn("⚠️ SMTP no configurado para automatización. Servicio no iniciado.", {
+          missingKeys: error.missingKeys,
+          invalidKeys: error.invalidKeys,
+          smtp: getSmtpRuntimeLogContext(),
+        });
+        return;
+      }
+
+      throw error;
+    }
     
     // Ejecutar inmediatamente la primera vez
     this.processReminders();
@@ -82,6 +98,7 @@ export class ReminderAutomationService {
     console.log(`\n🔍 [${startTime.toLocaleTimeString()}] Procesando recordatorios automáticamente...`);
 
     try {
+      configureEmailService();
       const snapshot = await adminDb.collection("cotizaciones").get();
 
       let processedCount = 0;
@@ -159,6 +176,15 @@ export class ReminderAutomationService {
       console.log(`   ⏰ Próxima ejecución: ${new Date(Date.now() + 60000).toLocaleTimeString()}`);
 
     } catch (error) {
+      if (isSmtpConfigError(error)) {
+        console.warn("⚠️ Procesamiento detenido por configuración SMTP inválida.", {
+          missingKeys: error.missingKeys,
+          invalidKeys: error.invalidKeys,
+          smtp: getSmtpRuntimeLogContext(),
+        });
+        return;
+      }
+
       console.error("❌ [AUTO] Error procesando recordatorios:", error);
     }
   }

@@ -455,17 +455,25 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       }
     }
 
-    // Load categories from Firebase
+    // Load categories from API boundary
     async function loadCategories() {
       try {
-        const categoriesSnapshot = await getDocs(collection(db, "categorias"));
-        allCategories = [];
+        const categoriesResponse = await fetch("/api/categories");
+        if (!categoriesResponse.ok) {
+          throw new Error(`HTTP ${categoriesResponse.status}`);
+        }
+
+        const categoriesData = await categoriesResponse.json();
+        const categories = Array.isArray(categoriesData)
+          ? categoriesData
+          : categoriesData.categories;
+
+        allCategories = Array.isArray(categories) ? categories : [];
         categoryMap = {};
 
-        categoriesSnapshot.forEach((doc) => {
-          const categoria = { id: doc.id, ...doc.data() } as any;
-          allCategories.push(categoria);
-          categoryMap[doc.id] = categoria.nombre;
+        allCategories.forEach((categoria: any) => {
+          if (!categoria?.id) return;
+          categoryMap[categoria.id] = categoria.nombre || "Sin nombre";
         });
 
         // Update category select
@@ -478,12 +486,12 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
           allCategories.forEach((categoria) => {
             const option = document.createElement("option");
             option.value = categoria.id;
-            option.textContent = categoria.nombre;
+            option.textContent = categoria.nombre || "Sin nombre";
             categorySelect.appendChild(option);
           });
         }
 
-        console.log("Categorías cargadas:", allCategories.length);
+        console.log("Categorías cargadas desde API:", allCategories.length);
       } catch (error) {
         console.error("Error loading categories:", error);
       }

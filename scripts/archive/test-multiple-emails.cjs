@@ -18,16 +18,49 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Configurar email service
-RealEmailService.configure({
-  host: "smtp.hostinger.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: "info@serviciosbls.com",
-    pass: "Pincharrata160$",
-  },
-});
+function getRequiredEnv(name) {
+  const value = process.env[name] && process.env[name].trim();
+
+  if (!value) {
+    throw new Error(`Missing required SMTP env: ${name}`);
+  }
+
+  return value;
+}
+
+function getSmtpConfig() {
+  const port = Number(process.env.SMTP_PORT || 587);
+
+  if (!Number.isInteger(port) || port <= 0) {
+    throw new Error("Invalid SMTP_PORT. Expected a positive integer.");
+  }
+
+  const secureRaw =
+    process.env.SMTP_SECURE && process.env.SMTP_SECURE.trim().toLowerCase();
+  let secure;
+
+  if (!secureRaw) {
+    secure = port === 465;
+  } else if (["1", "true", "yes", "on"].includes(secureRaw)) {
+    secure = true;
+  } else if (["0", "false", "no", "off"].includes(secureRaw)) {
+    secure = false;
+  } else {
+    throw new Error("Invalid SMTP_SECURE. Expected true/false.");
+  }
+
+  return {
+    host: getRequiredEnv("SMTP_HOST"),
+    port,
+    secure,
+    auth: {
+      user: getRequiredEnv("SMTP_USER"),
+      pass: getRequiredEnv("SMTP_PASSWORD"),
+    },
+  };
+}
+
+RealEmailService.configure(getSmtpConfig());
 
 async function createAndTestReminder() {
   console.log("📅 Creando recordatorio de prueba...");

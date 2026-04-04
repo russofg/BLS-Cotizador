@@ -613,7 +613,7 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
 
   // Helper function to get category name
   function getCategoryName(categoriaId: string): string {
-    // First try to find in loaded categories from Firebase
+    // First try to find in loaded categories from the API boundary
     const categoria = allCategories.find((cat: any) => cat.id === categoriaId);
     if (categoria) {
       return categoria.nombre;
@@ -740,28 +740,29 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
         console.error("❌ Error cargando items:", itemsResponse.status);
       }
 
-      // Load categories from Firebase (same as items.astro)
+      // Load categories from API boundary
       try {
-        console.log("🏷️ Cargando categorías desde Firebase...");
-        const { getDocs, collection } = await import("firebase/firestore");
-        const { db } = await import("../../utils/firebase.ts");
+        console.log("🏷️ Cargando categorías desde /api/categories...");
+        const categoriesResponse = await fetch("/api/categories");
+        if (!categoriesResponse.ok) {
+          throw new Error(`HTTP ${categoriesResponse.status}`);
+        }
 
-        const categoriesSnapshot = await getDocs(collection(db, "categorias"));
-        allCategories = [];
+        const categoriesData = await categoriesResponse.json();
+        const categories = Array.isArray(categoriesData)
+          ? categoriesData
+          : categoriesData.categories;
 
-        categoriesSnapshot.forEach((doc) => {
-          const categoria = { id: doc.id, ...doc.data() } as any;
-          allCategories.push(categoria);
-        });
+        allCategories = Array.isArray(categories) ? categories : [];
 
         console.log(
-          "🏷️ Categorías cargadas desde Firebase:",
+          "🏷️ Categorías cargadas desde API:",
           allCategories.length
         );
         renderCategoryOptions();
       } catch (error) {
         console.warn(
-          "⚠️ No se pudieron cargar categorías desde Firebase, usando mapeo manual"
+          "⚠️ No se pudieron cargar categorías desde API, usando mapeo manual"
         );
 
         // Fallback to manual mapping if Firebase fails

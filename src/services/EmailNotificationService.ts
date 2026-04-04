@@ -5,6 +5,11 @@
 
 import { EmailConfigService } from './EmailConfigService';
 import { RealEmailService } from './RealEmailService';
+import {
+  SmtpConfigError,
+  getSmtpRuntimeConfig,
+  getSmtpRuntimeLogContext,
+} from './SmtpRuntimeConfig';
 
 export interface EmailTemplate {
   subject: string;
@@ -152,8 +157,7 @@ export class EmailNotificationService {
         subject: emailTemplate.subject,
         quoteNumber: data.quoteNumber,
         reminderType: data.reminderType,
-        smtpHost: config.smtpHost,
-        smtpPort: config.smtpPort,
+        smtp: getSmtpRuntimeLogContext(),
         enabled: config.enabled
       });
       
@@ -199,32 +203,9 @@ export class EmailNotificationService {
       });
       */
       
-      console.log('📧 Enviando email de recordatorio:', {
-        to: destinationEmail,
-        from: config.fromEmail,
-        subject: emailTemplate.subject,
-        quoteNumber: data.quoteNumber,
-        reminderType: data.reminderType,
-        smtpHost: config.smtpHost,
-        smtpPort: config.smtpPort,
-        enabled: config.enabled
-      });
-      
       // Intentar enviar email real primero
       try {
-        // Importar el servicio real dinámicamente
-        const { RealEmailService } = await import('./RealEmailService');
-        
-        // Configurar Hostinger SMTP
-        RealEmailService.configure({
-          host: "smtp.hostinger.com",
-          port: 587,
-          secure: false,
-          auth: {
-            user: "info@serviciosbls.com",
-            pass: "Pincharrata160$"
-          }
-        });
+        RealEmailService.configure(getSmtpRuntimeConfig());
         
         const success = await RealEmailService.sendReminderEmail(
           destinationEmail,
@@ -238,17 +219,26 @@ export class EmailNotificationService {
           console.log('✅ Email real enviado exitosamente');
           return true;
         }
+        
+        console.warn('⚠️ Email real no se pudo enviar; activando simulación explícita');
       } catch (realEmailError) {
-        console.warn('⚠️ Error enviando email real, usando simulación:', realEmailError);
+        if (realEmailError instanceof SmtpConfigError) {
+          console.warn('⚠️ SMTP no configurado correctamente; activando simulación explícita:', {
+            missingKeys: realEmailError.missingKeys,
+            invalidKeys: realEmailError.invalidKeys
+          });
+        } else {
+          console.warn('⚠️ Error enviando email real, usando simulación explícita:', realEmailError);
+        }
       }
       
       // Fallback: Simular envío si el servicio real falla
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      console.log('📧 [MODO DESARROLLO] Email simulado enviado exitosamente');
+      console.log('📧 [SIMULACIÓN EXPLÍCITA] Email simulado enviado exitosamente');
       console.log('📧 [MODO DESARROLLO] Destinatario:', destinationEmail);
       console.log('📧 [MODO DESARROLLO] Asunto:', emailTemplate.subject);
-      console.log('📧 [MODO DESARROLLO] Para enviar emails reales, configura RealEmailService');
+      console.log('📧 [MODO DESARROLLO] Para enviar emails reales, definí SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER y SMTP_PASSWORD');
       
       return true;
     } catch (error) {
