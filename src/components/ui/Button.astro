@@ -37,17 +37,17 @@ const baseClasses =
 
 const variantClasses = {
   primary:
-    "bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 shadow-premium hover:shadow-premium-hover",
+    "bg-primary-container text-on-primary-container hover:bg-surface-tint focus:ring-primary-container shadow-premium hover:shadow-premium-hover hover:ring-2 hover:ring-surface-tint",
   secondary:
-    "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-gray-400 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md",
+    "bg-surface-container-lowest text-on-surface hover:bg-surface-container-low focus:ring-outline-variant border border-outline-variant shadow-sm hover:shadow-premium",
   success:
     "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 shadow-premium hover:shadow-premium-hover",
-  danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-premium hover:shadow-premium-hover",
+  danger: "bg-red-600/90 text-white hover:bg-red-700 focus:ring-red-500 shadow-premium hover:shadow-premium-hover backdrop-blur-sm",
   warning:
-    "bg-orange-600 text-white hover:bg-orange-700 focus:ring-orange-500 shadow-premium hover:shadow-premium-hover",
-  info: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 shadow-premium hover:shadow-premium-hover",
+    "bg-orange-600/90 text-white hover:bg-orange-700 focus:ring-orange-500 shadow-premium hover:shadow-premium-hover backdrop-blur-sm",
+  info: "bg-blue-600/90 text-white hover:bg-blue-700 focus:ring-blue-500 shadow-premium hover:shadow-premium-hover backdrop-blur-sm",
   ghost:
-    "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 focus:ring-gray-500",
+    "text-on-surface hover:text-white hover:bg-surface-container-low focus:ring-outline-variant",
 };
 
 const sizeClasses = {
