@@ -1,10 +1,5 @@
 ---
 import DashboardLayout from "../layouts/Dashboard.astro";
-import Card from "../components/ui/Card.astro";
-import Button from "../components/ui/Button.astro";
-import Badge from "../components/ui/Badge.astro";
-import StatCard from "../components/ui/StatCard.astro";
-import PageHeader from "../components/ui/PageHeader.astro";
 import ScrollbarStyles from "../components/ScrollbarStyles.astro";
 import { DateHelper } from "../utils/dateHelpers";
 import { QuoteHelper } from "../utils/quoteHelpers";
@@ -38,399 +33,301 @@ try {
     totalClientes: analytics.clients.totalClients,
     cotizacionesRecientes: analytics.recentQuotes || [],
   };
-  
-  console.log("Dashboard analytics loaded successfully");
 } catch (error) {
-  console.error("Error loading dashboard analytics:", error);
-  
-  // Fallback to old stats service
   try {
     const { statsService } = await import("../utils/database");
     stats = await statsService.getDashboardStats();
-    console.log("Dashboard stats loaded successfully (fallback)");
   } catch (fallbackError) {
-    console.error("Error loading dashboard stats (fallback):", fallbackError);
     // Keep default stats
   }
 }
-
-// Iconos como strings para reutilizar
-const icons = {
-  cotizaciones:
-    '<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>',
-  pendientes:
-    '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246C12.197 9.434 11.623 9.209 11 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"></path>',
-  items:
-    '<path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>',
-  clientes:
-    '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>',
-};
 ---
 
 <DashboardLayout title="Dashboard - BLS Cotizador" activeSection="dashboard">
   <ScrollbarStyles />
-  <PageHeader
-    title="Dashboard"
-    subtitle="Resumen general del sistema de cotizaciones"
-  />
-
-  <!-- Stats Grid - Usando nuevos StatCard -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-    <StatCard
-      title="Cotizaciones Totales"
-      value={stats.totalCotizaciones}
-      icon={icons.cotizaciones}
-      color="blue"
-    />
-    <StatCard
-      title="Cotizaciones Pendientes"
-      value={stats.cotizacionesPendientes}
-      icon={icons.pendientes}
-      color="yellow"
-    />
-    <StatCard
-      title="Items Activos"
-      value={stats.itemsActivos}
-      icon={icons.items}
-      color="green"
-    />
-    <StatCard
-      title="Total Clientes"
-      value={stats.totalClientes}
-      icon={icons.clientes}
-      color="purple"
-    />
-  </div>
-
-  <!-- Quick Actions -->
-  <Card title="Acciones Rápidas" class="mb-10 shadow-premium">
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-      <div
-        class="group relative overflow-hidden bg-surface-container-lowest rounded-2xl hover:bg-surface-container-low transition-all duration-300 transform hover:-translate-y-1 shadow-premium hover:shadow-premium-hover backdrop-blur-sm"
-      >
-        <a href="/quotes/new" class="block p-8 text-center">
-          <div class="mx-auto h-14 w-14 rounded-2xl bg-surface-container-lowest border-none flex items-center justify-center text-primary-500 mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
-            <svg
-              class="h-8 w-8"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 4.5v15m7.5-7.5h-15"></path>
-            </svg>
-          </div>
-          <span class="text-lg font-heading font-bold text-white"
-            >Nueva Cotización</span
-          >
-          <p class="text-sm text-gray-400 mt-2">
-            Empezar a cotizar ahora
-          </p>
-        </a>
+  
+  <div class="p-4 sm:p-12 space-y-10 w-full max-w-full">
+    
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 sm:gap-0">
+      <div class="space-y-1">
+        <h2 class="text-3xl sm:text-[2.75rem] font-bold tracking-tight text-white leading-none">Dashboard del Sistema</h2>
+        <p class="text-gray-400 font-medium">Rendimiento de operaciones globales e información en tiempo real.</p>
       </div>
-
-      <div
-        class="group relative overflow-hidden bg-surface-container-lowest rounded-2xl hover:bg-surface-container-low transition-all duration-300 transform hover:-translate-y-1 shadow-premium hover:shadow-premium-hover backdrop-blur-sm"
-      >
-        <a href="/items" class="block p-8 text-center">
-          <div class="mx-auto h-14 w-14 rounded-2xl bg-surface-container-lowest border-none flex items-center justify-center text-green-500 mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
-            <svg
-              class="h-8 w-8"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-              ></path>
-            </svg>
-          </div>
-          <span class="text-lg font-heading font-bold text-white"
-            >Gestionar Items</span
-          >
-          <p class="text-sm text-gray-500 mt-2">Ver catálogo de productos</p>
-        </a>
-      </div>
-
-      <div
-        class="group relative overflow-hidden bg-surface-container-lowest rounded-2xl hover:bg-surface-container-low transition-all duration-300 transform hover:-translate-y-1 shadow-premium hover:shadow-premium-hover backdrop-blur-sm"
-      >
-        <a href="/clients" class="block p-8 text-center">
-          <div class="mx-auto h-14 w-14 rounded-2xl bg-surface-container-lowest border-none flex items-center justify-center text-purple-500 mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
-            <svg
-              class="h-8 w-8"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-              ></path>
-            </svg>
-          </div>
-          <span class="text-lg font-heading font-bold text-white"
-            >Gestionar Clientes</span
-          >
-          <p class="text-sm text-gray-400 mt-2">
-            Base de datos de clientes
-          </p>
-        </a>
+      <div class="flex gap-4 w-full sm:w-auto">
+        <button class="px-6 py-2.5 rounded-lg text-sm font-semibold bg-surface-container text-gray-300 hover:bg-surface-container-low transition-colors border border-outline-variant/15 flex-1 sm:flex-none text-center shadow-premium">
+          Exportar Reporte
+        </button>
+        <button class="px-6 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-premium flex-1 sm:flex-none text-center hover:scale-[1.02] transition-transform">
+          Actualizar Datos
+        </button>
       </div>
     </div>
-  </Card>
 
-  <!-- Analytics Section -->
-  {analytics && (
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-      <!-- Quotes Analytics -->
-      <Card title="Análisis de Cotizaciones" class="h-full shadow-premium">
-        <div class="space-y-6">
-          <div class="grid grid-cols-2 gap-4">
-            <div class="text-center p-3 sm:p-4 bg-primary-500/10 rounded-2xl border-none">
-              <div class="text-xl sm:text-2xl lg:text-3xl font-heading font-extrabold text-primary-600 dark:text-primary-400 truncate">
-                {analytics.quotes.quotesThisMonth}
-              </div>
-              <div class="text-[10px] sm:text-xs font-bold text-primary-600 dark:text-primary-400 uppercase tracking-wider mt-1">Este mes</div>
-            </div>
-            <div class="text-center p-3 sm:p-4 bg-green-500/10 rounded-2xl border-none overflow-hidden">
-              <div class="text-base sm:text-xl lg:text-3xl font-heading font-extrabold text-green-600 dark:text-green-400 truncate" title={`$${analytics.quotes.averageQuoteValue.toLocaleString()}`}>
-                ${analytics.quotes.averageQuoteValue.toLocaleString()}
-              </div>
-              <div class="text-[10px] sm:text-xs font-bold text-green-600 dark:text-green-400 uppercase tracking-wider mt-1">Promedio</div>
-            </div>
+    <!-- Bento Summary Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+      
+      <!-- Summary Card 1 -->
+      <div class="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] transition-transform hover:scale-[1.01]">
+        <div class="flex justify-between items-start">
+          <p class="text-[0.75rem] uppercase tracking-widest text-gray-400 font-bold">Cotizaciones Totales</p>
+          <span class="material-symbols-outlined text-primary-500 select-none">description</span>
+        </div>
+        <div class="mt-4">
+          <span class="text-4xl font-black text-white tracking-tighter">{stats.totalCotizaciones}</span>
+          <div class="mt-2 flex items-center gap-1 text-[10px] font-bold text-green-400 bg-green-500/10 px-2 py-0.5 rounded w-fit">
+            <span class="material-symbols-outlined text-[12px] select-none">trending_up</span>
+            <span>+0% VS MES ANTERIOR</span>
           </div>
-          
-          <div class="space-y-3">
-            <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest px-1">Por Estado</h4>
-            <div class="space-y-2">
-              {analytics.quotes.quotesByStatus.slice(0, 3).map((status: any) => {
-                const statusInfo = QuoteHelper.getQuoteStatusInfo(status.status);
+        </div>
+      </div>
+
+      <!-- Summary Card 2 -->
+      <div class="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] transition-transform hover:scale-[1.01]">
+        <div class="flex justify-between items-start">
+          <p class="text-[0.75rem] uppercase tracking-widest text-gray-400 font-bold">Pendientes</p>
+          <span class="material-symbols-outlined text-amber-500 select-none">pending_actions</span>
+        </div>
+        <div class="mt-4">
+          <span class="text-4xl font-black text-white tracking-tighter">{stats.cotizacionesPendientes}</span>
+          <p class="text-xs text-gray-500 mt-2">Acción requerida pronto</p>
+        </div>
+      </div>
+
+      <!-- Summary Card 3 -->
+      <div class="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] transition-transform hover:scale-[1.01]">
+        <div class="flex justify-between items-start">
+          <p class="text-[0.75rem] uppercase tracking-widest text-gray-400 font-bold">Ítems Activos</p>
+          <span class="material-symbols-outlined text-green-500 select-none">inventory</span>
+        </div>
+        <div class="mt-4">
+          <span class="text-4xl font-black text-white tracking-tighter">{stats.itemsActivos}</span>
+          <p class="text-xs text-gray-500 mt-2 font-medium">En catálogo general</p>
+        </div>
+      </div>
+
+      <!-- Summary Card 4 -->
+      <div class="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] transition-transform hover:scale-[1.01]">
+        <div class="flex justify-between items-start">
+          <p class="text-[0.75rem] uppercase tracking-widest text-gray-400 font-bold">Clientes Totales</p>
+          <span class="material-symbols-outlined text-purple-500 select-none">groups_2</span>
+        </div>
+        <div class="mt-4">
+          <span class="text-4xl font-black text-white tracking-tighter">{stats.totalClientes}</span>
+          <div class="mt-2 flex items-center gap-1 text-[10px] font-bold text-primary-400 bg-primary-500/10 px-2 py-0.5 rounded w-fit">
+            <span class="material-symbols-outlined text-[12px] select-none">trending_up</span>
+            <span>+2 NUEVOS ESTA SEMANA</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Analysis & Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- Large Chart: Rendimiento de Cotizaciones -->
+      <div class="lg:col-span-2 bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] p-8 space-y-6">
+        <div class="flex justify-between items-center">
+          <h3 class="text-xl font-bold tracking-tight text-white">Rendimiento de Cotizaciones</h3>
+          <div class="flex gap-2">
+            <span class="inline-flex items-center px-3 py-1 rounded-full bg-surface-container text-[10px] font-bold text-gray-400">6 MESES</span>
+          </div>
+        </div>
+        
+        {analytics ? (
+          <div class="space-y-4">
+            <div class="h-64 flex items-end justify-between gap-4 px-4 w-full">
+              {analytics.quotes.quotesByMonth.slice(-6).map((month: any, idx: number) => {
+                const maxCount = Math.max(...analytics.quotes.quotesByMonth.map((m: any) => m.count));
+                const percentage = Math.max(10, Math.floor((month.count / maxCount) * 100));
+                
                 return (
-                  <div class="flex justify-between items-center p-3 rounded-xl bg-surface-container-lowest transition-colors hover:bg-surface-container-low border-none hover:shadow-md">
-                    <span class="text-sm font-semibold text-gray-300">{statusInfo.text}</span>
-                    <Badge variant={statusInfo.variant}>{status.count}</Badge>
+                  <div class={\`w-full \${idx === analytics.quotes.quotesByMonth.slice(-6).length - 1 ? 'bg-primary-500' : 'bg-surface-container hover:bg-primary-600'} rounded-t-sm transition-colors cursor-pointer relative group\`} style={\`height: \${percentage}%\`}>
+                    <div class={\`absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-gray-900 text-[10px] px-2 py-1 rounded transition-opacity \${idx === analytics.quotes.quotesByMonth.slice(-6).length - 1 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}\`}>
+                      {month.count}
+                    </div>
                   </div>
                 );
               })}
             </div>
-          </div>
-        </div>
-      </Card>
-
-      <!-- Clients Analytics -->
-      <Card title="Análisis de Clientes" class="h-full shadow-premium">
-        <div class="space-y-6">
-          <div class="grid grid-cols-2 gap-4">
-            <div class="text-center p-3 sm:p-4 bg-purple-500/10 rounded-2xl border-none">
-              <div class="text-xl sm:text-2xl lg:text-3xl font-heading font-extrabold text-purple-600 dark:text-purple-400 truncate">
-                {analytics.clients.newClientsThisMonth}
-              </div>
-              <div class="text-[10px] sm:text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider mt-1">Nuevos mes</div>
-            </div>
-            <div class="text-center p-3 sm:p-4 bg-orange-500/10 rounded-2xl border-none">
-              <div class="text-xl sm:text-2xl lg:text-3xl font-heading font-extrabold text-orange-600 dark:text-orange-400 truncate">
-                {analytics.clients.clientsWithQuotes}
-              </div>
-              <div class="text-[10px] sm:text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider mt-1">Con cotiz.</div>
-            </div>
-          </div>
-          
-          <div class="space-y-3">
-            <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest px-1">Top Clientes</h4>
-            <div class="space-y-2">
-              {analytics.clients.topClientsByQuotes.slice(0, 3).map((client: any) => (
-                <div class="flex justify-between items-center p-3 rounded-xl bg-surface-container-lowest transition-colors hover:bg-surface-container-low border-none hover:shadow-md">
-                  <span class="text-sm font-semibold text-gray-300 truncate pr-4">{client.clientName}</span>
-                  <Badge variant="primary">{client.quoteCount}</Badge>
-                </div>
+            <div class="flex justify-between text-[10px] text-gray-500 font-bold tracking-widest px-4">
+              {analytics.quotes.quotesByMonth.slice(-6).map((month: any) => (
+                <span class="uppercase">
+                  {new Date(month.month + '-01').toLocaleDateString('es-ES', { month: 'short' }).substring(0, 3)}
+                </span>
               ))}
             </div>
           </div>
-        </div>
-      </Card>
-    </div>
-  )}
+        ) : (
+          <div class="h-64 flex items-center justify-center border-2 border-dashed border-outline-variant/20 rounded-xl">
+            <p class="text-gray-500 text-sm">Gargando métricas...</p>
+          </div>
+        )}
+      </div>
 
-  <!-- Charts Section -->
-  {analytics && (
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-      <!-- Quotes Chart -->
-      <Card title="Cotizaciones por Mes" class="h-full shadow-premium">
-        <div class="space-y-5 py-2">
-          {analytics.quotes.quotesByMonth.slice(-6).map((month: any) => (
-            <div class="space-y-2">
-              <div class="flex justify-between items-end">
-                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  {new Date(month.month + '-01').toLocaleDateString('es-ES', { month: 'long' })}
-                </span>
-                <span class="text-sm font-heading font-extrabold text-white">
-                  {month.count}
-                </span>
-              </div>
-              <div class="w-full bg-surface-container-lowest rounded-full h-3 overflow-hidden border-none">
-                <div 
-                  class="bg-gradient-to-r from-primary-500 to-primary-600 h-full rounded-full transition-all duration-1000 ease-out shadow-sm"
-                  style={`width: ${(month.count / Math.max(...analytics.quotes.quotesByMonth.map((m: any) => m.count))) * 100}%`}
-                ></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      <!-- Items Chart -->
-      <Card title="Items por Categoría" class="h-full shadow-premium">
-        <div class="space-y-5 py-2">
-          {analytics.items.itemsByCategory.slice(0, 5).map((category: any) => (
-            <div class="space-y-2">
-              <div class="flex justify-between items-end pr-1">
-                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider truncate pr-4">
-                  {category.category}
-                </span>
-                <span class="text-sm font-heading font-extrabold text-white">
-                  {category.count}
-                </span>
-              </div>
-              <div class="w-full bg-surface-container-lowest rounded-full h-3 overflow-hidden border-none">
-                <div 
-                  class="bg-gradient-to-r from-green-500 to-green-600 h-full rounded-full transition-all duration-1000 ease-out shadow-sm"
-                  style={`width: ${(category.count / Math.max(...analytics.items.itemsByCategory.map((c: any) => c.count))) * 100}%`}
-                ></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-    </div>
-  )}
-
-  <!-- Recent Quotes -->
-  <Card title="Cotizaciones Recientes" class="shadow-premium overflow-hidden">
-    <div class="mt-2">
-      <ul role="list" class="space-y-4">
-        {
-          stats.cotizacionesRecientes.length > 0 ? (
-            stats.cotizacionesRecientes.map(
-              (cotizacion: any, index: number) => (
-                <li class="group relative py-4 bg-surface-container-lowest rounded-xl hover:shadow-premium-hover transition-all px-4 sm:px-6">
-                  <div class="flex items-center space-x-5">
-                    <div class="flex-shrink-0">
-                      <div
-                        class={`h-12 w-12 rounded-2xl flex items-center justify-center transform transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm ${
-                          (() => {
-                            const s = String(cotizacion.estado || '').toLowerCase();
-                            if (s.includes('aprob')) return "bg-green-500/10 text-green-400 border-none";
-                            if (s.includes('enviad')) return "bg-blue-500/10 text-blue-400 border-none";
-                            if (s.includes('recha')) return "bg-red-500/10 text-red-400 border-none";
-                            if (s.includes('pendien')) return "bg-amber-500/10 text-amber-400 border-none";
-                            return "bg-gray-500/10 text-gray-400 border-none";
-                          })()
-                        }`}
-                      >
-                        <svg
-                          class="h-6 w-6"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          {(() => {
-                            const s = String(cotizacion.estado || '').toLowerCase();
-                            if (s.includes('aprob')) return (
-                              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            );
-                            if (s.includes('recha')) return (
-                              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                            );
-                            return (
-                              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                            );
-                          })()}
-                        </svg>
-                      </div>
-                    </div>
-                    <div class="min-w-0 flex-1">
-                      <div class="flex justify-between items-start">
-                        <div>
-                          <a
-                            href={`/quotes/view/${cotizacion.id}`}
-                            class="text-lg font-heading font-bold text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-                          >
-                            {QuoteHelper.getDisplayQuoteNumber(cotizacion)}
-                          </a>
-                          <div class="flex items-center text-sm text-gray-400 mt-0.5">
-                            <span class="font-semibold">{cotizacion.cliente?.nombre || "Cliente"}</span>
-                            {cotizacion.cliente?.empresa && (
-                              <span class="mx-1.5 opacity-30">•</span>
-                              <span class="italic text-xs">{cotizacion.cliente.empresa}</span>
-                            )}
-                          </div>
-                        </div>
-                        <div class="text-right flex flex-col items-end">
-                          <span class="text-base sm:text-lg font-heading font-extrabold text-white">
-                            ${cotizacion.total.toLocaleString("es-AR")}
-                          </span>
-                          {(() => {
-                            const statusInfo = QuoteHelper.getQuoteStatusInfo(cotizacion.estado);
-                            return (
-                              <Badge variant={statusInfo.variant} class="mt-1">
-                                {statusInfo.text}
-                              </Badge>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    </div>
+      <!-- Secondary Analysis: Distribución -->
+      <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] p-8 flex flex-col justify-between">
+        <div class="space-y-8">
+          <h3 class="text-xl font-bold tracking-tight text-white">Distribución por Categoría</h3>
+          <div class="space-y-6">
+            
+            {analytics ? analytics.items.itemsByCategory.slice(0, 4).map((category: any, idx: number) => {
+              const maxCount = Math.max(...analytics.items.itemsByCategory.map((c: any) => c.count));
+              const percentage = Math.floor((category.count / maxCount) * 100);
+              const colors = ['bg-primary-500', 'bg-primary-400', 'bg-gray-500', 'bg-gray-600'];
+              
+              return (
+                <div class="space-y-2">
+                  <div class="flex justify-between text-xs font-bold uppercase tracking-wider">
+                    <span class="text-gray-400 truncate pr-4">{category.category}</span>
+                    <span class="text-white">{percentage}%</span>
                   </div>
-                </li>
-              )
-            )
-          ) : (
-            <li class="flex items-center justify-center py-12 text-gray-400">
-              <div class="text-center">
-                <div class="mx-auto h-20 w-20 rounded-full bg-surface-container-lowest flex items-center justify-center text-gray-500 mb-4 border-none">
-                  <svg
-                    class="h-10 w-10"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="1.5"
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
+                  <div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+                    <div class={\`h-full \${colors[idx % 4]} rounded-full shadow-premium\`} style={\`width: \${percentage}%\`}></div>
+                  </div>
                 </div>
-                <p class="text-lg font-heading font-bold text-white">
-                  No hay cotizaciones recientes
-                </p>
-                <p class="text-sm text-gray-500 mt-1 mb-6">Empezar a generar negocio hoy mismo</p>
-                <Button href="/quotes/new">
-                  Crear primera cotización
-                </Button>
-              </div>
-            </li>
-          )
-        }
-      </ul>
+              );
+            }) : (
+              <p class="text-gray-500 text-xs">Cargando...</p>
+            )}
+
+          </div>
+        </div>
+        <button class="w-full mt-8 py-3 rounded-lg text-xs font-bold text-primary-400 hover:bg-primary-500/10 transition-colors border border-primary-500/20">
+          Reporte Detallado de Ítems
+        </button>
+      </div>
+
     </div>
-  </Card>
+
+    <!-- Bottom Content Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      
+      <!-- Recent Quotations List -->
+      <div class="lg:col-span-3 bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] overflow-hidden">
+        <div class="px-8 py-6 border-b border-surface-container flex justify-between items-center">
+          <h3 class="text-xl font-bold tracking-tight text-white">Cotizaciones Recientes</h3>
+          <a class="text-xs font-bold text-primary-400 flex items-center gap-1 hover:underline" href="/quotes">
+            VER TODO <span class="material-symbols-outlined text-sm select-none">chevron_right</span>
+          </a>
+        </div>
+        
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="text-left bg-surface-container/30">
+                <th class="px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.1em]">ID Cotización</th>
+                <th class="px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.1em]">Nombre del Cliente</th>
+                <th class="px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.1em]">Fecha de Creación</th>
+                <th class="px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.1em]">Valor Total</th>
+                <th class="px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.1em]">Estado</th>
+                <th class="px-8 py-4"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-container">
+              {stats.cotizacionesRecientes.length > 0 ? stats.cotizacionesRecientes.slice(0, 5).map((cotizacion: any) => {
+                const s = String(cotizacion.estado || '').toLowerCase();
+                let statusBadge = "bg-gray-500/10 text-gray-400 border-gray-500/20";
+                let statusText = cotizacion.estado || "Borrador";
+                
+                if (s.includes('aprob')) statusBadge = "bg-green-500/10 text-green-400 border-green-500/20";
+                if (s.includes('enviad')) statusBadge = "bg-primary-500/10 text-primary-400 border-primary-500/20";
+                if (s.includes('recha')) statusBadge = "bg-red-500/10 text-red-400 border-red-500/20";
+                if (s.includes('pendien')) statusBadge = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+                
+                return (
+                  <tr class="hover:bg-surface-container/50 transition-colors">
+                    <td class="px-8 py-5 font-medium text-white">
+                      <a href={\`/quotes/view/\${cotizacion.id}\`} class="hover:text-primary-400 transition-colors">
+                        {QuoteHelper.getDisplayQuoteNumber(cotizacion)}
+                      </a>
+                    </td>
+                    <td class="px-8 py-5">
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center text-xs font-bold text-gray-400">
+                          {cotizacion.cliente?.nombre?.substring(0, 2).toUpperCase() || "CL"}
+                        </div>
+                        <span class="font-semibold text-gray-300">{cotizacion.cliente?.nombre || "Cliente General"}</span>
+                      </div>
+                    </td>
+                    <td class="px-8 py-5 text-sm text-gray-500">
+                      {new Date(cotizacion.fechaEmision || cotizacion.createdAt).toLocaleDateString("es-AR")}
+                    </td>
+                    <td class="px-8 py-5 font-bold text-white">
+                      \${cotizacion.total.toLocaleString("es-AR")}
+                    </td>
+                    <td class="px-8 py-5">
+                      <span class={\`px-3 py-1 border rounded-full text-[10px] font-bold uppercase \${statusBadge}\`}>
+                        {statusText}
+                      </span>
+                    </td>
+                    <td class="px-8 py-5">
+                      <button class="text-gray-500 hover:text-primary-400 transition-colors">
+                        <span class="material-symbols-outlined select-none">more_vert</span>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              }) : (
+                <tr class="hover:bg-surface-container/50 transition-colors">
+                  <td class="px-8 py-5 font-medium text-gray-500 italic">No hay cotizaciones</td>
+                  <td class="px-8 py-5 text-gray-600 text-sm" colspan="5">Sistema sincronizado, genera tu primera cotización.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Quick Actions Pillar -->
+      <div class="space-y-6">
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] p-8 space-y-6">
+          <h3 class="text-xl font-bold tracking-tight text-white">Acciones Rápidas</h3>
+          <div class="grid grid-cols-1 gap-4">
+            <a href="/clients/new" class="flex items-center justify-between p-4 rounded-lg bg-surface-container/50 hover:bg-primary-600 group transition-all duration-300 cursor-pointer border border-transparent hover:border-primary-500/30">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-primary-500 group-hover:text-white select-none">person_add</span>
+                <span class="text-sm font-semibold text-gray-300 group-hover:text-white">Agregar Cliente</span>
+              </div>
+              <span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity text-white select-none">arrow_forward</span>
+            </a>
+            <a href="/items/new" class="flex items-center justify-between p-4 rounded-lg bg-surface-container/50 hover:bg-primary-600 group transition-all duration-300 cursor-pointer border border-transparent hover:border-primary-500/30">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-primary-500 group-hover:text-white select-none">add_box</span>
+                <span class="text-sm font-semibold text-gray-300 group-hover:text-white">Crear Ítem</span>
+              </div>
+              <span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity text-white select-none">arrow_forward</span>
+            </a>
+            <a href="/config" class="flex items-center justify-between p-4 rounded-lg bg-surface-container/50 hover:bg-primary-600 group transition-all duration-300 cursor-pointer border border-transparent hover:border-primary-500/30">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-primary-500 group-hover:text-white select-none">settings</span>
+                <span class="text-sm font-semibold text-gray-300 group-hover:text-white">Configuración</span>
+              </div>
+              <span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity text-white select-none">arrow_forward</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="relative rounded-xl overflow-hidden h-40 shadow-[0_12px_32px_rgba(0,0,0,0.4)] group border border-outline-variant/10">
+          <div class="absolute inset-0 bg-primary-900 overflow-hidden">
+            <svg class="absolute inset-0 w-full h-full opacity-30" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+                  <path d="M0 32V0h32" fill="none" stroke="currentColor" stroke-width="1"></path>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" class="text-primary-500/30"></rect>
+            </svg>
+          </div>
+          <div class="absolute inset-0 bg-gradient-to-t from-primary-600/80 to-transparent flex flex-col justify-end p-6 z-10 hover:from-primary-500/90 transition-colors">
+            <p class="text-[10px] font-black text-white/80 tracking-widest uppercase">Disponibilidad del Sistema</p>
+            <h4 class="text-white text-2xl font-bold">99.98% Fiable</h4>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
 </DashboardLayout>
-
-<script>
-  document.addEventListener("DOMContentLoaded", async () => {
-    // Los datos reales ya están cargados desde Firebase en el servidor
-    // No necesitamos sobrescribir nada aquí
-
-    console.log("Dashboard cargado con datos reales de Firebase");
-  });
-</script>
