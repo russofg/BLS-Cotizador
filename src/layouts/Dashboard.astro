@@ -11,11 +11,11 @@ const { title, activeSection } = Astro.props;
 
 <Base title={title}>
   <div
-    class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
+    class="min-h-screen bg-background transition-colors duration-200"
     data-dashboard-content
   >
     <!-- Navigation -->
-    <nav class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-700/50 sticky top-0 z-20 shadow-sm transition-all duration-300">
+    <nav class="bg-surface/80 dark:bg-surface/60 backdrop-blur-xl border-b border-outline-variant/15 sticky top-0 z-20 shadow-[0_12px_32px_rgba(31,41,55,0.06)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.4)] transition-all duration-300">
       <div class="max-w-7xl mx-auto px-2 sm:px-4">
         <div class="flex justify-between h-16">
           <div class="flex items-center">
@@ -144,7 +144,7 @@ const { title, activeSection } = Astro.props;
               <!-- Dropdown menu -->
               <div
                 id="user-menu"
-                class="hidden absolute right-0 mt-3 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-premium py-2 z-50 border border-gray-100 dark:border-gray-700 overflow-hidden transform origin-top-right transition-all duration-200"
+                class="hidden absolute right-0 mt-3 w-56 bg-surface-container-lowest rounded-2xl shadow-[0_12px_32px_rgba(31,41,55,0.06)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.4)] py-2 z-50 border border-outline-variant/15 overflow-hidden transform origin-top-right transition-all duration-200"
                 role="menu"
                 aria-orientation="vertical"
                 aria-labelledby="user-menu-button"

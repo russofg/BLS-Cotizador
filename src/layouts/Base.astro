@@ -65,7 +65,7 @@ const {
     </script>
   </head>
   <body
-    class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200 antialiased text-gray-900 dark:text-gray-100"
+    class="bg-background min-h-screen transition-colors duration-200 antialiased text-on-background"
   >
     <slot />
 
@@ -122,6 +122,38 @@ const {
   :root {
     --font-heading: 'Outfit', system-ui, sans-serif;
     --font-body: 'Inter', system-ui, sans-serif;
+
+    /* Azure Slate Corporate (Light Mode Tokens) */
+    --color-background: #f8f9fb;
+    --color-on-background: #191c1e;
+    --color-surface: #f8f9fb;
+    --color-surface-container: #edeef0;
+    --color-surface-container-low: #f3f4f6;
+    --color-surface-container-lowest: #ffffff;
+    --color-on-surface: #191c1e;
+    --color-primary: #004ac6;
+    --color-on-primary: #ffffff;
+    --color-primary-container: #2563eb;
+    --color-on-primary-container: #eeefff;
+    --color-outline-variant: #c3c6d7;
+    --color-surface-tint: #0053db;
+  }
+
+  .dark {
+    /* Horizonte Global (Dark Mode Tokens) */
+    --color-background: #0c1324;
+    --color-on-background: #dce1fb;
+    --color-surface: #0c1324;
+    --color-surface-container: #191f31;
+    --color-surface-container-low: #151b2d;
+    --color-surface-container-lowest: #070d1f;
+    --color-on-surface: #dce1fb;
+    --color-primary: #b4c5ff;
+    --color-on-primary: #002a78;
+    --color-primary-container: #2563eb;
+    --color-on-primary-container: #eeefff;
+    --color-outline-variant: #434655;
+    --color-surface-tint: #b4c5ff;
   }
 
   html {

@@ -106,7 +106,7 @@ const icons = {
   <Card title="Acciones Rápidas" class="mb-10 shadow-premium">
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
       <div
-        class="group relative overflow-hidden bg-gray-50 dark:bg-gray-900/40 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50/30 dark:hover:bg-primary-900/10 transition-all duration-300 transform hover:-translate-y-1"
+        class="group relative overflow-hidden bg-surface-container rounded-2xl hover:bg-surface-container-highest transition-all duration-300 transform hover:-translate-y-1 shadow-sm hover:shadow-[0_12px_32px_rgba(31,41,55,0.06)] dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
       >
         <a href="/quotes/new" class="block p-8 text-center">
           <div class="mx-auto h-14 w-14 rounded-2xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-primary-500 mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
@@ -133,7 +133,7 @@ const icons = {
       </div>
 
       <div
-        class="group relative overflow-hidden bg-gray-50 dark:bg-gray-900/40 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-green-400 dark:hover:border-green-500 hover:bg-green-50/30 dark:hover:bg-green-900/10 transition-all duration-300 transform hover:-translate-y-1"
+        class="group relative overflow-hidden bg-surface-container rounded-2xl hover:bg-surface-container-highest transition-all duration-300 transform hover:-translate-y-1 shadow-sm hover:shadow-[0_12px_32px_rgba(31,41,55,0.06)] dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
       >
         <a href="/items" class="block p-8 text-center">
           <div class="mx-auto h-14 w-14 rounded-2xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-green-500 mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
@@ -159,7 +159,7 @@ const icons = {
       </div>
 
       <div
-        class="group relative overflow-hidden bg-gray-50 dark:bg-gray-900/40 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-purple-400 dark:hover:border-purple-500 hover:bg-purple-50/30 dark:hover:bg-purple-900/10 transition-all duration-300 transform hover:-translate-y-1"
+        class="group relative overflow-hidden bg-surface-container rounded-2xl hover:bg-surface-container-highest transition-all duration-300 transform hover:-translate-y-1 shadow-sm hover:shadow-[0_12px_32px_rgba(31,41,55,0.06)] dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
       >
         <a href="/clients" class="block p-8 text-center">
           <div class="mx-auto h-14 w-14 rounded-2xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-purple-500 mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
@@ -315,13 +315,13 @@ const icons = {
 
   <!-- Recent Quotes -->
   <Card title="Cotizaciones Recientes" class="shadow-premium overflow-hidden">
-    <div class="flow-root mt-2">
-      <ul role="list" class="divide-y divide-gray-100 dark:divide-gray-700/50">
+    <div class="mt-2">
+      <ul role="list" class="space-y-4">
         {
           stats.cotizacionesRecientes.length > 0 ? (
             stats.cotizacionesRecientes.map(
               (cotizacion: any, index: number) => (
-                <li class="group relative py-6 hover:bg-gray-50/50 dark:hover:bg-gray-900/20 transition-colors px-1 sm:px-4 -mx-1 sm:-mx-6 first:-mt-6 last:-mb-6">
+                <li class="group relative py-4 bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-[0_8px_24px_rgba(31,41,55,0.04)] dark:hover:shadow-[0_12px_24px_rgba(0,0,0,0.2)] transition-all px-4 sm:px-6">
                   <div class="flex items-center space-x-5">
                     <div class="flex-shrink-0">
                       <div
