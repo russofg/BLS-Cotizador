@@ -143,8 +143,8 @@ try {
                 const percentage = Math.max(10, Math.floor((month.count / maxCount) * 100));
                 
                 return (
-                  <div class={\`w-full \${idx === analytics.quotes.quotesByMonth.slice(-6).length - 1 ? 'bg-primary-500' : 'bg-surface-container hover:bg-primary-600'} rounded-t-sm transition-colors cursor-pointer relative group\`} style={\`height: \${percentage}%\`}>
-                    <div class={\`absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-gray-900 text-[10px] px-2 py-1 rounded transition-opacity \${idx === analytics.quotes.quotesByMonth.slice(-6).length - 1 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}\`}>
+                  <div class={`w-full ${idx === analytics.quotes.quotesByMonth.slice(-6).length - 1 ? 'bg-primary-500' : 'bg-surface-container hover:bg-primary-600'} rounded-t-sm transition-colors cursor-pointer relative group`} style={`height: ${percentage}%`}>
+                    <div class={`absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-gray-900 text-[10px] px-2 py-1 rounded transition-opacity ${idx === analytics.quotes.quotesByMonth.slice(-6).length - 1 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                       {month.count}
                     </div>
                   </div>
@@ -184,7 +184,7 @@ try {
                     <span class="text-white">{percentage}%</span>
                   </div>
                   <div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
-                    <div class={\`h-full \${colors[idx % 4]} rounded-full shadow-premium\`} style={\`width: \${percentage}%\`}></div>
+                    <div class={`h-full ${colors[idx % 4]} rounded-full shadow-premium`} style={`width: ${percentage}%`}></div>
                   </div>
                 </div>
               );
@@ -239,7 +239,7 @@ try {
                 return (
                   <tr class="hover:bg-surface-container/50 transition-colors">
                     <td class="px-8 py-5 font-medium text-white">
-                      <a href={\`/quotes/view/\${cotizacion.id}\`} class="hover:text-primary-400 transition-colors">
+                      <a href={`/quotes/view/${cotizacion.id}`} class="hover:text-primary-400 transition-colors">
                         {QuoteHelper.getDisplayQuoteNumber(cotizacion)}
                       </a>
                     </td>
@@ -258,7 +258,7 @@ try {
                       \${cotizacion.total.toLocaleString("es-AR")}
                     </td>
                     <td class="px-8 py-5">
-                      <span class={\`px-3 py-1 border rounded-full text-[10px] font-bold uppercase \${statusBadge}\`}>
+                      <span class={`px-3 py-1 border rounded-full text-[10px] font-bold uppercase ${statusBadge}`}>
                         {statusText}
                       </span>
                     </td>
