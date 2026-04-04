@@ -2,7 +2,7 @@
  * Servicio de automatización para procesar recordatorios.
  * El runtime real debe invocarlo una vez por ejecución (por ejemplo, desde Netlify Scheduled Functions).
  */
-import { adminDb } from '../utils/firebaseAdmin';
+import { getAdminDb } from '../utils/firebaseAdmin';
 import { RealEmailService } from "./RealEmailService";
 import { UserManagementService } from "./UserManagementService";
 import {
@@ -174,6 +174,7 @@ export class ReminderAutomationService {
     }
 
     try {
+      const adminDb = getAdminDb();
       const snapshot = await adminDb
         .collection(REMINDER_COLLECTION)
         .where("proximoSeguimientoEmail", "==", true)
