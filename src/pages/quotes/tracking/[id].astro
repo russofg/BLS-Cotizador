@@ -808,6 +808,17 @@ const getAvailableStatuses = (currentStatus: QuoteStatus): QuoteStatus[] => {
               const mensajeValue = mensaje ? mensaje.value : '';
               const sendEmailValue = sendEmail ? sendEmail.checked : false;
               const sendPushValue = sendPush ? sendPush.checked : true;
+
+              const fechaIsoValue = fechaValue ? new Date(fechaValue).toISOString() : '';
+
+              if (fechaValue && Number.isNaN(new Date(fechaValue).getTime())) {
+                if (window.showNotification) {
+                  window.showNotification('La fecha del recordatorio no es valida', 'error');
+                } else {
+                  alert('La fecha del recordatorio no es valida');
+                }
+                return;
+              }
               
               // Obtener destinatarios seleccionados si email está habilitado
               let selectedRecipients = [];
@@ -829,7 +840,7 @@ const getAvailableStatuses = (currentStatus: QuoteStatus): QuoteStatus[] => {
                     action: 'schedule-reminder',
                     quoteId: currentQuoteId,
                     tipo: tipoValue,
-                    fecha: fechaValue,
+                    fecha: fechaIsoValue,
                     mensaje: mensajeValue,
                     sendEmail: sendEmailValue,
                     sendPush: sendPushValue,
