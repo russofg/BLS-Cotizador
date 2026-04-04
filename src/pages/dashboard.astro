@@ -363,7 +363,7 @@ const icons = {
                             href={`/quotes/view/${cotizacion.id}`}
                             class="text-lg font-heading font-bold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                           >
-                            {cotizacion.numero}
+                            {QuoteHelper.getDisplayQuoteNumber(cotizacion)}
                           </a>
                           <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                             <span class="font-semibold">{cotizacion.cliente?.nombre || "Cliente"}</span>

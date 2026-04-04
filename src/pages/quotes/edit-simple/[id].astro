@@ -25,22 +25,6 @@ try {
     } else {
       clientes = await clienteService.getAll();
       
-      if (!cotizacion.numero || cotizacion.numero.includes('mvG2cFN4sBXIfjxxnYAL')) {
-        try {
-          const fechaCreacion = cotizacion.created_at ? new Date(cotizacion.created_at) : new Date(cotizacion.createdAt);
-          const fechaFormateada = fechaCreacion.toISOString().slice(0, 10).replace(/-/g, "");
-          const cliente = clientes.find((c: any) => c.id === cotizacion.cliente_id);
-          const clienteNombre = (cliente?.nombre || "CLIENTE").replace(/\s+/g, "").substring(0, 10).toUpperCase();
-          const eventoNombre = (cotizacion.titulo || "EVENTO").replace(/\s+/g, "").substring(0, 10).toUpperCase();
-          const numeroSecuencial = "001";
-          cotizacion.numeroMejorado = `COT-${numeroSecuencial}-${fechaFormateada}-${clienteNombre}-${eventoNombre}`;
-        } catch (numberError) {
-          console.error('Error generating quote number:', numberError);
-          cotizacion.numeroMejorado = `COT-001-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-CLIENTE-EVENTO`;
-        }
-      } else {
-        cotizacion.numeroMejorado = cotizacion.numero;
-      }
       
       // Asegurar que items sea un array
       if (cotizacion.items && typeof cotizacion.items === 'object' && !Array.isArray(cotizacion.items)) {
@@ -142,7 +126,7 @@ function safeFormatDate(dateValue: any): string {
             <div>
               <h1 class="text-2xl font-bold text-gray-900">Editar Cotización</h1>
               <p class="mt-1 text-sm text-gray-500">
-                {cotizacion.numeroMejorado || cotizacion.numero || `COT-${new Date(cotizacion.created_at).getFullYear()}-${String(cotizacion.id).padStart(3, '0')}`}
+                {QuoteHelper.getDisplayQuoteNumber(cotizacion)}
               </p>
             </div>
             <div>

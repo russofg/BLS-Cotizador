@@ -29,11 +29,7 @@ try {
       error = "Cotización no encontrada";
     } else {
       clientes = await clienteService.getAll();
-      
-      // Generate improved quote number using centralized helper
-      const cliente = clientes.find((c: any) => c.id === cotizacion.cliente_id);
-      cotizacion.numeroMejorado = QuoteHelper.generateQuoteNumber(cotizacion, cliente);
-      
+
       // Normalize items using centralized helper
       cotizacion.items = QuoteHelper.normalizeItems(cotizacion.items);
       
@@ -190,7 +186,7 @@ function safeFormatDate(dateValue: any): string {
             <div>
               <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Editar Cotización</h1>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 break-words">
-                {cotizacion.numeroMejorado || cotizacion.numero || `COT-${new Date(cotizacion.created_at).getFullYear()}-${String(cotizacion.id).padStart(3, '0')}`}
+                {QuoteHelper.getDisplayQuoteNumber(cotizacion)}
               </p>
             </div>
             <div class="flex justify-start sm:justify-end">

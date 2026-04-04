@@ -213,7 +213,8 @@ export const exportService = {
   ): ExportData {
     return {
       cotizacion: {
-        numero: cotizacion.numeroMejorado || cotizacion.numero || `COT-${Date.now()}`,
+        id: cotizacion.id,
+        numero: QuoteHelper.getDisplayQuoteNumber(cotizacion),
         titulo: cotizacion.titulo || 'Sin título',
         descripcion: cotizacion.descripcion || '',
         fechaEvento: this.formatDate(cotizacion.fechaEvento || cotizacion.fecha_evento),

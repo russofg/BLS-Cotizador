@@ -136,12 +136,19 @@ export const POST: APIRoute = async ({ request }) => {
       console.error("Error processing event dates:", e);
     }
 
+    const allExisting = await cotizacionService.getAll();
+    const year = new Date().getFullYear();
+    const numeroAsignado =
+      quoteData.numero && String(quoteData.numero).trim()
+        ? String(quoteData.numero).trim()
+        : QuoteHelper.computeNextQuoteNumberForYear(allExisting, year);
+
     // Create the new quote with all necessary fields
     const newQuote = await cotizacionService.create({
       cliente_id: quoteData.cliente_id, // For compatibility
       clienteId: quoteData.cliente_id,  // Standard field
       venueId: quoteData.venue_id || null,
-      numero: quoteData.numero || `COT-${Date.now()}`,
+      numero: numeroAsignado,
       fecha: new Date(),
       fechaEvento: quoteData.fecha_evento ? DateHelper.safeParseDate(quoteData.fecha_evento) : null,
       fechaEventoFin: fechaEventoFin,

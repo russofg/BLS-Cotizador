@@ -20,52 +20,53 @@ vi.mock('../src/utils/dateHelpers', () => ({
 }));
 
 describe('QuoteHelper', () => {
-  describe('generateQuoteNumber', () => {
-    it('should generate quote number with existing number', () => {
-      const cotizacion = {
+  describe('getDisplayQuoteNumber', () => {
+    it('normalizes AAAA-N to AAAA-NNNN', () => {
+      expect(QuoteHelper.getDisplayQuoteNumber({ numero: '2026-1', id: 'x' })).toBe('2026-0001');
+      expect(QuoteHelper.getDisplayQuoteNumber({ numero: '2026-42', id: 'x' })).toBe('2026-0042');
+    });
+
+    it('keeps standard format as-is (padded)', () => {
+      expect(QuoteHelper.getDisplayQuoteNumber({ numero: '2026-0001', id: 'x' })).toBe('2026-0001');
+    });
+
+    it('maps legacy long COT-... to year + stable seq from id', () => {
+      const result = QuoteHelper.getDisplayQuoteNumber({
+        id: 'quote1',
         numero: 'COT-001-20240115-CLIENTE-EVENTO',
-        created_at: '2024-01-15'
-      };
-      const cliente = { id: 'client1', nombre: 'Cliente Test' };
-
-      const result = QuoteHelper.generateQuoteNumber(cotizacion, cliente);
-      expect(result).toBe('COT-001-20240115-CLIENTE-EVENTO');
+        created_at: '2024-01-15',
+      });
+      expect(result).toMatch(/^2024-\d{4}$/);
     });
 
-    it('should generate new quote number when none exists', () => {
-      const cotizacion = {
-        titulo: 'Evento Test',
-        created_at: '2024-01-15'
-      };
-      const cliente = { id: 'client1', nombre: 'Cliente Test' };
+    it('uses year from created_at when numero missing', () => {
+      const result = QuoteHelper.getDisplayQuoteNumber({
+        id: 'abc',
+        created_at: '2024-06-01',
+      });
+      expect(result).toMatch(/^2024-\d{4}$/);
+    });
+  });
 
-      const result = QuoteHelper.generateQuoteNumber(cotizacion, cliente);
-      expect(result).toMatch(/^COT-001-20240115-CLIENTETES-EVENTOTEST/);
+  describe('computeNextQuoteNumberForYear', () => {
+    it('returns first number when none exist for year', () => {
+      expect(QuoteHelper.computeNextQuoteNumberForYear([], 2026)).toBe('2026-0001');
     });
 
-    it('should handle missing client data', () => {
-      const cotizacion = {
-        titulo: 'Evento Test',
-        created_at: '2024-01-15'
-      };
-
-      const result = QuoteHelper.generateQuoteNumber(cotizacion, undefined);
-      expect(result).toMatch(/^COT-001-20240115-CLIENTE-EVENTOTEST/);
+    it('increments max sequence for year', () => {
+      const existing = [
+        { numero: '2026-0001' },
+        { numero: '2026-0009' },
+        { numero: '2025-0999' },
+      ];
+      expect(QuoteHelper.computeNextQuoteNumberForYear(existing, 2026)).toBe('2026-0010');
     });
+  });
 
-    it('should handle missing quote title', () => {
-      const cotizacion = {
-        created_at: '2024-01-15'
-      };
-      const cliente = { id: 'client1', nombre: 'Cliente Test' };
-
-      const result = QuoteHelper.generateQuoteNumber(cotizacion, cliente);
-      expect(result).toMatch(/^COT-001-20240115-CLIENTETES-EVENTO$/);
-    });
-
-    it('should handle error in generation', () => {
-      const result = QuoteHelper.generateQuoteNumber(null as any, null as any);
-      expect(result).toMatch(/^COT-001-/);
+  describe('generateQuoteNumber', () => {
+    it('delegates to getDisplayQuoteNumber', () => {
+      const cotizacion = { numero: '2026-0003', id: 'q' };
+      expect(QuoteHelper.generateQuoteNumber(cotizacion)).toBe('2026-0003');
     });
   });
 
@@ -318,9 +319,11 @@ describe('QuoteHelper', () => {
       expect(totals.subtotal).toBe(250);
       expect(totals.total).toBe(250);
 
-      // Generate quote number
-      const quoteNumber = QuoteHelper.generateQuoteNumber(enrichedQuote, enrichedQuote.cliente);
-      expect(quoteNumber).toMatch(/^COT-/);
+      const quoteNumber = QuoteHelper.getDisplayQuoteNumber({
+        ...enrichedQuote,
+        id: 'quote1',
+      });
+      expect(quoteNumber).toMatch(/^\d{4}-\d{4}$/);
     });
   });
 });

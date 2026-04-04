@@ -52,41 +52,103 @@ export interface Client {
 }
 
 export class QuoteHelper {
+  /** Formato estándar visible en PDF/UI: AAAA-NNNN (ej. 2026-0001). */
+  private static readonly STANDARD_QUOTE_NUM = /^(\d{4})-(\d+)$/;
+
+  private static quoteCreatedToDate(cotizacion: any): Date | null {
+    const v = cotizacion?.created_at ?? cotizacion?.createdAt;
+    if (!v) return null;
+    if (typeof v === 'object' && typeof v.toDate === 'function') {
+      const d = v.toDate();
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const d = new Date(v);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  /** Secuencia estable 0001–9999 a partir del id (cotizaciones legacy sin número estándar). */
+  private static stableSeqFromId(id: string): string {
+    let n = 0;
+    for (let i = 0; i < id.length; i++) {
+      n = (n * 33 + id.charCodeAt(i)) >>> 0;
+    }
+    return String((n % 9999) + 1).padStart(4, '0');
+  }
+
   /**
-   * Genera un número de cotización mejorado basado en la fecha, cliente y evento
+   * Número de cotización para mostrar (PDF, listas, vistas): siempre AAAA-NNNN cuando no hay otro criterio.
    */
-  static generateQuoteNumber(cotizacion: Quote, cliente?: Client): string {
+  static getDisplayQuoteNumber(cotizacion: any): string {
     try {
-      // Si ya tiene un número válido, usarlo
-      if (cotizacion.numero && !cotizacion.numero.includes('mvG2cFN4sBXIfjxxnYAL')) {
-        return cotizacion.numero;
+      if (!cotizacion || typeof cotizacion !== 'object') {
+        return `${new Date().getFullYear()}-0001`;
       }
 
-      // Generar número basado en fecha de creación
-      const fechaCreacion = cotizacion.created_at ? new Date(cotizacion.created_at) : new Date(cotizacion.createdAt || Date.now());
-      const fechaFormateada = fechaCreacion.toISOString().slice(0, 10).replace(/-/g, "");
-      
-      // Obtener nombre del cliente
-      const clienteNombre = (cliente?.nombre || "CLIENTE")
-        .replace(/\s+/g, "")
-        .substring(0, 10)
-        .toUpperCase();
-      
-      // Obtener nombre del evento
-      const eventoNombre = (cotizacion.titulo || "EVENTO")
-        .replace(/\s+/g, "")
-        .substring(0, 10)
-        .toUpperCase();
-      
-      // Número secuencial (por ahora fijo, se puede mejorar con contador)
-      const numeroSecuencial = "001";
-      
-      return `COT-${numeroSecuencial}-${fechaFormateada}-${clienteNombre}-${eventoNombre}`;
+      const raw = String(cotizacion.numero ?? '').trim();
+      const id = String(cotizacion.id ?? '');
+
+      const std = raw.match(QuoteHelper.STANDARD_QUOTE_NUM);
+      if (std) {
+        return `${std[1]}-${std[2].padStart(4, '0')}`;
+      }
+
+      const created = QuoteHelper.quoteCreatedToDate(cotizacion);
+      const yearFromCreated = created ? created.getFullYear() : new Date().getFullYear();
+
+      // Legacy: COT-<timestamp en ms>
+      const cotTs = raw.match(/^COT-(\d{13,})$/);
+      if (cotTs) {
+        const ts = parseInt(cotTs[1], 10);
+        const d = new Date(ts);
+        const y = isNaN(d.getTime()) ? yearFromCreated : d.getFullYear();
+        const seq = String(ts % 10000).padStart(4, '0');
+        return `${y}-${seq}`;
+      }
+
+      if (raw.includes('mvG2cFN4sBXIfjxxnYAL')) {
+        return `${yearFromCreated}-${QuoteHelper.stableSeqFromId(id)}`;
+      }
+
+      // COT-001-YYYYMMDD-... (formato antiguo largo)
+      const longCot = raw.match(/^COT-\d{3}-(\d{4})(\d{2})(\d{2})-/);
+      if (longCot) {
+        const y = parseInt(longCot[1], 10);
+        return `${y}-${QuoteHelper.stableSeqFromId(id)}`;
+      }
+
+      if (raw && raw.length <= 24 && !raw.startsWith('COT-')) {
+        return raw;
+      }
+
+      return `${yearFromCreated}-${QuoteHelper.stableSeqFromId(id)}`;
     } catch (error) {
-      console.error('Error generating quote number:', error);
-      const fallbackDate = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-      return `COT-001-${fallbackDate}-CLIENTE-EVENTO`;
+      console.error('Error getDisplayQuoteNumber:', error);
+      return `${new Date().getFullYear()}-0001`;
     }
+  }
+
+  /**
+   * Siguiente número AAAA-NNNN para el año dado, según cotizaciones ya guardadas.
+   */
+  static computeNextQuoteNumberForYear(
+    existing: Array<{ numero?: string }>,
+    year: number
+  ): string {
+    let max = 0;
+    const re = new RegExp(`^${year}-(\\d+)$`);
+    for (const q of existing) {
+      const n = String(q?.numero ?? '').trim();
+      const m = n.match(re);
+      if (m) max = Math.max(max, parseInt(m[1], 10));
+    }
+    return `${year}-${String(max + 1).padStart(4, '0')}`;
+  }
+
+  /**
+   * Número legible para la UI (alias de getDisplayQuoteNumber; mantiene firma con cliente por compatibilidad).
+   */
+  static generateQuoteNumber(cotizacion: Quote, _cliente?: Client): string {
+    return QuoteHelper.getDisplayQuoteNumber(cotizacion);
   }
 
   /**

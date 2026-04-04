@@ -31,8 +31,6 @@ try {
       // Check both possible client ID field names for compatibility
       cliente = clientes.find((c: any) => c.id === cotizacion.cliente_id || c.id === cotizacion.clienteId);
       
-      // Generate improved quote number using centralized helper
-      cotizacion.numeroMejorado = QuoteHelper.generateQuoteNumber(cotizacion, cliente);
     } else {
       error = "Cotización no encontrada";
     }
@@ -77,7 +75,7 @@ if (cotizacion && cotizacion.items) {
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white break-words">
-                {cotizacion.numeroMejorado || cotizacion.numero || `COT-${new Date(cotizacion.created_at).getFullYear()}-${String(cotizacion.id).padStart(3, '0')}`}
+                {QuoteHelper.getDisplayQuoteNumber(cotizacion)}
               </h1>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 {cotizacion.titulo || 'Sin título'}
