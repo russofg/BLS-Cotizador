@@ -9,7 +9,7 @@ vi.mock("../../src/services/ReminderAutomationService", () => ({
 }));
 
 async function loadHandlerModule() {
-  return import("./process-reminders");
+  return import("../../netlify/functions/process-reminders");
 }
 
 describe("netlify scheduled function process-reminders", () => {
