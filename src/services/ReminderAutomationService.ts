@@ -1,9 +1,10 @@
 /**
- * Servicio de automatización para procesar recordatorios
- * Se ejecuta automáticamente cada minuto
+ * Servicio de automatización para procesar recordatorios.
+ * El runtime real debe invocarlo una vez por ejecución (por ejemplo, desde Netlify Scheduled Functions).
  */
 import { adminDb } from '../utils/firebaseAdmin';
 import { RealEmailService } from "./RealEmailService";
+import { UserManagementService } from "./UserManagementService";
 import {
   SmtpConfigError,
   getSmtpRuntimeConfig,
@@ -12,6 +13,17 @@ import {
 
 // Configurar email service una sola vez
 let emailServiceConfigured = false;
+
+const REMINDER_COLLECTION = "cotizaciones";
+const REMINDER_CLEAR_PAYLOAD = {
+  proximoSeguimiento: null,
+  proximoSeguimientoTipo: null,
+  proximoSeguimientoMensaje: null,
+  proximoSeguimientoEmail: false,
+  proximoSeguimientoPush: false,
+  proximoSeguimientoUsuario: null,
+  proximoSeguimientoDestinatarios: null,
+};
 
 function configureEmailService() {
   if (!emailServiceConfigured) {
@@ -27,104 +39,197 @@ function isSmtpConfigError(error: unknown): error is SmtpConfigError {
   return error instanceof SmtpConfigError;
 }
 
-export class ReminderAutomationService {
-  private static isRunning = false;
-  private static intervalId: NodeJS.Timeout | null = null;
+function normalizeReminderDate(value: unknown): Date | null {
+  if (!value) {
+    return null;
+  }
 
-  /**
-   * Inicia el servicio de automatización
-   * Se ejecuta cada minuto
-   */
-  static start() {
-    if (this.isRunning) {
-      console.log("⚠️ Servicio de automatización ya está ejecutándose");
-      return;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  if (typeof value === "object") {
+    const firestoreDate = value as { toDate?: () => Date; seconds?: number; _seconds?: number };
+
+    if (typeof firestoreDate.toDate === "function") {
+      const resolvedDate = firestoreDate.toDate();
+      return Number.isNaN(resolvedDate.getTime()) ? null : resolvedDate;
     }
 
-    console.log("🚀 Iniciando servicio de automatización de recordatorios...");
-    console.log("⏰ Se ejecutará cada minuto");
-    
+    const seconds = firestoreDate.seconds ?? firestoreDate._seconds;
+    if (typeof seconds === "number") {
+      const resolvedDate = new Date(seconds * 1000);
+      return Number.isNaN(resolvedDate.getTime()) ? null : resolvedDate;
+    }
+  }
+
+  if (typeof value === "number" || typeof value === "string") {
+    const resolvedDate = new Date(value);
+    return Number.isNaN(resolvedDate.getTime()) ? null : resolvedDate;
+  }
+
+  return null;
+}
+
+function normalizeRecipients(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const uniqueEmails = new Set<string>();
+
+  for (const recipient of value) {
+    if (typeof recipient !== "string") {
+      continue;
+    }
+
+    const normalized = recipient.trim().toLowerCase();
+    if (!normalized) {
+      continue;
+    }
+
+    uniqueEmails.add(normalized);
+  }
+
+  return [...uniqueEmails];
+}
+
+async function resolveReminderRecipients(data: Record<string, any>): Promise<{
+  recipients: string[];
+  source: "stored" | "fallback-active-users" | "none";
+}> {
+  const storedRecipients = normalizeRecipients(data.proximoSeguimientoDestinatarios);
+
+  if (storedRecipients.length > 0) {
+    return {
+      recipients: storedRecipients,
+      source: "stored",
+    };
+  }
+
+  const notificationUsers = await UserManagementService.getEmailNotificationUsers();
+  const fallbackRecipients = normalizeRecipients(notificationUsers.map((user) => user.email));
+
+  if (fallbackRecipients.length > 0) {
+    return {
+      recipients: fallbackRecipients,
+      source: "fallback-active-users",
+    };
+  }
+
+  return {
+    recipients: [],
+    source: "none",
+  };
+}
+
+export interface ReminderProcessingSummary {
+  status: "processed" | "skipped" | "error";
+  checkedCount: number;
+  dueCount: number;
+  processedCount: number;
+  skippedCount: number;
+  failedCount: number;
+  startedAt: string;
+  finishedAt: string;
+  reason?: string;
+  smtp?: ReturnType<typeof getSmtpRuntimeLogContext>;
+}
+
+export class ReminderAutomationService {
+  /**
+   * Procesa recordatorios vencidos una sola vez.
+   * Diseñado para invocaciones puntuales desde runtimes serverless.
+   */
+  static async processDueRemindersOnce(now: Date = new Date()): Promise<ReminderProcessingSummary> {
+    const startTime = new Date();
+    console.log(`\n🔍 [${startTime.toLocaleTimeString()}] Procesando recordatorios programados...`);
+
     try {
       configureEmailService();
     } catch (error) {
       if (isSmtpConfigError(error)) {
-        console.warn("⚠️ SMTP no configurado para automatización. Servicio no iniciado.", {
+        const smtp = getSmtpRuntimeLogContext();
+        console.warn("⚠️ Procesamiento detenido por configuración SMTP inválida.", {
           missingKeys: error.missingKeys,
           invalidKeys: error.invalidKeys,
-          smtp: getSmtpRuntimeLogContext(),
+          smtp,
         });
-        return;
+
+        return {
+          status: "skipped",
+          checkedCount: 0,
+          dueCount: 0,
+          processedCount: 0,
+          skippedCount: 0,
+          failedCount: 0,
+          startedAt: startTime.toISOString(),
+          finishedAt: new Date().toISOString(),
+          reason: "smtp_not_configured",
+          smtp,
+        };
       }
 
       throw error;
     }
-    
-    // Ejecutar inmediatamente la primera vez
-    this.processReminders();
-    
-    // Luego ejecutar cada minuto
-    this.intervalId = setInterval(() => {
-      this.processReminders();
-    }, 60000); // 60 segundos
-
-    this.isRunning = true;
-    console.log("✅ Servicio de automatización iniciado correctamente");
-  }
-
-  /**
-   * Detiene el servicio de automatización
-   */
-  static stop() {
-    if (!this.isRunning) {
-      console.log("⚠️ Servicio de automatización no está ejecutándose");
-      return;
-    }
-
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
-
-    this.isRunning = false;
-    console.log("🛑 Servicio de automatización detenido");
-  }
-
-  /**
-   * Procesa los recordatorios pendientes
-   * Esta es la función principal que se ejecuta cada minuto
-   */
-  private static async processReminders() {
-    const startTime = new Date();
-    console.log(`\n🔍 [${startTime.toLocaleTimeString()}] Procesando recordatorios automáticamente...`);
 
     try {
-      configureEmailService();
-      const snapshot = await adminDb.collection("cotizaciones").get();
+      const snapshot = await adminDb
+        .collection(REMINDER_COLLECTION)
+        .where("proximoSeguimientoEmail", "==", true)
+        .get();
 
+      let dueCount = 0;
       let processedCount = 0;
       let checkedCount = 0;
-      const now = new Date();
+      let skippedCount = 0;
+      let failedCount = 0;
 
       for (const docSnapshot of snapshot.docs) {
         const data = docSnapshot.data() || {};
+        const reminderDate = normalizeReminderDate(data.proximoSeguimiento);
 
-        // Verificar si hay un recordatorio programado
-        if (data.proximoSeguimiento && data.proximoSeguimientoEmail) {
-          checkedCount++;
-          const reminderDate = new Date(data.proximoSeguimiento.seconds * 1000);
+        if (!reminderDate) {
+          console.warn(`⚠️ [AUTO] Recordatorio inválido en ${docSnapshot.id}; se mantiene pendiente.`);
+          skippedCount++;
+          continue;
+        }
 
-          // Si es hora de ejecutar el recordatorio
-          if (reminderDate <= now) {
-            console.log(`📅 [AUTO] Procesando recordatorio para ${data.numero}:`);
-            console.log(`   Tipo: ${data.proximoSeguimientoTipo}`);
-            console.log(`   Mensaje: ${data.proximoSeguimientoMensaje}`);
-            console.log(`   Fecha programada: ${reminderDate.toLocaleString()}`);
-            console.log(`   Cliente: ${data.clienteNombre || "Sin cliente"}`);
+        checkedCount++;
 
-            // Enviar email
+        if (reminderDate > now) {
+          continue;
+        }
+
+        dueCount++;
+        console.log(`📅 [AUTO] Procesando recordatorio para ${data.numero || docSnapshot.id}:`);
+        console.log(`   Tipo: ${data.proximoSeguimientoTipo}`);
+        console.log(`   Mensaje: ${data.proximoSeguimientoMensaje}`);
+        console.log(`   Fecha programada: ${reminderDate.toLocaleString()}`);
+        console.log(`   Cliente: ${data.clienteNombre || "Sin cliente"}`);
+
+        try {
+          const { recipients, source } = await resolveReminderRecipients(data);
+
+          if (recipients.length === 0) {
+            skippedCount++;
+            console.warn(
+              `⚠️ [AUTO] Sin destinatarios para ${data.numero || docSnapshot.id}. Se mantiene pendiente.`
+            );
+            continue;
+          }
+
+          console.log(
+            `📧 [AUTO] Enviando a ${recipients.length} destinatario(s) [${source}]:`,
+            recipients
+          );
+
+          let sentEmails = 0;
+
+          for (const recipient of recipients) {
             try {
               const success = await RealEmailService.sendReminderEmail(
-                "russofg@gmail.com", // Email del usuario
+                recipient,
                 data.numero,
                 data.clienteNombre || "Cliente",
                 data.proximoSeguimientoMensaje || "Recordatorio programado",
@@ -132,70 +237,71 @@ export class ReminderAutomationService {
               );
 
               if (success) {
-                console.log("✅ [AUTO] Email enviado exitosamente");
-                processedCount++;
-
-                // Limpiar el recordatorio después de enviarlo
-                await adminDb.collection("cotizaciones").doc(docSnapshot.id).update({
-                  proximoSeguimiento: null,
-                  proximoSeguimientoTipo: null,
-                  proximoSeguimientoMensaje: null,
-                  proximoSeguimientoEmail: false,
-                  proximoSeguimientoPush: false,
-                  proximoSeguimientoUsuario: null,
-                  updatedAt: new Date(),
-                });
-
-                console.log(
-                  `✅ [AUTO] Recordatorio procesado y limpiado para ${data.numero}`
-                );
+                sentEmails++;
+                console.log(`✅ [AUTO] Email enviado a: ${recipient}`);
               } else {
-                console.log("❌ [AUTO] Error enviando email");
+                console.warn(`❌ [AUTO] Falló el envío a: ${recipient}`);
               }
             } catch (emailError) {
-              console.error("❌ [AUTO] Error enviando email:", emailError);
-            }
-          } else {
-            // Solo mostrar este log cada 5 minutos para no saturar
-            const minutesDiff = Math.floor((reminderDate.getTime() - now.getTime()) / (1000 * 60));
-            if (minutesDiff <= 5) {
-              console.log(
-                `⏰ [AUTO] Recordatorio para ${data.numero} en ${minutesDiff} minutos`
-              );
+              console.error(`❌ [AUTO] Error enviando a ${recipient}:`, emailError);
             }
           }
+
+          if (sentEmails > 0) {
+            processedCount++;
+            await adminDb.collection(REMINDER_COLLECTION).doc(docSnapshot.id).update({
+              ...REMINDER_CLEAR_PAYLOAD,
+              updatedAt: new Date(),
+            });
+
+            console.log(`✅ [AUTO] Recordatorio procesado y limpiado para ${data.numero || docSnapshot.id}`);
+            continue;
+          }
+
+          failedCount++;
+          console.warn(
+            `⚠️ [AUTO] No se pudo enviar ningún email para ${data.numero || docSnapshot.id}. Se mantiene pendiente.`
+          );
+        } catch (emailError) {
+          failedCount++;
+          console.error("❌ [AUTO] Error procesando emails del recordatorio:", emailError);
         }
       }
 
       const endTime = new Date();
       const duration = endTime.getTime() - startTime.getTime();
-      
+
       console.log(`🎉 [AUTO] Procesamiento completado en ${duration}ms`);
       console.log(`   📊 Cotizaciones verificadas: ${checkedCount}`);
+      console.log(`   🕒 Recordatorios vencidos: ${dueCount}`);
       console.log(`   📧 Recordatorios procesados: ${processedCount}`);
-      console.log(`   ⏰ Próxima ejecución: ${new Date(Date.now() + 60000).toLocaleTimeString()}`);
+      console.log(`   ⏭️ Recordatorios omitidos: ${skippedCount}`);
+      console.log(`   ❌ Recordatorios fallidos: ${failedCount}`);
 
+      return {
+        status: "processed",
+        checkedCount,
+        dueCount,
+        processedCount,
+        skippedCount,
+        failedCount,
+        startedAt: startTime.toISOString(),
+        finishedAt: endTime.toISOString(),
+      };
     } catch (error) {
-      if (isSmtpConfigError(error)) {
-        console.warn("⚠️ Procesamiento detenido por configuración SMTP inválida.", {
-          missingKeys: error.missingKeys,
-          invalidKeys: error.invalidKeys,
-          smtp: getSmtpRuntimeLogContext(),
-        });
-        return;
-      }
-
       console.error("❌ [AUTO] Error procesando recordatorios:", error);
-    }
-  }
 
-  /**
-   * Obtiene el estado del servicio
-   */
-  static getStatus() {
-    return {
-      isRunning: this.isRunning,
-      nextExecution: this.isRunning ? new Date(Date.now() + 60000).toLocaleTimeString() : null
-    };
+      return {
+        status: "error",
+        checkedCount: 0,
+        dueCount: 0,
+        processedCount: 0,
+        skippedCount: 0,
+        failedCount: 0,
+        startedAt: startTime.toISOString(),
+        finishedAt: new Date().toISOString(),
+        reason: error instanceof Error ? error.message : "unexpected_error",
+      };
+    }
   }
 }

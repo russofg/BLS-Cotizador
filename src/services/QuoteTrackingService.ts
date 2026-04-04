@@ -38,6 +38,7 @@ export interface QuoteTracking {
   proximoSeguimientoUsuario?: string;
   proximoSeguimientoEmail?: boolean;
   proximoSeguimientoPush?: boolean;
+  proximoSeguimientoDestinatarios?: string[];
   recordatorios: QuoteReminder[];
 }
 
@@ -75,6 +76,29 @@ export interface TrackingStats {
 export class QuoteTrackingService {
   private static readonly COLLECTION_NAME = 'cotizaciones';
   private static readonly CACHE_TTL = CacheTTL.MEDIUM;
+
+  private static normalizeReminderRecipients(value: unknown): string[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    const uniqueRecipients = new Set<string>();
+
+    for (const recipient of value) {
+      if (typeof recipient !== 'string') {
+        continue;
+      }
+
+      const normalized = recipient.trim().toLowerCase();
+      if (!normalized) {
+        continue;
+      }
+
+      uniqueRecipients.add(normalized);
+    }
+
+    return [...uniqueRecipients];
+  }
 
   /**
    * Obtiene todas las cotizaciones con información de seguimiento
@@ -298,6 +322,7 @@ export class QuoteTrackingService {
         proximoSeguimientoUsuario: null,
         proximoSeguimientoEmail: null,
         proximoSeguimientoPush: null,
+        proximoSeguimientoDestinatarios: null,
         updatedAt: new Date()
       };
 
@@ -347,7 +372,7 @@ export class QuoteTrackingService {
         proximoSeguimientoUsuario: userName,
         proximoSeguimientoEmail: sendEmail,
         proximoSeguimientoPush: sendPush,
-        proximoSeguimientoDestinatarios: recipients,
+        proximoSeguimientoDestinatarios: this.normalizeReminderRecipients(recipients),
         updatedAt: new Date()
       };
 
@@ -457,6 +482,7 @@ export class QuoteTrackingService {
       proximoSeguimientoUsuario: data.proximoSeguimientoUsuario,
       proximoSeguimientoEmail: data.proximoSeguimientoEmail,
       proximoSeguimientoPush: data.proximoSeguimientoPush,
+      proximoSeguimientoDestinatarios: this.normalizeReminderRecipients(data.proximoSeguimientoDestinatarios),
       recordatorios: data.recordatorios || []
     };
   }
