@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
 
 export interface EmailConfig {
   host: string;
@@ -19,17 +19,17 @@ export interface EmailData {
 
 export class RealEmailService {
   private static transporter: nodemailer.Transporter | null = null;
-  private static readonly ARGENTINA_TIMEZONE = 'America/Argentina/Buenos_Aires';
+  private static readonly ARGENTINA_TIMEZONE = "America/Argentina/Buenos_Aires";
 
   private static formatArgentinaDateTime(date: Date): string {
-    return new Intl.DateTimeFormat('es-AR', {
+    return new Intl.DateTimeFormat("es-AR", {
       timeZone: RealEmailService.ARGENTINA_TIMEZONE,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
       hour12: false,
     }).format(date);
   }
@@ -44,14 +44,14 @@ export class RealEmailService {
       secure: config.secure, // true para puerto 465, false para otros puertos
       auth: {
         user: config.auth.user,
-        pass: config.auth.pass
-      }
+        pass: config.auth.pass,
+      },
     });
 
-    console.log('📧 Email service configured with:', {
+    console.log("📧 Email service configured with:", {
       host: config.host,
       port: config.port,
-      user: config.auth.user
+      user: config.auth.user,
     });
   }
 
@@ -60,14 +60,14 @@ export class RealEmailService {
    */
   static configureGmail(email: string, appPassword: string): void {
     this.transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: "gmail",
       auth: {
         user: email,
-        pass: appPassword // App Password de Gmail, no la contraseña normal
-      }
+        pass: appPassword, // App Password de Gmail, no la contraseña normal
+      },
     });
 
-    console.log('📧 Gmail service configured for:', email);
+    console.log("📧 Gmail service configured for:", email);
   }
 
   /**
@@ -75,25 +75,25 @@ export class RealEmailService {
    */
   static async sendEmail(emailData: EmailData): Promise<boolean> {
     if (!this.transporter) {
-      console.error('❌ Email service not configured');
+      console.error("❌ Email service not configured");
       return false;
     }
 
     try {
-      console.log('📧 Sending real email to:', emailData.to);
-      
+      console.log("📧 Sending real email to:", emailData.to);
+
       const info = await this.transporter.sendMail({
         from: (this.transporter.options as any).auth?.user,
         to: emailData.to,
         subject: emailData.subject,
         html: emailData.html,
-        text: emailData.text
+        text: emailData.text,
       });
 
-      console.log('✅ Email sent successfully:', info.messageId);
+      console.log("✅ Email sent successfully:", info.messageId);
       return true;
     } catch (error) {
-      console.error('❌ Error sending email:', error);
+      console.error("❌ Error sending email:", error);
       return false;
     }
   }
@@ -103,16 +103,16 @@ export class RealEmailService {
    */
   static async verifyConnection(): Promise<boolean> {
     if (!this.transporter) {
-      console.error('❌ Email service not configured');
+      console.error("❌ Email service not configured");
       return false;
     }
 
     try {
       await this.transporter.verify();
-      console.log('✅ Email service connection verified');
+      console.log("✅ Email service connection verified");
       return true;
     } catch (error) {
-      console.error('❌ Email service connection failed:', error);
+      console.error("❌ Email service connection failed:", error);
       return false;
     }
   }
@@ -125,11 +125,12 @@ export class RealEmailService {
     quoteNumber: string,
     clientName: string,
     reminderMessage: string,
-    reminderDate: Date
+    reminderDate: Date,
   ): Promise<boolean> {
     const subject = `Recordatorio: Seguimiento - ${quoteNumber}`;
-    const formattedReminderDate = RealEmailService.formatArgentinaDateTime(reminderDate);
-    
+    const formattedReminderDate =
+      RealEmailService.formatArgentinaDateTime(reminderDate);
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -204,7 +205,7 @@ export class RealEmailService {
       to,
       subject,
       html,
-      text
+      text,
     });
   }
 }

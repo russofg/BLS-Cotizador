@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Quotation Pro | Dashboard Corporativo</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary": "#3b82f6", // Blue-500
+                    "background": "#020617", // Slate-950
+                    "surface": "#0f172a", // Slate-900
+                    "on-surface": "#f8fafc",
+                    "on-surface-variant": "#94a3b8",
+                    "outline": "#1e293b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .ghost-border {
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+        .premium-gradient {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+        .ambient-shadow {
+            box-shadow: 0px 12px 32px rgba(0, 0, 0, 0.4);
+        }
+    </style>
+</head>
+<body class="text-on-surface bg-background">
+<!-- Sidebar Navigation Shell -->
+<aside class="fixed left-0 top-0 h-full flex flex-col bg-slate-900/50 border-r border-slate-800/50 w-64 z-50">
+<div class="px-8 py-10">
+<h1 class="text-xl font-black text-white tracking-tight">Quotation Pro</h1>
+<p class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-1 font-bold">Empresa Global</p>
+</div>
+<nav class="flex-1 px-4 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-blue-500 font-semibold border-r-2 border-blue-500 bg-blue-500/5 transition-colors duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-inter body-md tracking-tight">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-inter body-md tracking-tight">Ítems</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-inter body-md tracking-tight">Clientes</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="request_quote">request_quote</span>
+<span class="font-inter body-md tracking-tight">Cotizaciones</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-inter body-md tracking-tight">Configuración</span>
+</a>
+</nav>
+<div class="p-6">
+<button class="premium-gradient text-white w-full py-4 rounded-xl font-bold text-sm tracking-tight ambient-shadow hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-lg" data-icon="add">add</span>
+            Nueva Cotización
+        </button>
+</div>
+</aside>
+<main class="ml-64 min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-40 flex justify-between items-center w-full px-12 py-6 glass-panel border-b border-slate-800/50">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm" data-icon="search">search</span>
+<input class="w-full bg-slate-800/50 border-none rounded-lg pl-10 pr-4 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-slate-600" placeholder="Buscar en datos corporativos..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<nav class="hidden md:flex gap-8">
+<a class="text-blue-500 font-bold tracking-tight text-sm" href="#">Resumen</a>
+<a class="text-slate-400 hover:text-blue-400 transition-all tracking-tight text-sm" href="#">Analítica</a>
+<a class="text-slate-400 hover:text-blue-400 transition-all tracking-tight text-sm" href="#">Reportes</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="text-slate-400 hover:text-blue-500 transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-slate-400 hover:text-blue-500 transition-colors">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border-2 border-blue-500/20">
+<img class="w-full h-full object-cover" data-alt="Retrato profesional de un ejecutivo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxHHv-O_dP_vk1jDCi-VxgS6P1lg5-dCqjLHuBHZZ6Tjqs5dlgvAvgPsdLA682ftBpCBVIsjyGo04iuNhVRYaftwu8NbpMhZ0IA9_FQB3Q24oPz6VoZlcAEcRSqibUfNnty2X6WvTQQ_1FqTYWkIkKRBMyCz1Ybmf0pVnO08sP0rqC8LEZ8q-XMEu83Vp-WIdrtUovx3BAR158FWx2GYDyZbYg1Fqb-5ApzVlCQJ4e8pExbj6JRWDUYfZrL2gZwyluNkPEPqzpYu9y"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Dashboard Content -->
+<div class="p-12 space-y-10">
+<!-- Header Section -->
+<div class="flex justify-between items-end">
+<div class="space-y-1">
+<h2 class="text-[2.75rem] font-bold tracking-tight text-white leading-none">Dashboard del Sistema</h2>
+<p class="text-slate-400 font-medium">Rendimiento de operaciones globales e información en tiempo real.</p>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-2.5 rounded-lg text-sm font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors ghost-border">
+                    Exportar Reporte
+                </button>
+<button class="px-6 py-2.5 rounded-lg text-sm font-semibold premium-gradient text-white ambient-shadow">
+                    Actualizar Datos
+                </button>
+</div>
+</div>
+<!-- Bento Summary Grid -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<!-- Summary Card 1 -->
+<div class="bg-surface p-8 rounded-xl ghost-border ambient-shadow transition-transform hover:scale-[1.01]">
+<div class="flex justify-between items-start">
+<p class="text-[0.75rem] uppercase tracking-widest text-slate-500 font-bold">Cotizaciones Totales</p>
+<span class="material-symbols-outlined text-blue-500" data-icon="description">description</span>
+</div>
+<div class="mt-4">
+<span class="text-4xl font-black text-white tracking-tighter">1</span>
+<div class="mt-2 flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded w-fit">
+<span class="material-symbols-outlined text-[12px]" data-icon="trending_up">trending_up</span>
+<span>+0% VS MES ANTERIOR</span>
+</div>
+</div>
+</div>
+<!-- Summary Card 2 -->
+<div class="bg-surface p-8 rounded-xl ghost-border ambient-shadow transition-transform hover:scale-[1.01]">
+<div class="flex justify-between items-start">
+<p class="text-[0.75rem] uppercase tracking-widest text-slate-500 font-bold">Pendientes</p>
+<span class="material-symbols-outlined text-amber-500" data-icon="pending_actions">pending_actions</span>
+</div>
+<div class="mt-4">
+<span class="text-4xl font-black text-white tracking-tighter">0</span>
+<p class="text-xs text-slate-500 mt-2">Todas las tareas completadas</p>
+</div>
+</div>
+<!-- Summary Card 3 -->
+<div class="bg-surface p-8 rounded-xl ghost-border ambient-shadow transition-transform hover:scale-[1.01]">
+<div class="flex justify-between items-start">
+<p class="text-[0.75rem] uppercase tracking-widest text-slate-500 font-bold">Ítems Activos</p>
+<span class="material-symbols-outlined text-blue-500" data-icon="inventory">inventory</span>
+</div>
+<div class="mt-4">
+<span class="text-4xl font-black text-white tracking-tighter">34</span>
+<p class="text-xs text-slate-500 mt-2 font-medium">En catálogo</p>
+</div>
+</div>
+<!-- Summary Card 4 -->
+<div class="bg-surface p-8 rounded-xl ghost-border ambient-shadow transition-transform hover:scale-[1.01]">
+<div class="flex justify-between items-start">
+<p class="text-[0.75rem] uppercase tracking-widest text-slate-500 font-bold">Clientes Totales</p>
+<span class="material-symbols-outlined text-blue-500" data-icon="groups_2">groups_2</span>
+</div>
+<div class="mt-4">
+<span class="text-4xl font-black text-white tracking-tighter">7</span>
+<div class="mt-2 flex items-center gap-1 text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded w-fit">
+<span class="material-symbols-outlined text-[12px]" data-icon="trending_up">trending_up</span>
+<span>+2 NUEVOS ESTA SEMANA</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Analysis & Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Large Chart: Rendimiento de Cotizaciones -->
+<div class="lg:col-span-2 bg-surface rounded-xl ghost-border p-8 space-y-6">
+<div class="flex justify-between items-center">
+<h3 class="text-xl font-bold tracking-tight text-white">Rendimiento de Cotizaciones</h3>
+<div class="flex gap-2">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-slate-800 text-[10px] font-bold text-slate-400">6 MESES</span>
+</div>
+</div>
+<div class="h-64 flex items-end justify-between gap-4 px-4">
+<div class="w-full bg-slate-800 h-1/4 rounded-t-sm hover:bg-blue-600 transition-colors cursor-pointer relative group">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-slate-950 text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">12</div>
+</div>
+<div class="w-full bg-slate-800 h-2/5 rounded-t-sm hover:bg-blue-600 transition-colors cursor-pointer relative group">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-slate-950 text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">18</div>
+</div>
+<div class="w-full bg-slate-800 h-3/4 rounded-t-sm hover:bg-blue-600 transition-colors cursor-pointer relative group">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-slate-950 text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">25</div>
+</div>
+<div class="w-full bg-slate-800 h-1/2 rounded-t-sm hover:bg-blue-600 transition-colors cursor-pointer relative group">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-slate-950 text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">14</div>
+</div>
+<div class="w-full bg-slate-800 h-4/5 rounded-t-sm hover:bg-blue-600 transition-colors cursor-pointer relative group">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-slate-950 text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">31</div>
+</div>
+<div class="w-full bg-blue-500 h-2/3 rounded-t-sm cursor-pointer relative group">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-slate-950 text-[10px] px-2 py-1 rounded opacity-100">22</div>
+</div>
+</div>
+<div class="flex justify-between text-[10px] text-slate-500 font-bold tracking-widest px-4">
+<span>ENE</span><span>FEB</span><span>MAR</span><span>ABR</span><span>MAY</span><span>JUN</span>
+</div>
+</div>
+<!-- Secondary Analysis: Distribución -->
+<div class="bg-surface rounded-xl ghost-border p-8 space-y-8">
+<h3 class="text-xl font-bold tracking-tight text-white">Distribución por Categoría</h3>
+<div class="space-y-6">
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-bold uppercase tracking-wider">
+<span class="text-slate-400">Servicios Logísticos</span>
+<span class="text-white">45%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-blue-500 w-[45%]"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-bold uppercase tracking-wider">
+<span class="text-slate-400">Equipos de Hardware</span>
+<span class="text-white">30%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-blue-400 w-[30%]"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-bold uppercase tracking-wider">
+<span class="text-slate-400">Consultoría</span>
+<span class="text-white">15%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-slate-500 w-[15%]"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-bold uppercase tracking-wider">
+<span class="text-slate-400">Otros</span>
+<span class="text-white">10%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-slate-600 w-[10%]"></div>
+</div>
+</div>
+</div>
+<button class="w-full py-3 rounded-lg text-xs font-bold text-blue-400 hover:bg-blue-500/10 transition-colors border border-blue-500/20">
+                    Reporte Detallado de Ítems
+                </button>
+</div>
+</div>
+<!-- Bottom Content Section -->
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+<!-- Recent Quotations List -->
+<div class="lg:col-span-3 bg-surface rounded-xl ghost-border overflow-hidden">
+<div class="px-8 py-6 border-b border-slate-800 flex justify-between items-center">
+<h3 class="text-xl font-bold tracking-tight text-white">Cotizaciones Recientes</h3>
+<a class="text-xs font-bold text-blue-400 flex items-center gap-1 hover:underline" href="#">VER TODO <span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span></a>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full">
+<thead>
+<tr class="text-left bg-slate-800/30">
+<th class="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.1em]">ID Cotización</th>
+<th class="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.1em]">Nombre del Cliente</th>
+<th class="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.1em]">Fecha de Creación</th>
+<th class="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.1em]">Valor Total</th>
+<th class="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.1em]">Estado</th>
+<th class="px-8 py-4"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-800">
+<tr class="hover:bg-slate-800/50 transition-colors">
+<td class="px-8 py-5 font-medium text-white">QTN-2024-001</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400">GS</div>
+<span class="font-semibold text-slate-300">Global Solutions Inc.</span>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-slate-500">24 Oct, 2024</td>
+<td class="px-8 py-5 font-bold text-white">$12,450.00</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 uppercase">Aprobada</span>
+</td>
+<td class="px-8 py-5">
+<button class="text-slate-600 hover:text-blue-400 transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-800/50 transition-colors">
+<td class="px-8 py-5 font-medium text-slate-600 italic">No hay más datos recientes</td>
+<td class="px-8 py-5 text-slate-700 text-sm" colspan="5">Sistema sincronizado con registros globales.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Quick Actions Pillar -->
+<div class="space-y-6">
+<div class="bg-surface rounded-xl ghost-border p-8 space-y-6 ambient-shadow">
+<h3 class="text-xl font-bold tracking-tight text-white">Acciones Rápidas</h3>
+<div class="grid grid-cols-1 gap-4">
+<button class="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 hover:bg-blue-600 group transition-all duration-300">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-blue-500 group-hover:text-white" data-icon="person_add">person_add</span>
+<span class="text-sm font-semibold text-slate-300 group-hover:text-white">Agregar Cliente</span>
+</div>
+<span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity text-white" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<button class="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 hover:bg-blue-600 group transition-all duration-300">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-blue-500 group-hover:text-white" data-icon="add_box">add_box</span>
+<span class="text-sm font-semibold text-slate-300 group-hover:text-white">Catálogo</span>
+</div>
+<span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity text-white" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<button class="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 hover:bg-blue-600 group transition-all duration-300">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-blue-500 group-hover:text-white" data-icon="receipt_long">settings</span>
+<span class="text-sm font-semibold text-slate-300 group-hover:text-white">Configuración</span>
+</div>
+<span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity text-white" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="relative rounded-xl overflow-hidden h-40 ambient-shadow group">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 opacity-40" data-alt="Visualización de datos moderna" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAH6EVUAA2UB153zUOtdt2uOtQ8IY075owY6jtL3nqjDOAzHxL4cLxp6STFkAMnjZlXzib5n-RtwlsllVqmdjmZE3exkzyOoaSRUt_KVmVCYjo9kwqBd4uM0vlEiT_L3aZJWeqtwCZfqYhbWxAQqh013141jgoz3ZP8_VvgQMyo1LUru9BC4HWC3vrNmdP_WKn_1d5NHNzSuaqAC-ePBA_TKhISU8BPPmhQF37rqKyBBnPwP-uWE-VgVNoq76gbRul9oxQ1hTIZtoIq"/>
+<div class="absolute inset-0 bg-blue-600/60 flex flex-col justify-end p-6">
+<p class="text-[10px] font-black text-white/80 tracking-widest uppercase">Disponibilidad del Sistema</p>
+<h4 class="text-white text-2xl font-bold">99.98% Fiable</h4>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Tonal Base -->
+<footer class="mt-12 px-12 py-8 bg-slate-900/80 border-t border-slate-800/50">
+<div class="flex justify-between items-center opacity-60">
+<p class="text-xs font-medium text-slate-500">© 2024 Quotation Pro Enterprise Systems. Todos los derechos reservados.</p>
+<div class="flex gap-8">
+<a class="text-xs font-bold text-slate-400 hover:text-blue-500 transition-colors" href="#">POLÍTICA DE PRIVACIDAD</a>
+<a class="text-xs font-bold text-slate-400 hover:text-blue-500 transition-colors" href="#">ESTADO DEL SERVICIO</a>
+<a class="text-xs font-bold text-slate-400 hover:text-blue-500 transition-colors" href="#">DOCUMENTACIÓN API</a>
+</div>
+</div>
+</footer>
+</main>
+</body></html>

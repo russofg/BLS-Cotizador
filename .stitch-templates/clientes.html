@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary": "#3b82f6", // Blue-500
+                    "surface": "#020617", // Slate-950
+                    "surface-container": "#0f172a", // Slate-900
+                    "surface-container-high": "#1e293b", // Slate-800
+                    "on-surface": "#f8fafc",
+                    "on-surface-variant": "#94a3b8",
+                    "outline": "#334155",
+                    "outline-variant": "#1e293b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-header {
+            background: rgba(2, 6, 23, 0.8);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+        .ghost-border {
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+        .editorial-shadow {
+            box-shadow: 0px 12px 32px rgba(0, 0, 0, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full flex flex-col bg-slate-900 h-screen w-64 border-r border-slate-800/50 z-50">
+<div class="px-6 py-8">
+<h1 class="text-xl font-black text-white tracking-tight">Quotation Pro</h1>
+<p class="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-1">Global Enterprise</p>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<a class="flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined mr-3">dashboard</span>
+<span class="font-inter text-sm tracking-tight">Tablero</span>
+</a>
+<a class="flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined mr-3">inventory_2</span>
+<span class="font-inter text-sm tracking-tight">Artículos</span>
+</a>
+<a class="flex items-center px-3 py-3 text-blue-400 font-semibold border-r-2 border-blue-500 bg-slate-800/50 transition-colors rounded-l-lg group" href="#">
+<span class="material-symbols-outlined mr-3" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-inter text-sm tracking-tight">Clientes</span>
+</a>
+<a class="flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined mr-3">request_quote</span>
+<span class="font-inter text-sm tracking-tight">Cotizaciones</span>
+</a>
+<a class="flex items-center px-3 py-3 text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined mr-3">settings</span>
+<span class="font-inter text-sm tracking-tight">Configuración</span>
+</a>
+</nav>
+<div class="p-6">
+<button class="w-full primary-gradient text-white py-3 rounded-xl font-semibold editorial-shadow active:scale-95 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+            Nueva Cotización
+        </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 min-h-screen">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-40 flex justify-between items-center w-full px-8 py-4 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/50">
+<div class="flex items-center gap-6 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg">search</span>
+<input class="w-full bg-slate-900 border-none rounded-xl py-2 pl-10 pr-4 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-slate-600" placeholder="Buscar clientes o cuentas..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-400 hover:text-blue-400 transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-blue-400 transition-all">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-8 w-px bg-slate-800 mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-xs font-bold text-slate-200">Usuario Ejecutivo</p>
+<p class="text-[10px] text-slate-500">Admin Global</p>
+</div>
+<img alt="Executive User Profile" class="w-10 h-10 rounded-full border-2 border-slate-800 editorial-shadow" data-alt="professional portrait of a corporate executive man in a clean white background, soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOGzHBVJPxfcN227cYkWPNsr5Sqoj_JAA9fDf-V3FA_qAAp1mzciFhJx3QeDxbjmM7hG-XiS2YvDsTbyhI0x6-fv3N-MNwgKZ9Q554pkg0dDKfogHlPq9OOc_ANQecjsDlFxHAYhc6qWw_V_zK8dO1WA_kI-d79kDW5ti9TTLwCPsjnOE5bN9pw8UTw5rvcS2zgFIr7c79auWljavdrS8efPc-TMQUlnKcr2BkvbeLjI9VFM2I1W4_ld4gpgkjzLmV8XQjTsIeUcqW"/>
+</div>
+</div>
+</header>
+<!-- Screen Header -->
+<section class="px-8 pt-10 pb-6 flex justify-between items-end">
+<div>
+<nav class="flex items-center gap-2 mb-2">
+<span class="text-[10px] font-bold tracking-widest text-slate-500 uppercase">Directorio</span>
+<span class="material-symbols-outlined text-xs text-slate-600">chevron_right</span>
+<span class="text-[10px] font-bold tracking-widest text-blue-500 uppercase">Clientes Activos</span>
+</nav>
+<h2 class="text-4xl font-bold tracking-tight text-white">Portafolio de Clientes</h2>
+<p class="text-slate-400 mt-2 text-base">Gestione y rastree sus relaciones con clientes multinacionales.</p>
+</div>
+<button class="flex items-center gap-2 primary-gradient text-white px-6 py-3 rounded-xl font-bold editorial-shadow transition-all hover:scale-[1.02] active:scale-[0.98]">
+<span class="material-symbols-outlined">person_add</span>
+            Nuevo Cliente
+        </button>
+</section>
+<!-- Stats Grid -->
+<section class="px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+<div class="bg-slate-900/50 p-6 rounded-xl ghost-border editorial-shadow">
+<p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Assets Totales</p>
+<h4 class="text-2xl font-bold text-white">128 <span class="text-sm font-medium text-slate-500 ml-1">Entidades</span></h4>
+</div>
+<div class="bg-slate-900/50 p-6 rounded-xl ghost-border editorial-shadow">
+<p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Cotizaciones Activas</p>
+<h4 class="text-2xl font-bold text-blue-400">34 <span class="text-sm font-medium text-slate-500 ml-1">Pendientes</span></h4>
+</div>
+<div class="bg-slate-900/50 p-6 rounded-xl ghost-border editorial-shadow">
+<p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Crecimiento Mensual</p>
+<h4 class="text-2xl font-bold text-emerald-500">+12% <span class="text-sm font-medium text-slate-500 ml-1">Anual</span></h4>
+</div>
+<div class="bg-slate-900/50 p-6 rounded-xl ghost-border editorial-shadow">
+<p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Retención</p>
+<h4 class="text-2xl font-bold text-white">98.2% <span class="text-sm font-medium text-slate-500 ml-1">Puntaje</span></h4>
+</div>
+</section>
+<!-- Client Grid -->
+<section class="px-8 pb-12">
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+<!-- Client Card 1 -->
+<div class="bg-slate-900/40 p-8 rounded-xl ghost-border editorial-shadow flex items-start gap-6 hover:bg-slate-900/60 transition-all cursor-pointer group">
+<img alt="Pablo Bronstein" class="w-24 h-24 rounded-2xl object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="middle-aged male architect with glasses in a modern office setting, professional yet creative aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYUppEUicAHurey9i4znr6fbGmCMrASXzI6ew-yXFgExRQxur6LrklFjdpV3GosDy2jL-0kijsnsJVyB1BglToKz0iUjOL6hI4qYwyHeM0F3bbzx8FTLEKAeWS7i2L155KqKbDXuY5BWC3WlKlu10gctJW1InatlYE9HAj-KXKBQ5bwBlv8MZ4zv875BqHVYJDs35Cu4wHPBl3Y1-7zEB9rSx9jSfJYUHrGMuX9RdibR3GLDfU9TDycE90ch2iHn3EVbgYsrYkhjFY"/>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-xl font-bold text-white">Pablo Bronstein</h3>
+<p class="text-blue-400 font-semibold text-sm">Pm Producciones</p>
+</div>
+<span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-emerald-500/20">Muy Activo</span>
+</div>
+<div class="mt-4 grid grid-cols-2 gap-4">
+<div class="flex items-center gap-2 text-slate-400">
+<span class="material-symbols-outlined text-sm">mail</span>
+<span class="text-xs">pablo@pmprod.com</span>
+</div>
+<div class="flex items-center gap-2 text-slate-400">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="text-xs">Buenos Aires, ARG</span>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-slate-800 flex justify-between items-center">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[8px] font-bold text-slate-400">+3</div>
+</div>
+<button class="text-xs font-bold text-slate-500 hover:text-blue-400 transition-colors flex items-center gap-1">
+                            VER HISTORIAL <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Client Card 2 -->
+<div class="bg-slate-900/40 p-8 rounded-xl ghost-border editorial-shadow flex items-start gap-6 hover:bg-slate-900/60 transition-all cursor-pointer group">
+<img alt="Elena Rossi" class="w-24 h-24 rounded-2xl object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="Italian business woman in a silk blouse, executive office environment, sophisticated and confident" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdmeLv1d0h72psT2Ga-NY4HshQvBjCGRRg-OnwhpD4AAYXeUXkROnul2fufbllpNbn9tuF_Otl2XqitSLuSliT2RU59bkC05t_oYSHLgWX8bO6SOZTshzvtHhfwnPIXufX4cIRo8cxR1PlFymlbLSxMaZxgI-69ccbVA8vfQLWYPNfv118oL0Kd-avG6yCBWLVQH3f52vIPJgXBIkuRAooUEgkLA3pk6IIvS7eMHXwiKtZv7keAO2kxTC3M6rFW2P46Tsk2mihzUj_"/>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-xl font-bold text-white">Elena Rossi</h3>
+<p class="text-blue-400 font-semibold text-sm">Milan Design Hub</p>
+</div>
+<span class="px-3 py-1 bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-blue-500/20">Cuenta Clave</span>
+</div>
+<div class="mt-4 grid grid-cols-2 gap-4">
+<div class="flex items-center gap-2 text-slate-400">
+<span class="material-symbols-outlined text-sm">mail</span>
+<span class="text-xs">e.rossi@milan.design</span>
+</div>
+<div class="flex items-center gap-2 text-slate-400">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="text-xs">Milán, IT</span>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-slate-800 flex justify-between items-center">
+<p class="text-[10px] font-bold text-slate-500">ÚLT. COTIZACIÓN: $42,500.00</p>
+<button class="text-xs font-bold text-slate-500 hover:text-blue-400 transition-colors flex items-center gap-1">
+                            VER HISTORIAL <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Client Card 3 -->
+<div class="bg-slate-900/40 p-8 rounded-xl ghost-border editorial-shadow flex items-start gap-6 hover:bg-slate-900/60 transition-all cursor-pointer group">
+<img alt="Marcus Thorne" class="w-24 h-24 rounded-2xl object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="British corporate lawyer in a navy suit, library background, high-end professional lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBN5YB0YbDviL7sXvFWaufJty-3QGcTsO6DblQWhJ1m5F1Udkc60W4wu3jfNlGj3G2gdeUO_4RSEyf3KKSAAWk_XOOzy-MotzkJM5Jl0rLagUOPgI8UP-XCsFnOiE4_t45xr_gz8Kr1lf7GlYDHxnaF0zHHEjxMP7bbjm1xH7CM3grlIChuszJegmAd30WspEOfbHJYHJPeDpJcbJYRR0_LuY2fQHM02V6YvMK15JJON56up0Al6MFCpeVEJasjXGWPftl5uKDmfvPi"/>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-xl font-bold text-white">Marcus Thorne</h3>
+<p class="text-blue-400 font-semibold text-sm">Thorne &amp; Partners</p>
+</div>
+<span class="px-3 py-1 bg-slate-500/10 text-slate-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-slate-500/20">Inactivo</span>
+</div>
+<div class="mt-4 grid grid-cols-2 gap-4">
+<div class="flex items-center gap-2 text-slate-400">
+<span class="material-symbols-outlined text-sm">mail</span>
+<span class="text-xs">m.thorne@legal.co.uk</span>
+</div>
+<div class="flex items-center gap-2 text-slate-400">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="text-xs">Londres, UK</span>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-slate-800 flex justify-between items-center">
+<p class="text-[10px] font-bold text-slate-500">MEMBRESÍA: PLATINO</p>
+<button class="text-xs font-bold text-slate-500 hover:text-blue-400 transition-colors flex items-center gap-1">
+                            VER HISTORIAL <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Client Card 4 -->
+<div class="bg-slate-900/40 p-8 rounded-xl ghost-border editorial-shadow flex items-start gap-6 hover:bg-slate-900/60 transition-all cursor-pointer group">
+<img alt="Sonia Kapoor" class="w-24 h-24 rounded-2xl object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="Indian tech executive in a bright office, vibrant and intelligent look, shallow depth of field" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4axA5qKToWO4QSh-GVMsM7-5m5ZubGLoKvEkoPsAGHjyN1R2AVnH3hEGoPp5GWdO1EHWU2fktva3DsekzX_zyMiopWZHODeD_pDqitAUfRtUU0sZLZHW9NiTh6axG35ILHOnBA_g9GFHgG-DEbJItvF-LtIKTZRZFSxIexxuxzC7vmw8yk23wogZj25sGlySramdB4qSy8aGPAX_4pQlA2JGQOY7VuK7xqFjSvlQPOFOlJZTdJhUouNN3fvCA8CLKyh2SaMIiWLRW"/>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-xl font-bold text-white">Sonia Kapoor</h3>
+<p class="text-blue-400 font-semibold text-sm">NextGen AI</p>
+</div>
+<span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-emerald-500/20">Activa</span>
+</div>
+<div class="mt-4 grid grid-cols-2 gap-4">
+<div class="flex items-center gap-2 text-slate-400">
+<span class="material-symbols-outlined text-sm">mail</span>
+<span class="text-xs">sonia@nextgen.tech</span>
+</div>
+<div class="flex items-center gap-2 text-slate-400">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="text-xs">Bangalore, IN</span>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-slate-800 flex justify-between items-center">
+<p class="text-[10px] font-bold text-slate-500">PRÓX. REVISIÓN: OCT 12</p>
+<button class="text-xs font-bold text-slate-500 hover:text-blue-400 transition-colors flex items-center gap-1">
+                            VER HISTORIAL <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Client Card 5 -->
+<div class="bg-slate-900/40 p-8 rounded-xl ghost-border editorial-shadow flex items-start gap-6 hover:bg-slate-900/60 transition-all cursor-pointer group">
+<div class="w-24 h-24 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 font-bold text-2xl group-hover:bg-blue-500 transition-all group-hover:text-white">
+                        TL
+                </div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-xl font-bold text-white">Thomas Low</h3>
+<p class="text-blue-400 font-semibold text-sm">Pacific Logistics</p>
+</div>
+<span class="px-3 py-1 bg-amber-500/10 text-amber-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-amber-500/20">Requiere Revisión</span>
+</div>
+<div class="mt-4 grid grid-cols-2 gap-4">
+<div class="flex items-center gap-2 text-slate-400">
+<span class="material-symbols-outlined text-sm">mail</span>
+<span class="text-xs">t.low@paclog.sg</span>
+</div>
+<div class="flex items-center gap-2 text-slate-400">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="text-xs">Singapur, SG</span>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-slate-800 flex justify-between items-center">
+<p class="text-[10px] font-bold text-slate-500">3 COTIZACIONES EN PROCESO</p>
+<button class="text-xs font-bold text-slate-500 hover:text-blue-400 transition-colors flex items-center gap-1">
+                            VER HISTORIAL <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Client Card 6 -->
+<div class="bg-slate-900/40 p-8 rounded-xl ghost-border editorial-shadow flex items-start gap-6 hover:bg-slate-900/60 transition-all cursor-pointer group">
+<img alt="James Chen" class="w-24 h-24 rounded-2xl object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="Asian man in casual business attire, looking thoughtful, modern light-filled office background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDs41ItFVyDl42blEFLpRuDCbCkxNgVkowQerB4bkCKGO_6y0HwaeSf870OaHPSu89pSJq8QZ3W3tIbJ41VKcBEvzjyTRttJPm92L2kHFLtfPxyNmZviMCa1qMNn8EOh-cX9p3KDCofvQUNM0KUHUXiuaEA1tj96CGo5kMgQE3tq4xZv5l9GWTQhu1pWu8K5zfLinIur7xqfI3lHGYHU_iH4JC4VaM9XiyahdeUrMBMPVkl1d6iiyH2Q0--sdNTiS57v7tgIMJr2ekl"/>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-xl font-bold text-white">James Chen</h3>
+<p class="text-blue-400 font-semibold text-sm">Horizon Ventures</p>
+</div>
+<span class="px-3 py-1 bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-blue-500/20">Socio de Riesgo</span>
+</div>
+<div class="mt-4 grid grid-cols-2 gap-4">
+<div class="flex items-center gap-2 text-slate-400">
+<span class="material-symbols-outlined text-sm">mail</span>
+<span class="text-xs">j.chen@horizon.vc</span>
+</div>
+<div class="flex items-center gap-2 text-slate-400">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="text-xs">San Francisco, US</span>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-slate-800 flex justify-between items-center">
+<p class="text-[10px] font-bold text-slate-500">VALORACIÓN EST.: $1.2B</p>
+<button class="text-xs font-bold text-slate-500 hover:text-blue-400 transition-colors flex items-center gap-1">
+                            VER HISTORIAL <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Client Card 7 (Wide) -->
+<div class="bg-slate-900/40 p-8 rounded-xl ghost-border editorial-shadow flex items-center gap-8 xl:col-span-2 hover:bg-slate-900/60 transition-all cursor-pointer group relative overflow-hidden">
+<div class="absolute right-0 top-0 h-full w-1/3 bg-blue-500/5 -z-10 group-hover:bg-blue-500/10 transition-colors"></div>
+<img alt="Sofia Mendez" class="w-32 h-32 rounded-full object-cover border-4 border-slate-800 editorial-shadow grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="Young professional Hispanic woman with a friendly smile, outdoor urban background with soft bokeh" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAshrYIJzScxUMEKsxNoxzff02OHVMfWnURSDxCk4Dx-K8HZQn44RRnmpQFFDelH7d08fzJyjdPHnp78QHd2EfH7rNk5dNH_kg8XWQwX14ZMqIYI13mRSnJ0EXnr-EfqgykBcn_xgQiVm4lNSzFnyjdHx_BLPw7sDdSsVF06e5gERHwZvuDNUnoh9w_6y-2wmJtgi8GWk7K2xEJBdUAt1YTzCPJVhFReFKt4JcZhh_V6ajoPsMMwlicLUSS4oJPdzYztwNDGNklTUyS"/>
+<div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-8">
+<div>
+<h3 class="text-2xl font-bold text-white">Sofia Mendez</h3>
+<p class="text-blue-400 font-bold">Mendez Global Solutions</p>
+<span class="mt-2 inline-block px-3 py-1 bg-blue-500 text-white text-[9px] font-black uppercase tracking-widest rounded-full">Nuevo Prospecto</span>
+</div>
+<div class="space-y-3">
+<div class="flex items-center gap-3 text-slate-400">
+<span class="material-symbols-outlined text-lg">public</span>
+<span class="text-sm font-medium">Madrid, España</span>
+</div>
+<div class="flex items-center gap-3 text-slate-400">
+<span class="material-symbols-outlined text-lg">calendar_today</span>
+<span class="text-sm font-medium">Se unió hace 2 días</span>
+</div>
+</div>
+<div class="flex flex-col justify-center items-end pr-4">
+<p class="text-[10px] text-slate-500 uppercase mb-2">Interés Inicial</p>
+<p class="text-xl font-black text-white">$120,000.00</p>
+<p class="text-[10px] text-slate-500 mt-1">CONTRATO PROPUESTO</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Contextual FAB -->
+<div class="fixed bottom-10 right-10 flex flex-col gap-4">
+<button class="w-14 h-14 primary-gradient text-white rounded-full editorial-shadow flex items-center justify-center hover:rotate-90 transition-all duration-300">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</body></html>

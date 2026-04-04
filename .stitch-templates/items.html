@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gestión de Items | Quotation Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#3b82f6", // Blue-500
+                        "surface": "#020617", // Slate-950
+                        "surface-container": "#0f172a", // Slate-900
+                        "surface-container-low": "#1e293b", // Slate-800
+                        "on-surface": "#f8fafc",
+                        "on-surface-variant": "#94a3b8",
+                        "outline-variant": "#334155"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-effect {
+            backdrop-filter: blur(24px);
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+        }
+        .premium-gradient {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-64 flex flex-col bg-slate-900 border-r border-slate-800 z-50">
+<div class="px-6 py-8 flex flex-col gap-1">
+<h1 class="text-xl font-black text-white tracking-tight">Quotation Pro</h1>
+<span class="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">Global Enterprise</span>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="font-inter body-md tracking-tight">Dashboard</span>
+</a>
+<!-- Active Tab: Items -->
+<a class="flex items-center gap-3 px-4 py-3 text-blue-500 font-semibold bg-blue-500/10 border-r-2 border-blue-500 rounded-lg group" href="#">
+<span class="material-symbols-outlined text-[20px]">inventory_2</span>
+<span class="font-inter body-md tracking-tight">Items</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined text-[20px]">group</span>
+<span class="font-inter body-md tracking-tight">Clientes</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined text-[20px]">request_quote</span>
+<span class="font-inter body-md tracking-tight">Cotizaciones</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="font-inter body-md tracking-tight">Configuración</span>
+</a>
+</nav>
+<div class="p-4 mt-auto">
+<button class="w-full flex items-center justify-center gap-2 premium-gradient text-white py-3 rounded-xl font-semibold shadow-lg shadow-blue-500/20 hover:scale-[0.98] transition-all duration-200">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+<span>Nueva Cotización</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<main class="ml-64 min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-40 flex justify-between items-center w-full px-8 py-4 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800 shadow-sm">
+<div class="flex items-center gap-6 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-slate-900 rounded-lg border-none focus:ring-2 focus:ring-blue-500/50 text-sm text-white placeholder-slate-500" placeholder="Buscar items, categorías o SKU..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 text-slate-400">
+<button class="hover:text-blue-500 transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="hover:text-blue-500 transition-all">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-slate-800 mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-xs font-bold text-white leading-none">Usuario Ejecutivo</p>
+<p class="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">Administrador</p>
+</div>
+<img alt="Perfil Usuario Ejecutivo" class="h-10 w-10 rounded-full object-cover border-2 border-slate-800 shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDt-g8Bc0dmFjy1hDtksq8ppVYed35G-9fY8K2CoQPICzEo_MeYlGaKpY3y63NdKgPimap5j1TEdyJkZcLp6Y_9RsG4eHHVfceHO19HwE8jseGmDJnuBwuJSpmTC8BOFvXoWQgd5ItN6sQv3LnfsuIyxk3RU06MLFZI0dOorx3kKRjL6yNok4xO13ZapJb16XdMymduT7jo7QfntQty_BnvDQ4tXxeVqpw08Tbem1slB8LBgsXLtZvDX3zlWAf2kWzlJJy6dcL8ia5M"/>
+</div>
+</div>
+</header>
+<!-- Screen Content -->
+<div class="p-8 space-y-8">
+<!-- Page Header -->
+<div class="flex justify-between items-end">
+<div>
+<h2 class="text-[2.75rem] font-extrabold tracking-tighter text-white leading-tight">Gestión de Items</h2>
+<p class="text-slate-400 mt-2 font-medium">Control centralizado de inventario y tarifas globales.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-5 py-2.5 bg-slate-900 border border-slate-700 text-slate-300 font-semibold rounded-lg flex items-center gap-2 hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-[20px]">download</span>
+                        Exportar
+                    </button>
+<button class="px-6 py-2.5 premium-gradient text-white font-semibold rounded-lg flex items-center gap-2 hover:shadow-xl hover:shadow-blue-500/20 transition-all">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                        Agregar Item
+                    </button>
+</div>
+</div>
+<!-- Stats Overview -->
+<div class="grid grid-cols-4 gap-6">
+<div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 hover:border-blue-500/30 transition-all group">
+<p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total de Items</p>
+<h3 class="text-3xl font-black text-white mt-2">34</h3>
+<div class="flex items-center gap-1 mt-4 text-emerald-500 text-xs font-bold">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span>12% vs mes anterior</span>
+</div>
+</div>
+<div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 hover:border-blue-500/30 transition-all">
+<p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Servicios Activos</p>
+<h3 class="text-3xl font-black text-white mt-2">28</h3>
+<p class="text-xs text-slate-500 mt-4 font-medium">82.3% del inventario total</p>
+</div>
+<div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 hover:border-blue-500/30 transition-all">
+<p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Valor Global</p>
+<h3 class="text-3xl font-black text-blue-500 mt-2">$42.8k</h3>
+<p class="text-xs text-slate-500 mt-4 font-medium">Margen promedio: 24%</p>
+</div>
+<div class="relative overflow-hidden rounded-2xl group">
+<img alt="Contexto Dashboard" class="absolute inset-0 w-full h-full object-cover brightness-[0.3] group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6w5oa7xRUtxW9IWum475BlT1XOwkuZWH79hyqj2djV2yEUX05je0TH7cdqc5JJJYepUPtb_YpGcwkCn2UwffEg6Vn4ITmk67BeHgcglj8LRSYXelh5WKeRByFdSOIR5OaobAZmtylsHoqPvRw-RS92Q_l0SEbb0AtCNDi9kCPu4Zqx0mgnFCSAlyowYlASEbTNcPEcz7ZTkFGvyjJEOLARaUO_jGou5LwIzDfWZmyQ_Ybi8rnrVHDYVXnroRnuVlvv_9DvjJ0YdZd"/>
+<div class="relative p-6 h-full flex flex-col justify-between text-white">
+<p class="text-xs font-bold uppercase tracking-widest opacity-80">Tendencias de Mercado</p>
+<div class="flex items-end justify-between">
+<span class="text-sm font-semibold underline decoration-blue-500 underline-offset-4">Ver Reporte</span>
+<span class="material-symbols-outlined">arrow_outward</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Table Section -->
+<div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
+<div class="px-8 py-6 border-b border-slate-800 flex items-center justify-between">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2 text-slate-500 cursor-pointer group">
+<span class="text-xs font-bold uppercase tracking-widest group-hover:text-blue-500 transition-colors">Filtros</span>
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+</div>
+<div class="h-4 w-[1px] bg-slate-800"></div>
+<div class="flex gap-4">
+<span class="px-3 py-1 bg-blue-500/10 text-blue-500 text-[10px] font-black uppercase rounded-full">Todos</span>
+<span class="px-3 py-1 hover:bg-slate-800 text-slate-500 text-[10px] font-black uppercase rounded-full transition-colors cursor-pointer">Hardware</span>
+<span class="px-3 py-1 hover:bg-slate-800 text-slate-500 text-[10px] font-black uppercase rounded-full transition-colors cursor-pointer">SaaS</span>
+<span class="px-3 py-1 hover:bg-slate-800 text-slate-500 text-[10px] font-black uppercase rounded-full transition-colors cursor-pointer">Consultoría</span>
+</div>
+</div>
+<p class="text-xs font-medium text-slate-500 italic">Mostrando 34 entradas</p>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-800/30">
+<th class="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.1em]">Nombre del Item</th>
+<th class="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.1em]">Categoría</th>
+<th class="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.1em]">Precio (USD)</th>
+<th class="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.1em]">Estado</th>
+<th class="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] text-right">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-800">
+<!-- Row 1 -->
+<tr class="hover:bg-slate-800/50 transition-all duration-200 group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[20px]">cloud_sync</span>
+</div>
+<div>
+<p class="text-sm font-bold text-white">Auditoría de Arquitectura Cloud</p>
+<p class="text-[10px] text-slate-500 mt-0.5">SKU: SRV-2024-001</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="text-xs font-semibold text-slate-400">Servicios de Consultoría</span>
+</td>
+<td class="px-8 py-6">
+<span class="text-sm font-black text-white">$2,450.00</span>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                                        ACTIVO
+                                    </span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="text-slate-500 hover:text-blue-500 transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-slate-800/50 transition-all duration-200 group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[20px]">laptop_mac</span>
+</div>
+<div>
+<p class="text-sm font-bold text-white">Workstation Premium Pro v2</p>
+<p class="text-[10px] text-slate-500 mt-0.5">SKU: HW-MAX-092</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="text-xs font-semibold text-slate-400">Hardware &amp; Equipos</span>
+</td>
+<td class="px-8 py-6">
+<span class="text-sm font-black text-white">$3,199.00</span>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                                        ACTIVO
+                                    </span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="text-slate-500 hover:text-blue-500 transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-slate-800/50 transition-all duration-200 group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[20px]">vpn_key</span>
+</div>
+<div>
+<p class="text-sm font-bold text-white">Suite de Seguridad Enterprise</p>
+<p class="text-[10px] text-slate-500 mt-0.5">SKU: LIC-SEC-882</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="text-xs font-semibold text-slate-400">Licencias SaaS</span>
+</td>
+<td class="px-8 py-6">
+<span class="text-sm font-black text-white">$850.00</span>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-orange-500/10 text-orange-500 border border-orange-500/20">
+                                        LIMITADO
+                                    </span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="text-slate-500 hover:text-blue-500 transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-slate-800/50 transition-all duration-200 group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[20px]">monitoring</span>
+</div>
+<div>
+<p class="text-sm font-bold text-white">Módulo de Analítica Avanzada</p>
+<p class="text-[10px] text-slate-500 mt-0.5">SKU: ADD-ANA-119</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="text-xs font-semibold text-slate-400">Complementos</span>
+</td>
+<td class="px-8 py-6">
+<span class="text-sm font-black text-white">$450.00</span>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-slate-700/50 text-slate-400 border border-slate-700">
+                                        INACTIVO
+                                    </span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="text-slate-500 hover:text-blue-500 transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-8 py-6 bg-slate-800/20 flex justify-between items-center">
+<p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Página 1 de 4</p>
+<div class="flex gap-2">
+<button class="w-8 h-8 rounded bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-500 hover:text-blue-500 transition-colors">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded bg-blue-500 text-white flex items-center justify-center text-[11px] font-black">1</button>
+<button class="w-8 h-8 rounded bg-slate-800 border border-slate-700 flex items-center justify-center text-[11px] font-black text-slate-400 hover:border-blue-500 transition-colors">2</button>
+<button class="w-8 h-8 rounded bg-slate-800 border border-slate-700 flex items-center justify-center text-[11px] font-black text-slate-400 hover:border-blue-500 transition-colors">3</button>
+<button class="w-8 h-8 rounded bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-500 hover:text-blue-500 transition-colors">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Detail Insight Card -->
+<div class="glass-effect p-8 rounded-3xl flex items-center gap-12 relative overflow-hidden border border-slate-800">
+<div class="absolute right-0 top-0 h-full w-1/3 opacity-5 pointer-events-none">
+<span class="material-symbols-outlined text-[240px] absolute -right-20 -top-10 rotate-12 text-blue-500">inventory_2</span>
+</div>
+<div class="flex-1 space-y-4">
+<div class="inline-flex items-center gap-2 px-3 py-1 bg-blue-500 text-white text-[10px] font-black uppercase rounded-full">
+<span class="material-symbols-outlined text-[12px]">verified</span>
+                        Optimización de Inventario
+                    </div>
+<h4 class="text-2xl font-black text-white tracking-tight">Sus 5 items principales representan el 64% de los ingresos totales.</h4>
+<p class="text-slate-400 leading-relaxed max-w-xl">
+                        El análisis de IA sugiere un ajuste de precio de +5% para el servicio de <strong class="text-blue-500">Auditoría de Arquitectura Cloud</strong> basado en la volatilidad reciente del mercado multinacional.
+                    </p>
+<div class="flex gap-4 pt-2">
+<button class="text-blue-500 font-bold text-sm flex items-center gap-1 group">
+                            Análisis Completo 
+                            <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="w-48 h-32 flex items-end gap-2 px-4 border-l border-slate-800">
+<div class="flex-1 bg-slate-800 h-[40%] rounded-t-sm"></div>
+<div class="flex-1 bg-slate-800 h-[60%] rounded-t-sm"></div>
+<div class="flex-1 bg-blue-500 h-[90%] rounded-t-sm shadow-[0_0_20px_rgba(59,130,246,0.3)]"></div>
+<div class="flex-1 bg-slate-800 h-[75%] rounded-t-sm"></div>
+<div class="flex-1 bg-slate-800 h-[50%] rounded-t-sm"></div>
+</div>
+</div>
+</div>
+<!-- Sticky Footer Branding -->
+<footer class="mt-auto px-8 py-6 border-t border-slate-800 flex justify-between items-center bg-slate-950/50">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">© 2024 Quotation Pro Multinational</p>
+<div class="flex gap-6">
+<a class="text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-blue-500 transition-colors" href="#">Privacidad</a>
+<a class="text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-blue-500 transition-colors" href="#">Cumplimiento</a>
+<a class="text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-blue-500 transition-colors" href="#">Soporte Global</a>
+</div>
+</footer>
+</main>
+</body></html>

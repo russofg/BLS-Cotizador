@@ -2,8 +2,8 @@
  * Servicio de automatización para procesar recordatorios.
  * El runtime real debe invocarlo una vez por ejecución (por ejemplo, desde Netlify Scheduled Functions).
  */
-import { getAdminDb } from '../utils/firebaseAdmin';
-import { QuoteHelper } from '../utils/quoteHelpers';
+import { getAdminDb } from "../utils/firebaseAdmin";
+import { QuoteHelper } from "../utils/quoteHelpers";
 import { RealEmailService } from "./RealEmailService";
 import { UserManagementService } from "./UserManagementService";
 import {
@@ -30,7 +30,10 @@ function configureEmailService() {
   if (!emailServiceConfigured) {
     RealEmailService.configure(getSmtpRuntimeConfig());
     emailServiceConfigured = true;
-    console.log("📧 Email service configurado para automatización", getSmtpRuntimeLogContext());
+    console.log(
+      "📧 Email service configurado para automatización",
+      getSmtpRuntimeLogContext(),
+    );
   }
 
   return true;
@@ -50,7 +53,11 @@ function normalizeReminderDate(value: unknown): Date | null {
   }
 
   if (typeof value === "object") {
-    const firestoreDate = value as { toDate?: () => Date; seconds?: number; _seconds?: number };
+    const firestoreDate = value as {
+      toDate?: () => Date;
+      seconds?: number;
+      _seconds?: number;
+    };
 
     if (typeof firestoreDate.toDate === "function") {
       const resolvedDate = firestoreDate.toDate();
@@ -99,7 +106,9 @@ async function resolveReminderRecipients(data: Record<string, any>): Promise<{
   recipients: string[];
   source: "stored" | "fallback-active-users" | "none";
 }> {
-  const storedRecipients = normalizeRecipients(data.proximoSeguimientoDestinatarios);
+  const storedRecipients = normalizeRecipients(
+    data.proximoSeguimientoDestinatarios,
+  );
 
   if (storedRecipients.length > 0) {
     return {
@@ -108,8 +117,11 @@ async function resolveReminderRecipients(data: Record<string, any>): Promise<{
     };
   }
 
-  const notificationUsers = await UserManagementService.getEmailNotificationUsers();
-  const fallbackRecipients = normalizeRecipients(notificationUsers.map((user) => user.email));
+  const notificationUsers =
+    await UserManagementService.getEmailNotificationUsers();
+  const fallbackRecipients = normalizeRecipients(
+    notificationUsers.map((user) => user.email),
+  );
 
   if (fallbackRecipients.length > 0) {
     return {
@@ -126,7 +138,7 @@ async function resolveReminderRecipients(data: Record<string, any>): Promise<{
 
 async function resolveClientDisplayName(
   adminDb: ReturnType<typeof getAdminDb>,
-  data: Record<string, any>
+  data: Record<string, any>,
 ): Promise<string> {
   if (typeof data.clienteNombre === "string" && data.clienteNombre.trim()) {
     return data.clienteNombre.trim();
@@ -138,7 +150,10 @@ async function resolveClientDisplayName(
   }
 
   try {
-    const clientDoc = await adminDb.collection("clientes").doc(String(clientId)).get();
+    const clientDoc = await adminDb
+      .collection("clientes")
+      .doc(String(clientId))
+      .get();
     if (!clientDoc.exists) {
       return "Cliente";
     }
@@ -172,20 +187,27 @@ export class ReminderAutomationService {
    * Procesa recordatorios vencidos una sola vez.
    * Diseñado para invocaciones puntuales desde runtimes serverless.
    */
-  static async processDueRemindersOnce(now: Date = new Date()): Promise<ReminderProcessingSummary> {
+  static async processDueRemindersOnce(
+    now: Date = new Date(),
+  ): Promise<ReminderProcessingSummary> {
     const startTime = new Date();
-    console.log(`\n🔍 [${startTime.toLocaleTimeString()}] Procesando recordatorios programados...`);
+    console.log(
+      `\n🔍 [${startTime.toLocaleTimeString()}] Procesando recordatorios programados...`,
+    );
 
     try {
       configureEmailService();
     } catch (error) {
       if (isSmtpConfigError(error)) {
         const smtp = getSmtpRuntimeLogContext();
-        console.warn("⚠️ Procesamiento detenido por configuración SMTP inválida.", {
-          missingKeys: error.missingKeys,
-          invalidKeys: error.invalidKeys,
-          smtp,
-        });
+        console.warn(
+          "⚠️ Procesamiento detenido por configuración SMTP inválida.",
+          {
+            missingKeys: error.missingKeys,
+            invalidKeys: error.invalidKeys,
+            smtp,
+          },
+        );
 
         return {
           status: "skipped",
@@ -220,10 +242,15 @@ export class ReminderAutomationService {
       for (const docSnapshot of snapshot.docs) {
         const data = docSnapshot.data() || {};
         const reminderDate = normalizeReminderDate(data.proximoSeguimiento);
-        const quoteNumber = QuoteHelper.getDisplayQuoteNumber({ id: docSnapshot.id, ...data });
+        const quoteNumber = QuoteHelper.getDisplayQuoteNumber({
+          id: docSnapshot.id,
+          ...data,
+        });
 
         if (!reminderDate) {
-          console.warn(`⚠️ [AUTO] Recordatorio inválido en ${docSnapshot.id}; se mantiene pendiente.`);
+          console.warn(
+            `⚠️ [AUTO] Recordatorio inválido en ${docSnapshot.id}; se mantiene pendiente.`,
+          );
           skippedCount++;
           continue;
         }
@@ -248,14 +275,14 @@ export class ReminderAutomationService {
           if (recipients.length === 0) {
             skippedCount++;
             console.warn(
-              `⚠️ [AUTO] Sin destinatarios para ${quoteNumber}. Se mantiene pendiente.`
+              `⚠️ [AUTO] Sin destinatarios para ${quoteNumber}. Se mantiene pendiente.`,
             );
             continue;
           }
 
           console.log(
             `📧 [AUTO] Enviando a ${recipients.length} destinatario(s) [${source}]:`,
-            recipients
+            recipients,
           );
 
           let sentEmails = 0;
@@ -267,7 +294,7 @@ export class ReminderAutomationService {
                 quoteNumber,
                 clientDisplayName,
                 data.proximoSeguimientoMensaje || "Recordatorio programado",
-                reminderDate
+                reminderDate,
               );
 
               if (success) {
@@ -277,28 +304,39 @@ export class ReminderAutomationService {
                 console.warn(`❌ [AUTO] Falló el envío a: ${recipient}`);
               }
             } catch (emailError) {
-              console.error(`❌ [AUTO] Error enviando a ${recipient}:`, emailError);
+              console.error(
+                `❌ [AUTO] Error enviando a ${recipient}:`,
+                emailError,
+              );
             }
           }
 
           if (sentEmails > 0) {
             processedCount++;
-            await adminDb.collection(REMINDER_COLLECTION).doc(docSnapshot.id).update({
-              ...REMINDER_CLEAR_PAYLOAD,
-              updatedAt: new Date(),
-            });
+            await adminDb
+              .collection(REMINDER_COLLECTION)
+              .doc(docSnapshot.id)
+              .update({
+                ...REMINDER_CLEAR_PAYLOAD,
+                updatedAt: new Date(),
+              });
 
-            console.log(`✅ [AUTO] Recordatorio procesado y limpiado para ${quoteNumber}`);
+            console.log(
+              `✅ [AUTO] Recordatorio procesado y limpiado para ${quoteNumber}`,
+            );
             continue;
           }
 
           failedCount++;
           console.warn(
-            `⚠️ [AUTO] No se pudo enviar ningún email para ${quoteNumber}. Se mantiene pendiente.`
+            `⚠️ [AUTO] No se pudo enviar ningún email para ${quoteNumber}. Se mantiene pendiente.`,
           );
         } catch (emailError) {
           failedCount++;
-          console.error("❌ [AUTO] Error procesando emails del recordatorio:", emailError);
+          console.error(
+            "❌ [AUTO] Error procesando emails del recordatorio:",
+            emailError,
+          );
         }
       }
 

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Quotation Pro | Cotizaciones Corporativas</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Outfit:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#3b82f6", // Blue-500
+                        "surface": "#020617", // Slate-950
+                        "surface-container": "#0f172a", // Slate-900
+                        "surface-container-high": "#1e293b", // Slate-800
+                        "surface-container-highest": "#334155", // Slate-700
+                        "on-surface": "#f8fafc",
+                        "on-surface-variant": "#94a3b8",
+                        "outline": "#475569",
+                        "outline-variant": "#1e293b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"],
+                        "display": ["Outfit", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+        .editorial-shadow {
+            box-shadow: 0px 12px 32px rgba(0, 0, 0, 0.4);
+        }
+        body {
+            background-color: #020617; /* Slate-950 */
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- SideNavBar Integration -->
+<aside class="fixed left-0 top-0 h-full flex flex-col bg-slate-900 h-screen w-64 border-r border-slate-800/50 z-50">
+<div class="p-8">
+<h1 class="text-xl font-black text-white tracking-tighter">Quotation Pro</h1>
+<p class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mt-1">Empresa Global</p>
+</div>
+<nav class="flex-1 px-4 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors group" href="#">
+<span class="material-symbols-outlined group-active:scale-95 duration-200">dashboard</span>
+<span class="font-inter body-md tracking-tight">Panel de Control</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors group" href="#">
+<span class="material-symbols-outlined group-active:scale-95 duration-200">inventory_2</span>
+<span class="font-inter body-md tracking-tight">Artículos</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors group" href="#">
+<span class="material-symbols-outlined group-active:scale-95 duration-200">group</span>
+<span class="font-inter body-md tracking-tight">Clientes</span>
+</a>
+<!-- ACTIVE TAB -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-blue-400 font-semibold border-r-2 border-blue-500 bg-slate-800/30 group" href="#">
+<span class="material-symbols-outlined group-active:scale-95 duration-200">request_quote</span>
+<span class="font-inter body-md tracking-tight">Cotizaciones</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors group" href="#">
+<span class="material-symbols-outlined group-active:scale-95 duration-200">settings</span>
+<span class="font-inter body-md tracking-tight">Configuración</span>
+</a>
+</nav>
+<div class="p-6">
+<button class="w-full primary-gradient text-white font-bold py-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">add_circle</span>
+                Nueva Cotización
+            </button>
+</div>
+</aside>
+<main class="ml-64 min-h-screen">
+<!-- TopNavBar Integration -->
+<header class="sticky top-0 z-40 flex justify-between items-center w-full px-12 py-6 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/50">
+<div class="flex items-center gap-8 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">search</span>
+<input class="w-full pl-12 pr-4 py-2.5 bg-slate-900 border-none rounded-xl text-sm text-on-surface focus:ring-2 focus:ring-primary/20 placeholder:text-slate-500" placeholder="Buscar cotizaciones, clientes o IDs..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-400 hover:text-blue-400 transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-blue-400 transition-all">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-slate-800 mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-xs font-bold text-on-surface">Alex Sterling</p>
+<p class="text-[10px] text-slate-500">Director Financiero Sr.</p>
+</div>
+<img alt="Perfil de Usuario Ejecutivo" class="w-10 h-10 rounded-full object-cover border-2 border-slate-800 shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0ejCKl5RIOFeoTjfIaX4jptJ2983rflcw0VqyjraFS1lFLprOFRFhJCgA79Tl8E8NsVs9iwEFbD0hw-YjgJHq6NLQO799nhRw9bS3J_AntnQhHA8pc9al_DF2hgphoj0yLwT0CplSiDvMfru5hkMAowiJ6NIdRFxCjp9cDA9UAjyfNKuUV1k7ixC9AOSQileqlvettrMLuo6uXpljbXXMb2_G3tfoPL3WkQAnSxn-1YWOCgq07XsYvog-0gQwWBcfcx4O--Bo0wNa"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<section class="p-12 max-w-7xl mx-auto">
+<!-- Hero Header Section -->
+<div class="flex flex-col md:flex-row justify-between items-end gap-6 mb-16">
+<div>
+<span class="label-md uppercase tracking-[0.1em] text-primary font-bold mb-3 block">Libro Contable</span>
+<h2 class="text-display-md font-display font-black tracking-tight text-on-surface leading-none">Historial de Cotizaciones</h2>
+<p class="mt-4 text-slate-400 max-w-md body-md leading-relaxed">
+                        Gestión de cotizaciones de alto valor a través de territorios multinacionales. Precisión en cada dígito.
+                    </p>
+</div>
+<div class="flex gap-4">
+<div class="bg-slate-900 px-6 py-4 rounded-xl border border-slate-800">
+<p class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Valor Total</p>
+<p class="text-2xl font-display font-bold text-on-surface">$142.8M</p>
+</div>
+<div class="bg-slate-900 px-6 py-4 rounded-xl border border-slate-800">
+<p class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Cotizaciones Activas</p>
+<p class="text-2xl font-display font-bold text-on-surface">2,482</p>
+</div>
+</div>
+</div>
+<!-- Dashboard Bento Grid Content -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Main Quotation List -->
+<div class="col-span-12 lg:col-span-8 space-y-6">
+<div class="flex items-center justify-between mb-2">
+<h3 class="headline-sm font-bold tracking-tight text-on-surface">Actividad Reciente</h3>
+<div class="flex items-center gap-2">
+<span class="text-xs font-semibold text-slate-500">Filtrar por Estado:</span>
+<select class="text-xs font-bold border-none bg-transparent focus:ring-0 cursor-pointer text-primary">
+<option class="bg-slate-900">Todas</option>
+<option class="bg-slate-900">Aprobadas</option>
+<option class="bg-slate-900">Pendientes</option>
+</select>
+</div>
+</div>
+<!-- Quotation Card Item: ID, Cliente, Estado, Valor -->
+<div class="group bg-slate-900 p-6 rounded-2xl editorial-shadow hover:bg-slate-800/50 transition-all duration-300 flex items-center justify-between border border-slate-800/50">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 bg-blue-500/10 flex items-center justify-center rounded-xl text-primary">
+<span class="material-symbols-outlined text-3xl">description</span>
+</div>
+<div>
+<div class="flex items-center gap-3">
+<span class="font-display font-bold text-lg text-on-surface">ID: 2026-7238</span>
+<span class="px-3 py-1 bg-green-500/10 text-green-400 text-[10px] font-black uppercase tracking-wider rounded-full">Aprobado</span>
+</div>
+<p class="text-slate-400 text-sm mt-1">Cliente: <span class="text-on-surface font-semibold">Global Logistics Corp</span></p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-2xl font-display font-bold text-primary">$6,987,420</p>
+<p class="text-xs text-slate-500 mt-1 font-medium">Emitido 24 Oct, 2023</p>
+</div>
+<button class="p-2 hover:bg-slate-800 rounded-lg text-slate-500 transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+<!-- Quotation Card Item -->
+<div class="group bg-slate-900 p-6 rounded-2xl editorial-shadow hover:bg-slate-800/50 transition-all duration-300 flex items-center justify-between border border-slate-800/50">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 bg-slate-800 flex items-center justify-center rounded-xl text-slate-500">
+<span class="material-symbols-outlined text-3xl">description</span>
+</div>
+<div>
+<div class="flex items-center gap-3">
+<span class="font-display font-bold text-lg text-on-surface">ID: 2026-7239</span>
+<span class="px-3 py-1 bg-amber-500/10 text-amber-400 text-[10px] font-black uppercase tracking-wider rounded-full">Pendiente</span>
+</div>
+<p class="text-slate-400 text-sm mt-1">Cliente: <span class="text-on-surface font-semibold">Vertex Solutions PLC</span></p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-2xl font-display font-bold text-primary">$1,240,000</p>
+<p class="text-xs text-slate-500 mt-1 font-medium">Emitido 25 Oct, 2023</p>
+</div>
+<button class="p-2 hover:bg-slate-800 rounded-lg text-slate-500 transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+<!-- Quotation Card Item -->
+<div class="group bg-slate-900 p-6 rounded-2xl editorial-shadow hover:bg-slate-800/50 transition-all duration-300 flex items-center justify-between border border-slate-800/50">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 bg-blue-500/10 flex items-center justify-center rounded-xl text-primary">
+<span class="material-symbols-outlined text-3xl">description</span>
+</div>
+<div>
+<div class="flex items-center gap-3">
+<span class="font-display font-bold text-lg text-on-surface">ID: 2026-7240</span>
+<span class="px-3 py-1 bg-green-500/10 text-green-400 text-[10px] font-black uppercase tracking-wider rounded-full">Aprobado</span>
+</div>
+<p class="text-slate-400 text-sm mt-1">Cliente: <span class="text-on-surface font-semibold">Neo-Bank International</span></p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-2xl font-display font-bold text-primary">$12,450,000</p>
+<p class="text-xs text-slate-500 mt-1 font-medium">Emitido 26 Oct, 2023</p>
+</div>
+<button class="p-2 hover:bg-slate-800 rounded-lg text-slate-500 transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+<!-- Quotation Card Item -->
+<div class="group bg-slate-900 p-6 rounded-2xl editorial-shadow hover:bg-slate-800/50 transition-all duration-300 flex items-center justify-between border border-slate-800/50 opacity-60">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 bg-red-500/10 flex items-center justify-center rounded-xl text-red-400">
+<span class="material-symbols-outlined text-3xl">description</span>
+</div>
+<div>
+<div class="flex items-center gap-3">
+<span class="font-display font-bold text-lg text-on-surface">ID: 2026-7112</span>
+<span class="px-3 py-1 bg-red-500/10 text-red-400 text-[10px] font-black uppercase tracking-wider rounded-full">Expirado</span>
+</div>
+<p class="text-slate-400 text-sm mt-1">Cliente: <span class="text-on-surface font-semibold">Atlas Infrastructure</span></p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-2xl font-display font-bold text-slate-600">$450,200</p>
+<p class="text-xs text-slate-500 mt-1 font-medium">Emitido 12 Sep, 2023</p>
+</div>
+<button class="p-2 hover:bg-slate-800 rounded-lg text-slate-500 transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Secondary Context / Stats (Asymmetric layout) -->
+<div class="col-span-12 lg:col-span-4 space-y-8">
+<!-- Featured Insight Card -->
+<div class="relative overflow-hidden rounded-3xl h-64 group shadow-xl border border-slate-800">
+<img alt="Arquitectura corporativa moderna" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVHZGWGwD8RiU0NrEk8iiF0Vb7BCnheCl4HVS77NQeurMVEZGYR7Y3UGB2KH_HeAiTvk5Cif3hYSHzkxgXPZ1bxW1I-85IKVTMK1UEyPlbfIeN0SbJP43Zpc7BKTmRxlhK3G2If2TNrV99uJ-rYS8iJxb56RgsPvpoTqMdQrXu2p_yWPgKV8yXkCNYSufP9mloFhv8AvV4irl-p9S-7FVRO41EPjlbCKeGTE1hsos-Hsr6j8LeCifE0sXiVPPx1YnbFY3tk7WGAjRv"/>
+<div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent p-8 flex flex-col justify-end">
+<p class="text-white/60 text-[10px] uppercase font-bold tracking-[0.2em] mb-2">Foco de Mercado Regional</p>
+<h4 class="text-white font-display text-xl font-bold">Tendencias de Crecimiento EMEA</h4>
+<p class="text-white/80 text-sm mt-2 line-clamp-2 font-light">Las cotizaciones en el sector europeo han aumentado un 14% este trimestre con tickets promedio más altos.</p>
+</div>
+</div>
+<!-- Client Performance -->
+<div class="bg-slate-900 p-8 rounded-3xl border border-slate-800">
+<h4 class="headline-sm font-bold tracking-tight mb-6 text-on-surface">Clientes Top</h4>
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-primary font-bold text-xs">GL</div>
+<span class="text-sm font-bold text-on-surface">Global Logistics</span>
+</div>
+<span class="text-xs font-bold text-primary">$42.4M</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-primary font-bold text-xs">VS</div>
+<span class="text-sm font-bold text-on-surface">Vertex Solutions</span>
+</div>
+<span class="text-xs font-bold text-primary">$18.2M</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-primary font-bold text-xs">NB</div>
+<span class="text-sm font-bold text-on-surface">Neo-Bank Int.</span>
+</div>
+<span class="text-xs font-bold text-primary">$12.5M</span>
+</div>
+</div>
+<button class="w-full mt-8 py-3 border border-slate-800 text-[10px] uppercase font-black tracking-widest text-slate-500 rounded-xl hover:bg-slate-800 hover:text-white transition-all">
+                            Ver Todos los Clientes
+                        </button>
+</div>
+<!-- System Status Glass Component -->
+<div class="glass-panel p-6 rounded-3xl border border-slate-800 shadow-sm">
+<div class="flex items-center gap-2 mb-4">
+<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+<span class="text-[10px] uppercase font-black tracking-widest text-slate-500">Integridad del Sistema</span>
+</div>
+<p class="text-xs text-slate-400 leading-relaxed">
+                            Sincronización financiera completada a las <span class="font-bold text-on-surface">08:42 AM</span>. Tasas de cambio actualizadas a los mercados globales.
+                        </p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- FAB for New Quote -->
+<button class="fixed bottom-12 right-12 w-16 h-16 primary-gradient text-white rounded-full shadow-2xl flex items-center justify-center group active:scale-90 transition-all z-50">
+<span class="material-symbols-outlined text-3xl group-hover:rotate-90 transition-transform">add</span>
+</button>
+</body></html>

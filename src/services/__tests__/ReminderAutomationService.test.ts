@@ -24,7 +24,7 @@ class MockSmtpConfigError extends Error {
     }: {
       missingKeys?: string[];
       invalidKeys?: string[];
-    } = {}
+    } = {},
   ) {
     super(message);
     this.name = "SmtpConfigError";
@@ -125,11 +125,15 @@ describe("ReminderAutomationService.processDueRemindersOnce", () => {
 
     const ReminderAutomationService = await loadService();
     const summary = await ReminderAutomationService.processDueRemindersOnce(
-      new Date("2024-01-01T00:00:00.000Z")
+      new Date("2024-01-01T00:00:00.000Z"),
     );
 
     expect(collectionMock).toHaveBeenCalledWith("cotizaciones");
-    expect(whereMock).toHaveBeenCalledWith("proximoSeguimientoEmail", "==", true);
+    expect(whereMock).toHaveBeenCalledWith(
+      "proximoSeguimientoEmail",
+      "==",
+      true,
+    );
     expect(sendReminderEmailMock).toHaveBeenCalledTimes(2);
     expect(sendReminderEmailMock).toHaveBeenNthCalledWith(
       1,
@@ -137,7 +141,7 @@ describe("ReminderAutomationService.processDueRemindersOnce", () => {
       expect.stringMatching(/^\d{4}-\d{4}$/),
       "Cliente Demo",
       "Llamar mañana",
-      expect.any(Date)
+      expect.any(Date),
     );
     expect(sendReminderEmailMock).toHaveBeenNthCalledWith(
       2,
@@ -145,7 +149,7 @@ describe("ReminderAutomationService.processDueRemindersOnce", () => {
       expect.stringMatching(/^\d{4}-\d{4}$/),
       "Cliente Demo",
       "Llamar mañana",
-      expect.any(Date)
+      expect.any(Date),
     );
     expect(updateMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -157,7 +161,7 @@ describe("ReminderAutomationService.processDueRemindersOnce", () => {
         proximoSeguimientoUsuario: null,
         proximoSeguimientoDestinatarios: null,
         updatedAt: expect.any(Date),
-      })
+      }),
     );
     expect(summary).toMatchObject({
       status: "processed",
@@ -175,7 +179,9 @@ describe("ReminderAutomationService.processDueRemindersOnce", () => {
         createSnapshotDoc("quote-2", {
           numero: "COT-002",
           clienteNombre: "Cliente Fallback",
-          proximoSeguimiento: { toDate: () => new Date("2024-01-01T00:00:00.000Z") },
+          proximoSeguimiento: {
+            toDate: () => new Date("2024-01-01T00:00:00.000Z"),
+          },
           proximoSeguimientoTipo: "revision",
           proximoSeguimientoMensaje: "Revisar propuesta",
           proximoSeguimientoEmail: true,
@@ -190,7 +196,7 @@ describe("ReminderAutomationService.processDueRemindersOnce", () => {
 
     const ReminderAutomationService = await loadService();
     const summary = await ReminderAutomationService.processDueRemindersOnce(
-      new Date("2024-01-01T00:05:00.000Z")
+      new Date("2024-01-01T00:05:00.000Z"),
     );
 
     expect(getEmailNotificationUsersMock).toHaveBeenCalledTimes(1);
@@ -201,7 +207,7 @@ describe("ReminderAutomationService.processDueRemindersOnce", () => {
       expect.stringMatching(/^\d{4}-\d{4}$/),
       "Cliente Fallback",
       "Revisar propuesta",
-      expect.any(Date)
+      expect.any(Date),
     );
     expect(sendReminderEmailMock).toHaveBeenNthCalledWith(
       2,
@@ -209,7 +215,7 @@ describe("ReminderAutomationService.processDueRemindersOnce", () => {
       expect.stringMatching(/^\d{4}-\d{4}$/),
       "Cliente Fallback",
       "Revisar propuesta",
-      expect.any(Date)
+      expect.any(Date),
     );
     expect(summary.processedCount).toBe(1);
     expect(updateMock).toHaveBeenCalledTimes(1);
@@ -233,7 +239,7 @@ describe("ReminderAutomationService.processDueRemindersOnce", () => {
 
     const ReminderAutomationService = await loadService();
     const summary = await ReminderAutomationService.processDueRemindersOnce(
-      new Date("2024-01-01T00:00:00.000Z")
+      new Date("2024-01-01T00:00:00.000Z"),
     );
 
     expect(sendReminderEmailMock).toHaveBeenCalledTimes(1);
@@ -264,7 +270,7 @@ describe("ReminderAutomationService.processDueRemindersOnce", () => {
 
     const ReminderAutomationService = await loadService();
     const summary = await ReminderAutomationService.processDueRemindersOnce(
-      new Date("2024-01-01T00:00:00.000Z")
+      new Date("2024-01-01T00:00:00.000Z"),
     );
 
     expect(collectionMock).not.toHaveBeenCalled();
