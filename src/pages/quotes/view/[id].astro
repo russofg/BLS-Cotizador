@@ -51,7 +51,7 @@ function getStatusStyle(rawEstado: string) {
   if (s.includes("recha"))   return { badge: "bg-red-500/10 text-red-400 border-red-500/20",             dot: "bg-red-500",     label: "Rechazada" };
   if (s.includes("vencid"))  return { badge: "bg-orange-500/10 text-orange-400 border-orange-500/20",    dot: "bg-orange-500",  label: "Vencida" };
   if (s.includes("revis"))   return { badge: "bg-amber-500/10 text-amber-400 border-amber-500/20",       dot: "bg-amber-500",   label: "Revisada" };
-  if (s.includes("convert")) return { badge: "bg-violet-500/10 text-violet-400 border-violet-500/20",    dot: "bg-violet-500",  label: "Convertida" };
+  if (s.includes("convert")) return { badge: "bg-violet-500/10 text-violet-400 border-violet-500/20",    dot: "bg-violet-500",  label: "Facturada" };
   return { badge: "bg-slate-500/10 text-slate-400 border-slate-500/20", dot: "bg-slate-500", label: "Borrador" };
 }
 

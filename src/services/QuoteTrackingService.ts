@@ -597,7 +597,7 @@ export class QuoteTrackingService {
       [QuoteStatus.APROBADA]: "Aprobada",
       [QuoteStatus.RECHAZADA]: "Rechazada",
       [QuoteStatus.VENCIDA]: "Vencida",
-      [QuoteStatus.CONVERTIDA]: "Convertida",
+      [QuoteStatus.CONVERTIDA]: "Facturada",
     };
     return statusNames[status] || status;
   }
