@@ -6,7 +6,6 @@ import { QuoteHelper } from "../../../utils/quoteHelpers";
 import ScrollbarStyles from "../../../components/ScrollbarStyles.astro";
 import { DEFAULT_QUOTE_TEXTS, COMPANY_INFO } from "../../../config/company";
 
-// Valores por defecto para los campos de texto
 const defaultObservaciones = DEFAULT_QUOTE_TEXTS.observaciones;
 const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
 
@@ -16,21 +15,18 @@ let cotizacion: any = null;
 let cliente: any = null;
 let error = "";
 
-// Usar la función centralizada de formateo de fechas
 const safeFormatDate = DateHelper.safeFormatDate;
 
 try {
   if (id) {
     const cotizaciones = await cotizacionService.getAll();
     cotizacion = cotizaciones.find((c: any) => c.id === id);
-    
+
     if (cotizacion) {
-      console.log('🔍 Server-side cotizacion object:', JSON.stringify(cotizacion, null, 2));
-      
       const clientes = await clienteService.getAll();
-      // Check both possible client ID field names for compatibility
-      cliente = clientes.find((c: any) => c.id === cotizacion.cliente_id || c.id === cotizacion.clienteId);
-      
+      cliente = clientes.find(
+        (c: any) => c.id === cotizacion.cliente_id || c.id === cotizacion.clienteId
+      );
     } else {
       error = "Cotización no encontrada";
     }
@@ -42,347 +38,408 @@ try {
   error = "Error al cargar la cotización";
 }
 
-// Normalize items data using centralized helper
 let itemsToShow: any[] = [];
-if (cotizacion && cotizacion.items) {
+if (cotizacion?.items) {
   itemsToShow = QuoteHelper.normalizeItems(cotizacion.items);
 }
+
+// Normalize estado for display
+function getStatusStyle(rawEstado: string) {
+  const s = String(rawEstado || "").toLowerCase();
+  if (s.includes("aprob"))   return { badge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", dot: "bg-emerald-500", label: "Aprobada" };
+  if (s.includes("enviad"))  return { badge: "bg-blue-500/10 text-blue-400 border-blue-500/20",          dot: "bg-blue-500",    label: "Enviada" };
+  if (s.includes("recha"))   return { badge: "bg-red-500/10 text-red-400 border-red-500/20",             dot: "bg-red-500",     label: "Rechazada" };
+  if (s.includes("vencid"))  return { badge: "bg-orange-500/10 text-orange-400 border-orange-500/20",    dot: "bg-orange-500",  label: "Vencida" };
+  if (s.includes("revis"))   return { badge: "bg-amber-500/10 text-amber-400 border-amber-500/20",       dot: "bg-amber-500",   label: "Revisada" };
+  if (s.includes("convert")) return { badge: "bg-violet-500/10 text-violet-400 border-violet-500/20",    dot: "bg-violet-500",  label: "Convertida" };
+  return { badge: "bg-slate-500/10 text-slate-400 border-slate-500/20", dot: "bg-slate-500", label: "Borrador" };
+}
+
+const statusStyle = cotizacion ? getStatusStyle(cotizacion.estado) : null;
+const quoteNumber = cotizacion ? QuoteHelper.getDisplayQuoteNumber(cotizacion) : "";
+const clienteNombre = cliente
+  ? `${cliente.nombre}${cliente.empresa ? ` — ${cliente.empresa}` : ""}`
+  : "Sin cliente";
+
+const fechaInicio = cotizacion?.fecha_evento || cotizacion?.fechaEvento;
+const fechaFin    = cotizacion?.fecha_evento_fin || cotizacion?.fechaEventoFin || fechaInicio;
+const subtotal    = cotizacion?.subtotal || 0;
+const descuento   = cotizacion?.descuento || 0;
+const total       = cotizacion?.total || 0;
+const descuentoMonto = subtotal * (descuento / 100);
 ---
 
-<Dashboard title="Ver Cotización - BLS Cotizador" activeSection="quotes">
+<Dashboard title={`Cotización ${quoteNumber} - BLS Cotizador`} activeSection="quotes">
   <ScrollbarStyles />
+
   {error ? (
-    <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md p-4">
-      <div class="flex">
-        <div class="flex-shrink-0">
-          <svg class="h-5 w-5 text-red-400 dark:text-red-300" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-          </svg>
-        </div>
-        <div class="ml-3">
-          <h3 class="text-sm font-medium text-red-800 dark:text-red-300">Error</h3>
-          <div class="mt-2 text-sm text-red-700 dark:text-red-400">
-            <p>{error}</p>
-          </div>
-        </div>
+    <div class="flex items-center gap-4 bg-red-500/10 border border-red-500/20 text-red-400 px-6 py-5 rounded-xl">
+      <span class="material-symbols-outlined text-2xl">error</span>
+      <div>
+        <p class="font-bold">Error</p>
+        <p class="text-sm opacity-80">{error}</p>
       </div>
+      <a href="/quotes" class="ml-auto text-sm font-bold underline underline-offset-4">Volver</a>
     </div>
   ) : cotizacion ? (
-    <div class="space-y-6">
-      <!-- Header -->
-      <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:px-6">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white break-words">
-                {QuoteHelper.getDisplayQuoteNumber(cotizacion)}
-              </h1>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {cotizacion.titulo || 'Sin título'}
-              </p>
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <button
-                id="export-pdf-btn"
-                class="inline-flex items-center justify-center px-3 py-2.5 border border-emerald-300 dark:border-emerald-600 shadow-sm text-sm font-medium rounded-md text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 flex-1 sm:flex-none touch-scroll-item transition-colors"
-                title="Exportar como PDF"
-              >
-                <svg class="-ml-0.5 mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-                PDF
-              </button>
-              <button
-                id="export-excel-btn"
-                class="inline-flex items-center justify-center px-3 py-2.5 border border-blue-300 dark:border-blue-600 shadow-sm text-sm font-medium rounded-md text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 flex-1 sm:flex-none touch-scroll-item transition-colors"
-                title="Exportar como Excel"
-              >
-                <svg class="-ml-0.5 mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 0a2 2 0 012 2v6a2 2 0 01-2 2" />
-                </svg>
-                Excel
-              </button>
-              <a
-                href={`/quotes/edit/${cotizacion.id}`}
-                class="inline-flex items-center justify-center px-4 py-2.5 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 flex-1 sm:flex-none touch-scroll-item"
-              >
-                <svg class="-ml-0.5 mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
-                Editar
-              </a>
-              <a
-                href="/quotes"
-                class="inline-flex items-center justify-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 flex-1 sm:flex-none touch-scroll-item"
-              >
-                Volver a Cotizaciones
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="space-y-6 pb-12">
 
-      <!-- Quote Details -->
-      <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-          <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Detalles de la Cotización</h3>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cliente</label>
-              <p class="mt-1 text-sm text-gray-900 dark:text-gray-200 font-medium">
-                {cliente ? `${cliente.nombre}${cliente.empresa ? ` - ${cliente.empresa}` : ''}` : 'Cliente no encontrado'}
-              </p>
+      <!-- ── Header ──────────────────────────────────────────────────────── -->
+      <section class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
+        <div>
+          <nav class="flex items-center gap-2 mb-2">
+            <a href="/quotes" class="text-[10px] font-bold tracking-widest text-[var(--color-on-surface-variant)] uppercase hover:text-[var(--color-primary)] transition-colors">Cotizaciones</a>
+            <span class="material-symbols-outlined text-xs text-[var(--color-outline)]">chevron_right</span>
+            <span class="text-[10px] font-bold tracking-widest text-[var(--color-primary)] uppercase font-mono">{quoteNumber}</span>
+          </nav>
+          <div class="flex items-center gap-3 flex-wrap">
+            <h2 class="text-3xl font-black tracking-tight text-[var(--color-on-surface)]">{cotizacion.titulo || "Sin título"}</h2>
+            {statusStyle && (
+              <span class={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${statusStyle.badge}`}>
+                {statusStyle.label}
+              </span>
+            )}
+          </div>
+          <p class="text-[var(--color-on-surface-variant)] mt-1 text-sm font-mono">{quoteNumber} · {clienteNombre}</p>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <button
+            id="export-pdf-btn"
+            class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm border border-emerald-500/30 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all"
+          >
+            <span class="material-symbols-outlined text-lg">picture_as_pdf</span>
+            PDF
+          </button>
+          <button
+            id="export-excel-btn"
+            class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm border border-blue-500/30 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-all"
+          >
+            <span class="material-symbols-outlined text-lg">table_view</span>
+            Excel
+          </button>
+          <a
+            href={`/quotes/edit/${cotizacion.id}`}
+            class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)] transition-all"
+          >
+            <span class="material-symbols-outlined text-lg">edit_document</span>
+            Editar
+          </a>
+          <a
+            href="/quotes"
+            class="flex items-center gap-2 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-[0_4px_12px_rgba(59,130,246,0.3)] hover:scale-[1.02] transition-all"
+          >
+            <span class="material-symbols-outlined text-lg">arrow_back</span>
+            Volver
+          </a>
+        </div>
+      </section>
+
+      <!-- ── Two-column layout ───────────────────────────────────────────── -->
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+        <!-- Left: main details + items (2/3) -->
+        <div class="xl:col-span-2 space-y-6">
+
+          <!-- Details Bento -->
+          <div class="bg-[var(--color-surface-container-low)] rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.3)] overflow-hidden">
+            <div class="px-6 py-4 border-b border-[var(--color-outline-variant)]/40 flex items-center gap-2">
+              <span class="material-symbols-outlined text-lg text-[var(--color-primary)]">info</span>
+              <h3 class="font-black text-[var(--color-on-surface)] uppercase tracking-widest text-xs">Detalles del Evento</h3>
             </div>
-            
-            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
-              <p class="mt-1">
-                {(() => {
-                  const statusInfo = QuoteHelper.getQuoteStatusInfo(cotizacion.estado);
-                  return (
-                    <span class={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusInfo.bgClass} ${statusInfo.textClass}`}>
-                      {statusInfo.text}
-                    </span>
-                  );
-                })()}
-              </p>
-            </div>
-            
-            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Inicio del Evento</label>
-              <p class="mt-1 text-sm text-gray-900 dark:text-gray-200 font-medium">
-                {cotizacion.fecha_evento ? safeFormatDate(cotizacion.fecha_evento) : 
-                 cotizacion.fechaEvento ? safeFormatDate(cotizacion.fechaEvento) : 'No especificada'}
-              </p>
-            </div>
-            
-            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Fin del Evento</label>
-              <p class="mt-1 text-sm text-gray-900 dark:text-gray-200 font-medium">
-                {cotizacion.fecha_evento_fin ? safeFormatDate(cotizacion.fecha_evento_fin) : 
-                 cotizacion.fechaEventoFin ? safeFormatDate(cotizacion.fechaEventoFin) : 
-                 (cotizacion.fecha_evento ? safeFormatDate(cotizacion.fecha_evento) :
-                  cotizacion.fechaEvento ? safeFormatDate(cotizacion.fechaEvento) : 'No especificada')}
-              </p>
-            </div>
-            
-            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Lugar del Evento</label>
-              <p class="mt-1 text-sm text-gray-900 dark:text-gray-200 font-medium">
-                {cotizacion.lugar_evento || 'No especificado'}
-              </p>
-            </div>
-            
-            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Duración del Evento</label>
-              <div class="mt-1 flex flex-wrap items-center gap-2">
-                <span class="text-sm text-gray-900 dark:text-gray-200 font-medium">
-                  {cotizacion.duracion_dias || (cotizacion.duracion_horas ? Math.ceil(cotizacion.duracion_horas/24) : 1)} día(s)
-                </span>
-                {cotizacion.requiere_armado && 
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                    + Día de armado previo
-                  </span>
-                }
+            <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              <div class="bg-[var(--color-surface-container)] rounded-xl p-4 border border-[var(--color-outline-variant)]/30">
+                <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-1">Cliente</p>
+                <p class="font-bold text-[var(--color-on-surface)] text-sm">{clienteNombre}</p>
               </div>
-            </div>
-            
-            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Armado Previo</label>
-              <div class="mt-1">
-                {cotizacion.requiere_armado ? (
-                  <div class="flex items-center text-sm text-gray-900 dark:text-gray-200">
-                    <svg class="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Incluye día de armado previo al evento</span>
-                  </div>
-                ) : (
-                  <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                    <svg class="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                    <span>No requiere día de armado previo</span>
-                  </div>
+
+              <div class="bg-[var(--color-surface-container)] rounded-xl p-4 border border-[var(--color-outline-variant)]/30">
+                <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-1">Estado</p>
+                {statusStyle && (
+                  <span class={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${statusStyle.badge}`}>
+                    <span class={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`}></span>
+                    {statusStyle.label}
+                  </span>
                 )}
               </div>
+
+              <div class="bg-[var(--color-surface-container)] rounded-xl p-4 border border-[var(--color-outline-variant)]/30">
+                <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-1">Inicio del Evento</p>
+                <p class="font-bold text-[var(--color-on-surface)] text-sm">
+                  {fechaInicio ? safeFormatDate(fechaInicio) : "No especificada"}
+                </p>
+              </div>
+
+              <div class="bg-[var(--color-surface-container)] rounded-xl p-4 border border-[var(--color-outline-variant)]/30">
+                <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-1">Fin del Evento</p>
+                <p class="font-bold text-[var(--color-on-surface)] text-sm">
+                  {fechaFin ? safeFormatDate(fechaFin) : "No especificada"}
+                </p>
+              </div>
+
+              {cotizacion.lugar_evento && (
+                <div class="bg-[var(--color-surface-container)] rounded-xl p-4 border border-[var(--color-outline-variant)]/30">
+                  <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-1">Lugar</p>
+                  <p class="font-bold text-[var(--color-on-surface)] text-sm">{cotizacion.lugar_evento}</p>
+                </div>
+              )}
+
+              <div class="bg-[var(--color-surface-container)] rounded-xl p-4 border border-[var(--color-outline-variant)]/30">
+                <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-1">Duración</p>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="font-bold text-[var(--color-on-surface)] text-sm">
+                    {cotizacion.duracion_dias || (cotizacion.duracion_horas ? Math.ceil(cotizacion.duracion_horas / 24) : 1)} día(s)
+                  </span>
+                  {cotizacion.requiere_armado && (
+                    <span class="px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/20">
+                      + armado previo
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {cotizacion.descripcion && (
+                <div class="sm:col-span-2 bg-[var(--color-surface-container)] rounded-xl p-4 border border-[var(--color-outline-variant)]/30">
+                  <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-1">Descripción</p>
+                  <p class="text-sm text-[var(--color-on-surface)] leading-relaxed">{cotizacion.descripcion}</p>
+                </div>
+              )}
             </div>
-            
-            <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Total</label>
-              <p class="mt-1 text-lg font-semibold text-primary-600 dark:text-primary-400">
-                ${(cotizacion.total || 0).toLocaleString('es-AR')}
-              </p>
-            </div>
-            
-            {cotizacion.descripcion && (
-              <div class="md:col-span-2 bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripción</label>
-                <p class="mt-1 text-sm text-gray-900 dark:text-gray-200">{cotizacion.descripcion}</p>
-              </div>
-            )}
-            
-            {cotizacion.observaciones && (
-              <div class="md:col-span-2 bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Observaciones</label>
-                <p class="mt-1 text-sm text-gray-900 dark:text-gray-200">{cotizacion.observaciones}</p>
-              </div>
-            )}
-            
-            {(cotizacion.condiciones || cotizacion.condiciones === '') && (
-              <div class="md:col-span-2 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md border border-blue-200 dark:border-blue-800">
-                <label class="block text-sm font-medium text-blue-700 dark:text-blue-300">Condiciones Comerciales</label>
-                <ul class="mt-2 list-disc pl-5 space-y-1.5 text-sm text-gray-900 dark:text-gray-200">
-                  {QuoteHelper.getCondicionesLines(cotizacion.condiciones || defaultCondiciones).map((line) => (
-                    <li>{line}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </div>
-        </div>
-      </div>
-      
-      <!-- Items Section -->
-      {itemsToShow.length > 0 ? (
-        <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
-          <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Items de la Cotización</h3>
-            
-            <!-- Desktop table (hidden on small screens) -->
-            <div class="hidden sm:block overflow-x-auto custom-scrollbar">
-              <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
-                <thead>
-                  <tr>
-                    <th class="px-3 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-300">
-                      Descripción
-                    </th>
-                    <th class="px-3 py-3.5 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-300">
-                      Cantidad
-                    </th>
-                    <th class="px-3 py-3.5 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-300">
-                      Precio Unit.
-                    </th>
-                    <th class="px-3 py-3.5 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-300">
-                      Total
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
+
+          <!-- Items Table -->
+          <div class="bg-[var(--color-surface-container-low)] rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.3)] overflow-hidden">
+            <div class="px-6 py-4 border-b border-[var(--color-outline-variant)]/40 flex items-center gap-2">
+              <span class="material-symbols-outlined text-lg text-[var(--color-primary)]">inventory_2</span>
+              <h3 class="font-black text-[var(--color-on-surface)] uppercase tracking-widest text-xs">Items de la Cotización</h3>
+              <span class="ml-auto text-[10px] font-black bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20 px-2 py-0.5 rounded-full">{itemsToShow.length} items</span>
+            </div>
+
+            {itemsToShow.length > 0 ? (
+              <div class="overflow-x-auto">
+                <!-- Desktop table -->
+                <table class="w-full hidden sm:table">
+                  <thead>
+                    <tr class="border-b border-[var(--color-outline-variant)]/30">
+                      <th class="px-6 py-3 text-left text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">Descripción</th>
+                      <th class="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">Cant.</th>
+                      <th class="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">P. Unit.</th>
+                      <th class="px-6 py-3 text-right text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-[var(--color-outline-variant)]/20">
+                    {itemsToShow.map((item: any) => {
+                      const { displayText } = QuoteHelper.formatItemForDisplay(item);
+                      const cantidad = item.cantidad || item.quantity || 1;
+                      const precioUnitario = item.precio_unitario || item.precio || item.price || 0;
+                      const itemTotal = item.total || (cantidad * precioUnitario);
+                      return (
+                        <tr class="hover:bg-[var(--color-surface-container)] transition-colors">
+                          <td class="px-6 py-4 text-sm text-[var(--color-on-surface)]" set:html={displayText}></td>
+                          <td class="px-4 py-4 text-sm text-[var(--color-on-surface)] text-center font-bold">{cantidad}</td>
+                          <td class="px-4 py-4 text-sm text-[var(--color-on-surface)] text-right">${precioUnitario.toLocaleString("es-AR")}</td>
+                          <td class="px-6 py-4 text-sm font-black text-[var(--color-on-surface)] text-right">${itemTotal.toLocaleString("es-AR")}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot class="border-t-2 border-[var(--color-outline-variant)]/40 bg-[var(--color-surface-container)]">
+                    <tr>
+                      <td colspan="3" class="px-6 py-3 text-xs font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] text-right">Subtotal</td>
+                      <td class="px-6 py-3 text-sm font-bold text-[var(--color-on-surface)] text-right">${subtotal.toLocaleString("es-AR")}</td>
+                    </tr>
+                    {descuento > 0 && (
+                      <tr>
+                        <td colspan="3" class="px-6 py-2 text-xs font-black uppercase tracking-widest text-red-400 text-right">Descuento ({descuento}%)</td>
+                        <td class="px-6 py-2 text-sm font-bold text-red-400 text-right">-${descuentoMonto.toLocaleString("es-AR")}</td>
+                      </tr>
+                    )}
+                    <tr>
+                      <td colspan="3" class="px-6 py-4 text-xs font-black uppercase tracking-widest text-[var(--color-primary)] text-right">Total</td>
+                      <td class="px-6 py-4 text-xl font-black text-[var(--color-primary)] text-right">${total.toLocaleString("es-AR")}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+
+                <!-- Mobile cards -->
+                <div class="sm:hidden divide-y divide-[var(--color-outline-variant)]/20">
                   {itemsToShow.map((item: any) => {
                     const { displayText } = QuoteHelper.formatItemForDisplay(item);
-                    
                     const cantidad = item.cantidad || item.quantity || 1;
                     const precioUnitario = item.precio_unitario || item.precio || item.price || 0;
-                    const total = item.total || (cantidad * precioUnitario);
-                    
+                    const itemTotal = item.total || (cantidad * precioUnitario);
                     return (
-                      <tr>
-                        <td class="px-3 py-4 text-sm text-gray-900 dark:text-white" set:html={displayText}></td>
-                        <td class="px-3 py-4 text-sm text-gray-900 dark:text-white text-center">{cantidad}</td>
-                        <td class="px-3 py-4 text-sm text-gray-900 dark:text-white text-right font-medium">${precioUnitario.toLocaleString('es-AR')}</td>
-                        <td class="px-3 py-4 text-sm text-gray-900 dark:text-white text-right font-semibold">${total.toLocaleString('es-AR')}</td>
-                      </tr>
+                      <div class="p-4">
+                        <div class="text-sm text-[var(--color-on-surface)] mb-3" set:html={displayText}></div>
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                          <div>
+                            <p class="text-[9px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">Cant.</p>
+                            <p class="font-bold text-[var(--color-on-surface)] text-sm">{cantidad}</p>
+                          </div>
+                          <div>
+                            <p class="text-[9px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">P. Unit.</p>
+                            <p class="font-bold text-[var(--color-on-surface)] text-sm">${precioUnitario.toLocaleString("es-AR")}</p>
+                          </div>
+                          <div>
+                            <p class="text-[9px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">Subtotal</p>
+                            <p class="font-black text-[var(--color-primary)] text-sm">${itemTotal.toLocaleString("es-AR")}</p>
+                          </div>
+                        </div>
+                      </div>
                     );
                   })}
-                </tbody>
-                <tfoot class="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <td colspan="3" class="px-3 py-3 text-sm font-medium text-gray-900 dark:text-white text-right">Subtotal:</td>
-                    <td class="px-3 py-3 text-sm font-semibold text-gray-900 dark:text-white text-right">${(cotizacion.subtotal || 0).toLocaleString('es-AR')}</td>
-                  </tr>
-                  {cotizacion.descuento > 0 && (
-                    <tr>
-                      <td colspan="3" class="px-3 py-3 text-sm font-medium text-gray-900 dark:text-white text-right">Descuento ({cotizacion.descuento}%):</td>
-                      <td class="px-3 py-3 text-sm font-semibold text-red-600 dark:text-red-400 text-right">-${((cotizacion.subtotal || 0) * (cotizacion.descuento / 100)).toLocaleString('es-AR')}</td>
-                    </tr>
-                  )}
-                  <tr class="border-t-2 border-gray-300 dark:border-gray-600">
-                    <td colspan="3" class="px-3 py-3 text-base font-bold text-gray-900 dark:text-white text-right">Total:</td>
-                    <td class="px-3 py-3 text-base font-bold text-primary-600 dark:text-primary-400 text-right">${(cotizacion.total || 0).toLocaleString('es-AR')}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-            
-            <!-- Mobile card view (visible only on small screens) -->
-            <div class="sm:hidden space-y-4">
-              {itemsToShow.map((item: any) => {
-                const { displayText } = QuoteHelper.formatItemForDisplay(item);
-                
-                const cantidad = item.cantidad || item.quantity || 1;
-                const precioUnitario = item.precio_unitario || item.precio || item.price || 0;
-                const total = item.total || (cantidad * precioUnitario);
-                
-                return (
-                  <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-md shadow-sm">
-                    <div class="text-sm text-gray-900 dark:text-white" set:html={displayText}></div>
-                    <div class="grid grid-cols-3 gap-2 mt-3">
-                      <div>
-                        <span class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cantidad</span>
-                        <span class="text-sm font-medium text-gray-900 dark:text-white">{cantidad}</span>
+                  <!-- Mobile totals -->
+                  <div class="p-4 bg-[var(--color-surface-container)] space-y-2">
+                    <div class="flex justify-between text-sm">
+                      <span class="text-[var(--color-on-surface-variant)]">Subtotal</span>
+                      <span class="font-bold text-[var(--color-on-surface)]">${subtotal.toLocaleString("es-AR")}</span>
+                    </div>
+                    {descuento > 0 && (
+                      <div class="flex justify-between text-sm">
+                        <span class="text-red-400">Descuento ({descuento}%)</span>
+                        <span class="font-bold text-red-400">-${descuentoMonto.toLocaleString("es-AR")}</span>
                       </div>
-                      <div>
-                        <span class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Precio Unit.</span>
-                        <span class="text-sm font-medium text-gray-900 dark:text-white">${precioUnitario.toLocaleString('es-AR')}</span>
-                      </div>
-                      <div>
-                        <span class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total</span>
-                        <span class="text-sm font-semibold text-primary-600 dark:text-primary-400">${total.toLocaleString('es-AR')}</span>
-                      </div>
+                    )}
+                    <div class="flex justify-between items-center pt-2 border-t border-[var(--color-outline-variant)]/40">
+                      <span class="font-black text-[var(--color-primary)] uppercase tracking-widest text-xs">Total</span>
+                      <span class="text-xl font-black text-[var(--color-primary)]">${total.toLocaleString("es-AR")}</span>
                     </div>
                   </div>
-                );
-              })}
-              
-              <!-- Mobile Totals -->
-              <div class="mt-6 bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
-                <div class="flex justify-between items-center mb-2">
-                  <span class="text-sm font-medium text-gray-900 dark:text-white">Subtotal:</span>
-                  <span class="text-sm font-semibold text-gray-900 dark:text-white">${(cotizacion.subtotal || 0).toLocaleString('es-AR')}</span>
                 </div>
-                
-                {cotizacion.descuento > 0 && (
-                  <div class="flex justify-between items-center mb-2">
-                    <span class="text-sm font-medium text-gray-900 dark:text-white">Descuento ({cotizacion.descuento}%):</span>
-                    <span class="text-sm font-semibold text-red-600 dark:text-red-400">-${((cotizacion.subtotal || 0) * (cotizacion.descuento / 100)).toLocaleString('es-AR')}</span>
-                  </div>
-                )}
-                
-                <div class="flex justify-between items-center pt-2 border-t border-gray-300 dark:border-gray-600">
-                  <span class="text-base font-bold text-gray-900 dark:text-white">Total:</span>
-                  <span class="text-base font-bold text-primary-600 dark:text-primary-400">${(cotizacion.total || 0).toLocaleString('es-AR')}</span>
+              </div>
+            ) : (
+              <div class="text-center py-16">
+                <span class="material-symbols-outlined text-5xl opacity-30 mb-3 block text-[var(--color-on-surface-variant)]">inventory_2</span>
+                <p class="text-[var(--color-on-surface-variant)]">No hay items en esta cotización</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <!-- Right: sidebar (1/3) -->
+        <div class="space-y-6">
+
+          <!-- Total card -->
+          <div class="bg-gradient-to-br from-[var(--color-surface-container)] to-[var(--color-surface-container-low)] rounded-xl border border-[var(--color-primary)]/20 shadow-[0_12px_32px_rgba(0,0,0,0.4)] p-6">
+            <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-3">Inversión Total</p>
+            <p class="text-4xl font-black text-[var(--color-on-surface)]">
+              <span class="text-[var(--color-primary)] text-xl font-medium mr-1">$</span>{total.toLocaleString("es-AR")}
+            </p>
+            {descuento > 0 && (
+              <p class="text-xs text-[var(--color-on-surface-variant)] mt-2">
+                Subtotal: ${subtotal.toLocaleString("es-AR")} — Descuento {descuento}%
+              </p>
+            )}
+          </div>
+
+          <!-- Quick info -->
+          <div class="bg-[var(--color-surface-container-low)] rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.3)] p-6 space-y-4">
+            <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">Información Rápida</p>
+
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-lg text-[var(--color-primary)] opacity-70">confirmation_number</span>
+              <div>
+                <p class="text-[9px] uppercase tracking-widest text-[var(--color-on-surface-variant)]">N° Cotización</p>
+                <p class="font-black text-[var(--color-on-surface)] font-mono text-sm">{quoteNumber}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-lg text-[var(--color-primary)] opacity-70">person</span>
+              <div class="min-w-0">
+                <p class="text-[9px] uppercase tracking-widest text-[var(--color-on-surface-variant)]">Cliente</p>
+                <p class="font-bold text-[var(--color-on-surface)] text-sm truncate">{cliente?.nombre || "—"}</p>
+                {cliente?.empresa && <p class="text-[var(--color-primary)] text-xs truncate">{cliente.empresa}</p>}
+              </div>
+            </div>
+
+            {fechaInicio && (
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-lg text-[var(--color-primary)] opacity-70">event</span>
+                <div>
+                  <p class="text-[9px] uppercase tracking-widest text-[var(--color-on-surface-variant)]">Inicio Evento</p>
+                  <p class="font-bold text-[var(--color-on-surface)] text-sm">{safeFormatDate(fechaInicio)}</p>
                 </div>
+              </div>
+            )}
+
+            {cotizacion.lugar_evento && (
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-lg text-[var(--color-primary)] opacity-70">location_on</span>
+                <div class="min-w-0">
+                  <p class="text-[9px] uppercase tracking-widest text-[var(--color-on-surface-variant)]">Lugar</p>
+                  <p class="font-bold text-[var(--color-on-surface)] text-sm truncate">{cotizacion.lugar_evento}</p>
+                </div>
+              </div>
+            )}
+
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-lg text-[var(--color-primary)] opacity-70">inventory_2</span>
+              <div>
+                <p class="text-[9px] uppercase tracking-widest text-[var(--color-on-surface-variant)]">Items</p>
+                <p class="font-bold text-[var(--color-on-surface)] text-sm">{itemsToShow.length} servicio(s)</p>
               </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
-          <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Items de la Cotización</h3>
-            <div class="text-center py-10">
-              <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                <svg class="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                </svg>
+
+          <!-- Observaciones -->
+          {cotizacion.observaciones && (
+            <div class="bg-[var(--color-surface-container-low)] rounded-xl border border-[var(--color-outline-variant)]/50 p-6">
+              <div class="flex items-center gap-2 mb-3">
+                <span class="material-symbols-outlined text-lg text-amber-400">sticky_note_2</span>
+                <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">Observaciones</p>
               </div>
-              <p class="text-center text-gray-500 dark:text-gray-400">No hay items en esta cotización</p>
+              <p class="text-sm text-[var(--color-on-surface)] leading-relaxed">{cotizacion.observaciones}</p>
             </div>
+          )}
+
+          <!-- Condiciones -->
+          {(cotizacion.condiciones || cotizacion.condiciones === "") && (
+            <div class="bg-[var(--color-surface-container-low)] rounded-xl border border-blue-500/20 p-6">
+              <div class="flex items-center gap-2 mb-3">
+                <span class="material-symbols-outlined text-lg text-blue-400">gavel</span>
+                <p class="text-[10px] font-black uppercase tracking-widest text-blue-400">Condiciones Comerciales</p>
+              </div>
+              <ul class="space-y-2">
+                {QuoteHelper.getCondicionesLines(cotizacion.condiciones || defaultCondiciones).map((line) => (
+                  <li class="flex items-start gap-2 text-sm text-[var(--color-on-surface)]">
+                    <span class="w-1 h-1 rounded-full bg-blue-400 mt-2 shrink-0"></span>
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <!-- Actions sidebar -->
+          <div class="bg-[var(--color-surface-container-low)] rounded-xl border border-[var(--color-outline-variant)]/50 p-4 space-y-2">
+            <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-3">Acciones</p>
+            <a href={`/quotes/tracking/${cotizacion.id}`} class="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-bold text-[var(--color-on-surface)] border border-[var(--color-outline-variant)] hover:bg-[var(--color-surface-container-high)] transition-all">
+              <span class="material-symbols-outlined text-lg text-[var(--color-primary)]">timeline</span>
+              Ver seguimiento
+            </a>
+            <a href={`/quotes/edit/${cotizacion.id}`} class="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-bold text-[var(--color-on-surface)] border border-[var(--color-outline-variant)] hover:bg-[var(--color-surface-container-high)] transition-all">
+              <span class="material-symbols-outlined text-lg text-[var(--color-primary)]">edit_document</span>
+              Editar cotización
+            </a>
           </div>
         </div>
-      )}
+      </div>
     </div>
   ) : (
-    <div class="text-center py-12">
-      <p class="text-gray-500 dark:text-gray-400">Cargando cotización...</p>
+    <div class="text-center py-24">
+      <svg class="animate-spin h-10 w-10 mx-auto mb-4 text-[var(--color-primary)] opacity-80" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <p class="text-[var(--color-on-surface-variant)] font-bold uppercase tracking-widest text-xs">Cargando cotización...</p>
     </div>
   )}
 </Dashboard>
 
 <script define:vars={{ cotizacion, cliente, itemsToShow, COMPANY_INFO, defaultObservaciones, defaultCondiciones }}>
-  // Make data available globally for export functions
   window.cotizacion = cotizacion;
   window.cliente = cliente;
   window.itemsToShow = itemsToShow;
@@ -392,63 +449,42 @@ if (cotizacion && cotizacion.items) {
 </script>
 
 <script>
-  /** Import estático: evita fetch a /src/utils/export.ts en dev (errores 504 Outdated Optimize Dep con import dinámico). */
   import { exportService } from "../../../utils/export";
   import { notifications } from "../../../utils/notifications";
 
   document.addEventListener("DOMContentLoaded", () => {
-    const getCotizacionData = () => {
-      return {
-        cotizacion: (window as any).cotizacion || {},
-        cliente: (window as any).cliente || {},
-        items: (window as any).itemsToShow || [],
-        empresa: (window as any).COMPANY_INFO || {},
-      };
-    };
+    const getCotizacionData = () => ({
+      cotizacion: (window as any).cotizacion || {},
+      cliente: (window as any).cliente || {},
+      items: (window as any).itemsToShow || [],
+      empresa: (window as any).COMPANY_INFO || {},
+    });
 
     document.getElementById("export-pdf-btn")?.addEventListener("click", async () => {
       try {
         const rawData = getCotizacionData();
-        if (!rawData.cotizacion || !rawData.cotizacion.id) {
+        if (!rawData.cotizacion?.id) {
           notifications.error("Error", "No se pudo obtener los datos de la cotización");
           return;
         }
-        const exportData = exportService.prepareExportData(
-          rawData.cotizacion,
-          rawData.cliente,
-          rawData.items,
-          rawData.empresa
-        );
+        const exportData = exportService.prepareExportData(rawData.cotizacion, rawData.cliente, rawData.items, rawData.empresa);
         await exportService.exportCotizacion(exportData, "pdf");
       } catch (error) {
-        console.error("Export PDF error:", error);
-        notifications.error(
-          "Error",
-          "Error al exportar PDF: " + (error instanceof Error ? error.message : "Error desconocido")
-        );
+        notifications.error("Error", "Error al exportar PDF: " + (error instanceof Error ? error.message : "Error desconocido"));
       }
     });
 
     document.getElementById("export-excel-btn")?.addEventListener("click", async () => {
       try {
         const rawData = getCotizacionData();
-        if (!rawData.cotizacion || !rawData.cotizacion.id) {
+        if (!rawData.cotizacion?.id) {
           notifications.error("Error", "No se pudo obtener los datos de la cotización");
           return;
         }
-        const exportData = exportService.prepareExportData(
-          rawData.cotizacion,
-          rawData.cliente,
-          rawData.items,
-          rawData.empresa
-        );
+        const exportData = exportService.prepareExportData(rawData.cotizacion, rawData.cliente, rawData.items, rawData.empresa);
         await exportService.exportCotizacion(exportData, "excel");
       } catch (error) {
-        console.error("Export Excel error:", error);
-        notifications.error(
-          "Error",
-          "Error al exportar Excel: " + (error instanceof Error ? error.message : "Error desconocido")
-        );
+        notifications.error("Error", "Error al exportar Excel: " + (error instanceof Error ? error.message : "Error desconocido"));
       }
     });
 
