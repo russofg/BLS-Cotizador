@@ -51,13 +51,13 @@ try {
     else if (rawEstado.includes("recha")) estadoNorm = "rechazada";
     else if (rawEstado.includes("vencid")) estadoNorm = "vencida";
     else if (rawEstado.includes("revis"))  estadoNorm = "revisada";
-    else if (rawEstado.includes("convert")) estadoNorm = "convertida";
+    else if (rawEstado.includes("convert") || rawEstado.includes("factur")) estadoNorm = "convertida";
 
     return {
       ...enrichedQuote,
       estado: estadoNorm,
       numero_display: QuoteHelper.generateQuoteNumber(
-        normalizedQuote,
+        { ...normalizedQuote, id: cotizacion.id },
         clientes.find(
           (c) => c.id === normalizedQuote.cliente_id || c.id === normalizedQuote.clienteId
         )
@@ -67,19 +67,19 @@ try {
     };
   });
 
-  // ── Tasa de conversión real: aprobadas / total (no sobre enviadas) ──────────
-  const aprobadas = cotizaciones.filter(q => q.estado === "aprobada").length;
-  tasaConversionReal = cotizaciones.length > 0 ? (aprobadas / cotizaciones.length) * 100 : 0;
+  // ── Tasa de conversión real: (aprobadas + facturadas) / total ──────────
+  const exitosas = cotizaciones.filter(q => q.estado === "aprobada" || q.estado === "convertida").length;
+  tasaConversionReal = cotizaciones.length > 0 ? (exitosas / cotizaciones.length) * 100 : 0;
 
-  // ── Total facturado de cotizaciones aprobadas ─────────────────────────────
+  // ── Total facturado de cotizaciones aprobadas y facturadas ─────────────────────────────
   totalFacturadoAprobadas = cotizaciones
-    .filter(q => q.estado === "aprobada")
+    .filter(q => q.estado === "aprobada" || q.estado === "convertida")
     .reduce((sum, q) => sum + Number(q.total || 0), 0);
 
-  // ── Top clientes por cotizaciones aprobadas ───────────────────────────────
+  // ── Top clientes por cotizaciones exitosas ───────────────────────────────
   const clienteMap = new Map<string, { nombre: string; empresa?: string; count: number; total: number }>();
   cotizaciones
-    .filter(q => q.estado === "aprobada")
+    .filter(q => q.estado === "aprobada" || q.estado === "convertida")
     .forEach(q => {
       const clienteId = q.cliente_id || q.clienteId;
       const cliente = clientes.find(c => c.id === clienteId);
@@ -111,6 +111,7 @@ function getStatusStyle(estado: string) {
   switch (estado) {
     case "aprobada":   return { badge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", dot: "bg-emerald-500", label: "Aprobada" };
     case "enviada":    return { badge: "bg-blue-500/10 text-blue-400 border-blue-500/20",          dot: "bg-blue-500",    label: "Enviada" };
+    case "pendiente":  return { badge: "bg-amber-500/10 text-amber-400 border-amber-500/20",       dot: "bg-amber-500",   label: "Pendiente" };
     case "rechazada":  return { badge: "bg-red-500/10 text-red-400 border-red-500/20",             dot: "bg-red-500",     label: "Rechazada" };
     case "vencida":    return { badge: "bg-orange-500/10 text-orange-400 border-orange-500/20",    dot: "bg-orange-500",  label: "Vencida" };
     case "revisada":   return { badge: "bg-amber-500/10 text-amber-400 border-amber-500/20",       dot: "bg-amber-500",   label: "Revisada" };
@@ -123,9 +124,11 @@ function getEstadoBarStyle(estado: string) {
   switch (estado) {
     case "aprobada":  return "bg-emerald-500";
     case "enviada":   return "bg-blue-500";
+    case "pendiente": return "bg-amber-500";
     case "rechazada": return "bg-red-500";
     case "vencida":   return "bg-orange-500";
     case "revisada":  return "bg-amber-500";
+    case "convertida": return "bg-violet-500";
     default:          return "bg-slate-500";
   }
 }
@@ -231,9 +234,11 @@ function getEstadoBarStyle(estado: string) {
                 let estadoKey = "borrador";
                 if (rawS.includes("aprob"))   estadoKey = "aprobada";
                 else if (rawS.includes("enviad")) estadoKey = "enviada";
+                else if (rawS.includes("pendien")) estadoKey = "pendiente";
                 else if (rawS.includes("recha")) estadoKey = "rechazada";
                 else if (rawS.includes("vencid")) estadoKey = "vencida";
                 else if (rawS.includes("revis"))  estadoKey = "revisada";
+                else if (rawS.includes("convert") || rawS.includes("factur")) estadoKey = "convertida";
                 const style = getStatusStyle(estadoKey);
                 return (
                   <div>

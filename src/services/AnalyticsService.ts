@@ -402,13 +402,23 @@ export class AnalyticsService {
   }
 
   /**
-   * Calcula cotizaciones por estado
+   * Calcula cotizaciones por estado con normalización
    */
   private static calculateQuotesByStatus(quotes: any[]): Array<{ status: string; count: number }> {
     const statusMap = new Map<string, number>();
     
     quotes.forEach(quote => {
-      const status = quote.estado || 'Borrador';
+      const raw = String(quote.estado || '').toLowerCase().trim();
+      let status = "Borrador";
+
+      if (raw.includes('aprob')) status = "Aprobada";
+      else if (raw.includes('enviad')) status = "Enviada";
+      else if (raw.includes('recha')) status = "Rechazada";
+      else if (raw.includes('vencid')) status = "Vencida";
+      else if (raw.includes('revis')) status = "Revisada";
+      else if (raw.includes('convert') || raw.includes('factur')) status = "Facturada";
+      else if (raw.includes('pendien')) status = "Pendiente";
+
       statusMap.set(status, (statusMap.get(status) || 0) + 1);
     });
 

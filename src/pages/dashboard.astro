@@ -169,34 +169,38 @@ try {
       <!-- Secondary Analysis: Distribución -->
       <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] p-8 flex flex-col justify-between">
         <div class="space-y-8">
-          <h3 class="text-xl font-bold tracking-tight text-white">Distribución por Categoría</h3>
+          <h3 class="text-xl font-bold tracking-tight text-white">¿Qué ofrecemos? (por categoría)</h3>
           <div class="space-y-6">
             
-            {analytics ? analytics.items.itemsByCategory.slice(0, 4).map((category: any, idx: number) => {
-              const maxCount = Math.max(...analytics.items.itemsByCategory.map((c: any) => c.count));
-              const percentage = Math.floor((category.count / maxCount) * 100);
+            {analytics ? (() => {
+              const totalItemsCount = analytics.items.itemsByCategory.reduce((acc: number, c: any) => acc + c.count, 0);
+              const topCategories = analytics.items.itemsByCategory.slice(0, 4);
               const colors = ['bg-primary-500', 'bg-primary-400', 'bg-gray-500', 'bg-gray-600'];
               
-              return (
-                <div class="space-y-2">
-                  <div class="flex justify-between text-xs font-bold uppercase tracking-wider">
-                    <span class="text-gray-400 truncate pr-4">{category.category}</span>
-                    <span class="text-white">{percentage}%</span>
+              return topCategories.map((category: any, idx: number) => {
+                const percentage = totalItemsCount > 0 ? Math.round((category.count / totalItemsCount) * 100) : 0;
+                
+                return (
+                  <div class="space-y-2">
+                    <div class="flex justify-between text-xs font-bold uppercase tracking-wider">
+                      <span class="text-gray-400 truncate pr-4">{category.category}</span>
+                      <span class="text-white">{percentage}%</span>
+                    </div>
+                    <div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+                      <div class={`h-full ${colors[idx % 4]} rounded-full shadow-premium`} style={`width: ${percentage}%`}></div>
+                    </div>
                   </div>
-                  <div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
-                    <div class={`h-full ${colors[idx % 4]} rounded-full shadow-premium`} style={`width: ${percentage}%`}></div>
-                  </div>
-                </div>
-              );
-            }) : (
+                );
+              });
+            })() : (
               <p class="text-gray-500 text-xs">Cargando...</p>
             )}
 
           </div>
         </div>
-        <button class="w-full mt-8 py-3 rounded-lg text-xs font-bold text-primary-400 hover:bg-primary-500/10 transition-colors border border-primary-500/20">
+        <a href="/items" class="w-full mt-8 py-3 rounded-lg text-xs font-bold text-primary-400 hover:bg-primary-500/10 transition-colors border border-primary-500/20 text-center block">
           Reporte Detallado de Ítems
-        </button>
+        </a>
       </div>
 
     </div>
@@ -231,10 +235,22 @@ try {
                 let statusBadge = "bg-gray-500/10 text-gray-400 border-gray-500/20";
                 let statusText = cotizacion.estado || "Borrador";
                 
-                if (s.includes('aprob')) statusBadge = "bg-green-500/10 text-green-400 border-green-500/20";
-                if (s.includes('enviad')) statusBadge = "bg-primary-500/10 text-primary-400 border-primary-500/20";
-                if (s.includes('recha')) statusBadge = "bg-red-500/10 text-red-400 border-red-500/20";
-                if (s.includes('pendien')) statusBadge = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+                if (s.includes('aprob')) {
+                  statusBadge = "bg-green-500/10 text-green-400 border-green-500/20";
+                  statusText = "Aprobada";
+                } else if (s.includes('enviad')) {
+                  statusBadge = "bg-primary-500/10 text-primary-400 border-primary-500/20";
+                  statusText = "Enviada";
+                } else if (s.includes('recha')) {
+                  statusBadge = "bg-red-500/10 text-red-400 border-red-500/20";
+                  statusText = "Rechazada";
+                } else if (s.includes('pendien')) {
+                  statusBadge = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+                  statusText = "Pendiente";
+                } else if (s.includes('convert') || s.includes('factur')) {
+                  statusBadge = "bg-violet-500/10 text-violet-400 border-violet-500/20";
+                  statusText = "Facturada";
+                }
                 
                 return (
                   <tr class="hover:bg-surface-container/50 transition-colors">

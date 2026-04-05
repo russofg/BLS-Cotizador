@@ -13,6 +13,7 @@ import { QuoteHelper } from "../utils/quoteHelpers";
 // Estados de cotización
 export enum QuoteStatus {
   BORRADOR = "borrador",
+  PENDIENTE = "pendiente",
   ENVIADA = "enviada",
   REVISADA = "revisada",
   APROBADA = "aprobada",
@@ -279,12 +280,12 @@ export class QuoteTrackingService {
         }),
       );
 
-      // Calcular tasa de conversión
-      const cotizacionesAprobadas = estadoCounts.get(QuoteStatus.APROBADA) || 0;
+      // Calcular tasa de conversión: (aprobadas + facturadas) / enviadas
+      const cotizacionesExitosas = (estadoCounts.get(QuoteStatus.APROBADA) || 0) + (estadoCounts.get(QuoteStatus.CONVERTIDA) || 0);
       const cotizacionesEnviadas = estadoCounts.get(QuoteStatus.ENVIADA) || 0;
       const conversionRate =
         cotizacionesEnviadas > 0
-          ? (cotizacionesAprobadas / cotizacionesEnviadas) * 100
+          ? (cotizacionesExitosas / cotizacionesEnviadas) * 100
           : 0;
 
       // Calcular tiempo promedio de aprobación
@@ -307,6 +308,7 @@ export class QuoteTrackingService {
         (q) =>
           q.fechaVencimiento < now &&
           q.estado !== QuoteStatus.APROBADA &&
+          q.estado !== QuoteStatus.CONVERTIDA &&
           q.estado !== QuoteStatus.RECHAZADA,
       ).length;
 
@@ -321,6 +323,7 @@ export class QuoteTrackingService {
             diasHastaVencimiento <= 7 &&
             diasHastaVencimiento > 0 &&
             q.estado !== QuoteStatus.APROBADA &&
+            q.estado !== QuoteStatus.CONVERTIDA &&
             q.estado !== QuoteStatus.RECHAZADA
           );
         })
@@ -333,6 +336,7 @@ export class QuoteTrackingService {
             q.proximoSeguimiento &&
             q.proximoSeguimiento <= now &&
             q.estado !== QuoteStatus.APROBADA &&
+            q.estado !== QuoteStatus.CONVERTIDA &&
             q.estado !== QuoteStatus.RECHAZADA,
         )
         .slice(0, 10);
@@ -467,7 +471,8 @@ export class QuoteTrackingService {
     nuevoEstado: QuoteStatus,
   ): boolean {
     const transicionesValidas: Record<QuoteStatus, QuoteStatus[]> = {
-      [QuoteStatus.BORRADOR]: [QuoteStatus.ENVIADA, QuoteStatus.RECHAZADA],
+      [QuoteStatus.BORRADOR]: [QuoteStatus.PENDIENTE, QuoteStatus.ENVIADA, QuoteStatus.RECHAZADA],
+      [QuoteStatus.PENDIENTE]: [QuoteStatus.ENVIADA, QuoteStatus.RECHAZADA],
       [QuoteStatus.ENVIADA]: [
         QuoteStatus.REVISADA,
         QuoteStatus.RECHAZADA,
@@ -543,12 +548,15 @@ export class QuoteTrackingService {
       estado: (() => {
         const s = String(data.estado || "").toLowerCase();
         if (s.includes("borrador")) return QuoteStatus.BORRADOR;
-        if (s.includes("enviad")) return QuoteStatus.ENVIADA;
-        if (s.includes("aprob")) return QuoteStatus.APROBADA;
-        if (s.includes("recha")) return QuoteStatus.RECHAZADA;
-        if (s.includes("revis")) return QuoteStatus.REVISADA;
-        if (s.includes("vencid")) return QuoteStatus.VENCIDA;
-        if (s.includes("convert")) return QuoteStatus.CONVERTIDA;
+        if (s.includes("enviad"))   return QuoteStatus.ENVIADA;
+        if (s.includes("aprob"))    return QuoteStatus.APROBADA;
+        if (s.includes("recha"))    return QuoteStatus.RECHAZADA;
+        if (s.includes("revis"))    return QuoteStatus.REVISADA;
+        if (s.includes("vencid"))   return QuoteStatus.VENCIDA;
+        if (s.includes("convert") || s.includes("factur")) return QuoteStatus.CONVERTIDA;
+        if (s.includes("pendien"))  return QuoteStatus.PENDIENTE;
+        if (s.includes("enviad"))   return QuoteStatus.ENVIADA;
+        if (s.includes("borrad"))   return QuoteStatus.BORRADOR;
         return (data.estado as QuoteStatus) || QuoteStatus.BORRADOR;
       })(),
       fechaCreacion,
@@ -592,6 +600,7 @@ export class QuoteTrackingService {
   static getStatusDisplayName(status: QuoteStatus): string {
     const statusNames: Record<QuoteStatus, string> = {
       [QuoteStatus.BORRADOR]: "Borrador",
+      [QuoteStatus.PENDIENTE]: "Pendiente",
       [QuoteStatus.ENVIADA]: "Enviada",
       [QuoteStatus.REVISADA]: "Revisada",
       [QuoteStatus.APROBADA]: "Aprobada",
@@ -608,6 +617,7 @@ export class QuoteTrackingService {
   static getStatusColor(status: QuoteStatus): string {
     const statusColors: Record<QuoteStatus, string> = {
       [QuoteStatus.BORRADOR]: "gray",
+      [QuoteStatus.PENDIENTE]: "amber",
       [QuoteStatus.ENVIADA]: "blue",
       [QuoteStatus.REVISADA]: "yellow",
       [QuoteStatus.APROBADA]: "green",

@@ -421,47 +421,48 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
             : `<div class="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-2xl bg-gradient-to-br from-[var(--color-surface-container-highest)] to-[var(--color-surface-container)] flex items-center justify-center text-[var(--color-primary)] font-black text-2xl group-hover:scale-105 transition-transform border border-[var(--color-outline-variant)] shadow-inner">${initials}</div>`;
 
           return `
-          <!-- Client Card -->
-          <div class="bg-[var(--color-surface-container-low)] p-6 sm:p-8 rounded-xl border border-[var(--color-outline-variant)] shadow-[0_12px_32px_rgba(0,0,0,0.3)] flex flex-col sm:flex-row items-center sm:items-start gap-6 hover:bg-[var(--color-surface-container)] transition-all cursor-default group relative">
-            ${avatarHtml}
-            
-            <div class="flex-1 w-full">
-              <div class="flex flex-col sm:flex-row justify-between items-center sm:items-start gap-3 sm:gap-0 text-center sm:text-left">
-                <div>
-                  <h3 class="text-xl font-black text-[var(--color-on-surface)]">${client.nombre || "Sin nombre"}</h3>
-                  <p class="text-[var(--color-primary)] font-bold text-sm tracking-wide">${client.empresa || "Sin empresa"}</p>
-                </div>
-                <!-- Status Badge -->
-                <span class="px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border ${activeBadgeClass}">
-                  ${activeBadgeText}
-                </span>
-              </div>
+          <div class="bg-[var(--color-surface-container-low)] p-6 sm:p-8 rounded-xl border border-[var(--color-outline-variant)] shadow-[0_12px_32px_rgba(0,0,0,0.3)] hover:bg-[var(--color-surface-container)] transition-all group relative overflow-hidden">
+            <a href="/clients/${client.id}" class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+              ${avatarHtml}
               
-              <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="flex items-center gap-3 text-[var(--color-on-surface-variant)] justify-center sm:justify-start">
-                  <span class="material-symbols-outlined text-sm opacity-70">mail</span>
-                  <span class="text-xs truncate max-w-[140px]" title="${client.email || ''}">${client.email || "—"}</span>
+              <div class="flex-1 w-full text-center sm:text-left">
+                <div class="flex flex-col sm:flex-row justify-between items-center sm:items-start gap-3 sm:gap-0">
+                  <div>
+                    <h3 class="text-xl font-black text-[var(--color-on-surface)] group-hover:text-[var(--color-primary)] transition-colors">${client.nombre || "Sin nombre"}</h3>
+                    <p class="text-[var(--color-primary)] font-bold text-sm tracking-wide opacity-80">${client.empresa || "Sin empresa"}</p>
+                  </div>
+                  <!-- Status Badge -->
+                  <span class="px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border ${activeBadgeClass}">
+                    ${activeBadgeText}
+                  </span>
                 </div>
-                <div class="flex items-center gap-3 text-[var(--color-on-surface-variant)] justify-center sm:justify-start">
-                  <span class="material-symbols-outlined text-sm opacity-70">phone</span>
-                  <span class="text-xs">${client.telefono || "—"}</span>
-                </div>
-              </div>
-              
-              <div class="mt-6 pt-5 border-t border-[var(--color-outline-variant)]/50 flex justify-between items-center w-full">
-                <p class="text-[10px] font-black text-[var(--color-on-surface-variant)] uppercase tracking-widest">
-                  ${client.cotizaciones || 0} Cotizaciones
-                </p>
                 
-                <!-- Silent Actions that reveal on hover on desktop, always visible subtly on mobile -->
-                <div class="flex items-center gap-4 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button class="edit-client flex items-center text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors" data-id="${client.id}" title="Editar Cliente">
-                      <span class="material-symbols-outlined text-xl pointer-events-none">edit_document</span>
-                  </button>
-                  <button class="delete-client flex items-center text-[var(--color-on-surface-variant)] hover:text-red-500 transition-colors" data-id="${client.id}" title="Borrar Cliente">
-                      <span class="material-symbols-outlined text-xl pointer-events-none">delete</span>
-                  </button>
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="flex items-center gap-3 text-[var(--color-on-surface-variant)] justify-center sm:justify-start">
+                    <span class="material-symbols-outlined text-sm opacity-70">mail</span>
+                    <span class="text-xs truncate max-w-[140px]" title="${client.email || ''}">${client.email || "—"}</span>
+                  </div>
+                  <div class="flex items-center gap-3 text-[var(--color-on-surface-variant)] justify-center sm:justify-start">
+                    <span class="material-symbols-outlined text-sm opacity-70">phone</span>
+                    <span class="text-xs">${client.telefono || "—"}</span>
+                  </div>
                 </div>
+              </div>
+            </a>
+            
+            <div class="mt-6 pt-5 border-t border-[var(--color-outline-variant)]/50 flex justify-between items-center w-full">
+              <p class="text-[10px] font-black text-[var(--color-on-surface-variant)] uppercase tracking-widest">
+                ${client.cotizaciones || 0} Cotizaciones
+              </p>
+              
+              <!-- Silent Actions that reveal on hover on desktop, always visible subtly on mobile -->
+              <div class="flex items-center gap-4 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                <button class="edit-client flex items-center text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors" data-id="${client.id}" title="Editar Cliente">
+                    <span class="material-symbols-outlined text-xl pointer-events-none">edit_document</span>
+                </button>
+                <button class="delete-client flex items-center text-[var(--color-on-surface-variant)] hover:text-red-500 transition-colors" data-id="${client.id}" title="Borrar Cliente">
+                    <span class="material-symbols-outlined text-xl pointer-events-none">delete</span>
+                </button>
               </div>
             </div>
           </div>
@@ -845,6 +846,15 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
             hideModal();
           }
         });
+
+      // Handle edit from URL query param
+      const urlParams = new URLSearchParams(window.location.search);
+      const editId = urlParams.get("edit");
+      if (editId) {
+        // Use a small timeout to ensure the clients are loaded/rendered if needed, 
+        // though editClient will search in allClients which should be ready.
+        setTimeout(() => editClient(editId), 100);
+      }
     });
   </script>
 </Dashboard>

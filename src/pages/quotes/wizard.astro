@@ -652,6 +652,24 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
     // Load data for the current step (step 1 by default)
     loadStepData(currentStep);
 
+    // Seleccionar cliente automáticamente si viene por URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientId = urlParams.get('clientId');
+    if (clientId) {
+      console.log("🔗 Detectado clientId en URL:", clientId);
+      const checkClientSelect = setInterval(() => {
+        const select = document.getElementById("wizard-cliente_id") as HTMLSelectElement;
+        if (select && select.options.length > 1) {
+          select.value = clientId;
+          console.log("✅ Cliente preseleccionado automáticamente");
+          clearInterval(checkClientSelect);
+        }
+      }, 100);
+      
+      // Limpiar el intervalo después de 5 segundos si no se encuentra
+      setTimeout(() => clearInterval(checkClientSelect), 5000);
+    }
+
     // For debugging: Add a quick way to test step 2
     // Check if URL has a hash for step
     const hash = window.location.hash;

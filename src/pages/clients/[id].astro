@@ -1,0 +1,343 @@
+---
+import Dashboard from "../../layouts/Dashboard.astro";
+import ScrollbarStyles from "../../components/ScrollbarStyles.astro";
+import { clienteService, cotizacionService } from "../../utils/database";
+import { QuoteHelper } from "../../utils/quoteHelpers";
+import { QuoteTrackingService, QuoteStatus } from "../../services/QuoteTrackingService";
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect("/clients");
+}
+
+let client: any = null;
+let quotes: any[] = [];
+let error = "";
+
+try {
+  client = await clienteService.getById(id);
+  if (!client) {
+    error = "Cliente no encontrado";
+  } else {
+    const allQuotes = await cotizacionService.getAll();
+    // Filter quotes by client ID (supporting both field names for compatibility)
+    quotes = allQuotes.filter(q => q.clienteId === id || (q as any).cliente_id === id);
+  }
+} catch (err) {
+  console.error("Error loading client details:", err);
+  error = "Error al cargar los detalles del cliente";
+}
+
+// Calculate Stats
+const normalizedQuotes = quotes.map(q => ({
+  ...q,
+  displayNumero: QuoteHelper.getDisplayQuoteNumber(q),
+  normalizedEstado: String(q.estado || "").toLowerCase().trim()
+}));
+
+const totalQuotes = normalizedQuotes.length;
+const approvedQuotes = normalizedQuotes.filter(q => 
+  q.normalizedEstado.includes("aprob") || 
+  q.normalizedEstado.includes("convert") || 
+  q.normalizedEstado.includes("factur")
+).length;
+
+const facturadas = normalizedQuotes.filter(q => 
+  q.normalizedEstado.includes("convert") || 
+  q.normalizedEstado.includes("factur")
+);
+
+const totalFacturado = facturadas.reduce((sum, q) => sum + (Number(q.total) || 0), 0);
+const expiredQuotes = normalizedQuotes.filter(q => q.normalizedEstado.includes("vencid")).length;
+
+const conversionRate = totalQuotes > 0 ? Math.round((approvedQuotes / totalQuotes) * 100 * 10) / 10 : 0;
+
+function getStatusBadge(estado: string) {
+  const s = String(estado || "").toLowerCase();
+  if (s.includes("aprob"))   return { badge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", dot: "bg-emerald-500", label: "Aprobada" };
+  if (s.includes("enviad"))  return { badge: "bg-blue-500/10 text-blue-400 border-blue-500/20",          dot: "bg-blue-500",    label: "Enviada" };
+  if (s.includes("recha"))   return { badge: "bg-red-500/10 text-red-400 border-red-500/20",             dot: "bg-red-500",     label: "Rechazada" };
+  if (s.includes("vencid"))  return { badge: "bg-orange-500/10 text-orange-400 border-orange-500/20",    dot: "bg-orange-500",  label: "Vencida" };
+  if (s.includes("revis"))   return { badge: "bg-amber-500/10 text-amber-400 border-amber-500/20",       dot: "bg-amber-500",   label: "Revisada" };
+  if (s.includes("convert") || s.includes("factur")) return { badge: "bg-violet-500/10 text-violet-400 border-violet-500/20",    dot: "bg-violet-500",  label: "Facturada" };
+  return { badge: "bg-slate-500/10 text-slate-400 border-slate-500/20", dot: "bg-slate-500", label: "Borrador" };
+}
+
+const initials = client?.nombre
+  ? client.nombre
+      .split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase()
+  : "CL";
+---
+
+<Dashboard title={`Historial · ${client?.nombre ?? "Cliente"} - BLS Cotizador`} activeSection="clients">
+  <ScrollbarStyles />
+  
+  <div class="space-y-8 pb-20">
+    <!-- Header & Navigation -->
+    <section class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      <div>
+        <nav class="flex items-center gap-2 mb-3">
+          <a href="/clients" class="text-[10px] font-bold tracking-widest text-[var(--color-on-surface-variant)] uppercase hover:text-[var(--color-primary)] transition-colors">Clientes</a>
+          <span class="material-symbols-outlined text-xs text-[var(--color-outline)]">chevron_right</span>
+          <span class="text-[10px] font-bold tracking-widest text-[var(--color-primary)] uppercase">Historial del Cliente</span>
+        </nav>
+        <div class="flex items-center gap-6">
+          {client?.imagenBase64 ? (
+            <img src={client.imagenBase64} alt={client.nombre} class="w-16 h-16 rounded-2xl object-cover border border-[var(--color-outline-variant)] shadow-lg" />
+          ) : (
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-surface-container-highest)] to-[var(--color-surface-container)] flex items-center justify-center text-[var(--color-primary)] font-black text-xl border border-[var(--color-outline-variant)] shadow-inner">
+              {initials}
+            </div>
+          )}
+          <div>
+            <h2 class="text-4xl font-black tracking-tight text-[var(--color-on-surface)] leading-tight">{client?.nombre || "Cargando..."}</h2>
+            <p class="text-[var(--color-primary)] font-bold text-lg tracking-wide opacity-90">{client?.empresa || "Cliente Individual"}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <a href="/clients" class="flex items-center gap-2 px-5 py-3 rounded-xl font-bold border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)] transition-all">
+          <span class="material-symbols-outlined text-lg">arrow_back</span>
+          Volver
+        </a>
+        <button id="edit-client-btn" class="flex items-center gap-2 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-[0_8px_16px_rgba(59,130,246,0.3)] transition-all hover:scale-[1.02]">
+          <span class="material-symbols-outlined text-lg">edit</span>
+          Editar Perfil
+        </button>
+      </div>
+    </section>
+
+    {error && (
+      <div class="bg-red-500/10 border border-red-500/20 text-red-400 p-6 rounded-2xl flex items-center gap-4">
+        <span class="material-symbols-outlined text-2xl">error</span>
+        <p class="font-bold">{error}</p>
+      </div>
+    )}
+
+    {client && (
+      <>
+        <!-- Stats Grid (Bento Style) -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="bg-[var(--color-surface-container-low)] p-6 rounded-2xl border border-[var(--color-outline-variant)]/50 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+            <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-2">Total Cotizaciones</p>
+            <div class="flex items-baseline gap-2">
+              <span class="text-4xl font-black text-[var(--color-on-surface)]">{totalQuotes}</span>
+              <span class="text-xs font-bold text-[var(--color-on-surface-variant)]">Propuestas</span>
+            </div>
+          </div>
+          
+          <div class="bg-[var(--color-surface-container-low)] p-6 rounded-2xl border border-[var(--color-outline-variant)]/50 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+            <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-2">Tasa de Conversión</p>
+            <div class="flex items-baseline gap-2">
+              <span class="text-4xl font-black text-emerald-400">{conversionRate}%</span>
+              <span class="text-xs font-bold text-emerald-500/80">Aprobadas</span>
+            </div>
+            <div class="mt-3 w-full h-1 bg-[var(--color-surface-container-highest)] rounded-full overflow-hidden">
+              <div class="h-full bg-emerald-400 rounded-full" style={`width: ${conversionRate}%`}></div>
+            </div>
+          </div>
+          
+          <div class="bg-[var(--color-surface-container-low)] p-6 rounded-2xl border border-[var(--color-outline-variant)]/50 shadow-[0_8px_32_rgba(0,0,0,0.3)]">
+            <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-2">Total Facturado</p>
+            <div class="flex items-baseline gap-1">
+              <span class="text-sm font-bold text-orange-400">$</span>
+              <span class="text-3xl font-black text-orange-400">{totalFacturado.toLocaleString('es-AR')}</span>
+            </div>
+            <p class="text-[9px] font-bold text-[var(--color-on-surface-variant)] uppercase mt-1">Solo Aprobadas</p>
+          </div>
+          
+          <div class="bg-[var(--color-surface-container-low)] p-6 rounded-2xl border border-[var(--color-outline-variant)]/50 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+            <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-2">Vencidas</p>
+            <div class="flex items-baseline gap-2">
+              <span class="text-4xl font-black text-red-400">{expiredQuotes}</span>
+              <span class="text-xs font-bold text-red-500/80">Caducadas</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Info Column -->
+          <div class="space-y-6">
+            <div class="bg-[var(--color-surface-container-low)] rounded-2xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.3)] overflow-hidden">
+              <div class="px-6 py-4 border-b border-[var(--color-outline-variant)]/30 bg-[var(--color-surface-container)]/50 flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg text-[var(--color-primary)]">contact_page</span>
+                <h3 class="font-black text-[var(--color-on-surface)] uppercase tracking-widest text-xs">Información de Contacto</h3>
+              </div>
+              <div class="p-6 space-y-6">
+                <div>
+                  <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-2">Email Corporativo</p>
+                  <a href={`mailto:${client.email}`} class="flex items-center gap-3 text-[var(--color-on-surface)] hover:text-[var(--color-primary)] transition-colors group">
+                    <span class="material-symbols-outlined text-xl opacity-50 group-hover:opacity-100 transition-opacity">mail</span>
+                    <span class="font-bold underline decoration-[var(--color-outline-variant)] underline-offset-4">{client.email || "No registrado"}</span>
+                  </a>
+                </div>
+                <div>
+                  <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-2">Teléfono / WhatsApp</p>
+                  <a href={`tel:${client.telefono}`} class="flex items-center gap-3 text-[var(--color-on-surface)] hover:text-[var(--color-primary)] transition-colors group">
+                    <span class="material-symbols-outlined text-xl opacity-50 group-hover:opacity-100 transition-opacity">phone</span>
+                    <span class="font-bold">{client.telefono || "No registrado"}</span>
+                  </a>
+                </div>
+                {client.direccion && (
+                  <div>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-2">Dirección</p>
+                    <div class="flex items-start gap-3 text-[var(--color-on-surface)]">
+                      <span class="material-symbols-outlined text-xl opacity-50 mt-0.5">location_on</span>
+                      <span class="text-sm font-medium leading-relaxed">{client.direccion}</span>
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-2">Cliente desde</p>
+                  <div class="flex items-center gap-3 text-[var(--color-on-surface)]">
+                    <span class="material-symbols-outlined text-xl opacity-50">calendar_month</span>
+                    <span class="text-sm font-bold">{new Date(client.createdAt).toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="bg-[var(--color-surface-container-low)] rounded-2xl border border-[var(--color-outline-variant)]/50 p-6 space-y-4">
+              <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-2">Acciones Rápidas</p>
+              <a href={`/quotes/wizard?clientId=${id}`} class="flex items-center justify-between w-full p-4 rounded-xl border border-blue-500/30 text-blue-400 bg-blue-500/5 hover:bg-blue-500/10 transition-all group" id="new-quote-btn">
+                <div class="flex items-center gap-3 font-bold text-sm">
+                  <span class="material-symbols-outlined text-xl">add_box</span>
+                  Nueva Cotización
+                </div>
+                <span class="material-symbols-outlined text-lg opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0">chevron_right</span>
+              </a>
+              <button id="share-profile-btn" class="flex items-center justify-between w-full p-4 rounded-xl border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)] transition-all group">
+                <div class="flex items-center gap-3 font-bold text-sm">
+                  <span class="material-symbols-outlined text-xl">share</span>
+                  Compartir Perfil
+                </div>
+                <span class="material-symbols-outlined text-lg opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0">chevron_right</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- History Table -->
+          <div class="lg:col-span-2">
+            <div class="bg-[var(--color-surface-container-low)] rounded-2xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.3)] overflow-hidden">
+              <div class="px-6 py-4 border-b border-[var(--color-outline-variant)]/30 bg-[var(--color-surface-container)]/50 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-lg text-[var(--color-primary)]">history</span>
+                  <h3 class="font-black text-[var(--color-on-surface)] uppercase tracking-widest text-xs">Historial de Cotizaciones</h3>
+                </div>
+                <span class="text-[10px] font-black bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20 px-2.5 py-1 rounded-full">{quotes.length} en total</span>
+              </div>
+              
+              <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                  <thead>
+                    <tr class="bg-[var(--color-surface-container)]/30">
+                      <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] text-center">Nº</th>
+                      <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">Evento / Título</th>
+                      <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] text-center">Estado</th>
+                      <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] text-right">Monto Total</th>
+                      <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] text-center">Opciones</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-[var(--color-outline-variant)]/20">
+                    {normalizedQuotes.length === 0 ? (
+                      <tr>
+                        <td colspan="5" class="px-6 py-20 text-center">
+                          <span class="material-symbols-outlined text-5xl opacity-20 block mb-3">description</span>
+                          <p class="text-[var(--color-on-surface-variant)] font-bold text-sm tracking-wide italic">No hay historial para este cliente.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      normalizedQuotes.map((quote) => {
+                        const status = getStatusBadge(quote.estado);
+                        return (
+                          <tr class="hover:bg-[var(--color-surface-container)]/40 transition-colors group">
+                            <td class="px-6 py-5 text-center">
+                              <span class="font-mono text-xs font-black text-[var(--color-on-surface)] group-hover:text-[var(--color-primary)] transition-colors">
+                                {quote.displayNumero}
+                              </span>
+                            </td>
+                            <td class="px-6 py-5">
+                              <p class="text-sm font-black text-[var(--color-on-surface)]">{quote.titulo}</p>
+                              <p class="text-[10px] text-[var(--color-on-surface-variant)] font-bold uppercase tracking-widest mt-1">
+                                {new Date(quote.fecha).toLocaleDateString('es-AR')}
+                              </p>
+                            </td>
+                            <td class="px-6 py-5 text-center">
+                              <div class="flex items-center justify-center gap-2">
+                                <span class={`w-1.5 h-1.5 rounded-full ${status.dot}`}></span>
+                                <span class={`px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-full border ${status.badge}`}>
+                                  {status.label}
+                                </span>
+                              </div>
+                            </td>
+                            <td class="px-6 py-5 text-right">
+                              <span class="font-black text-[var(--color-on-surface)]">
+                                <span class="text-xs font-medium mr-0.5 opacity-50">$</span>
+                                {quote.total.toLocaleString('es-AR')}
+                              </span>
+                            </td>
+                            <td class="px-6 py-5 text-center">
+                              <div class="flex items-center justify-center gap-2">
+                                <a href={`/quotes/view/${quote.id}`} class="p-2 rounded-lg text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all" title="Ver Detalle">
+                                  <span class="material-symbols-outlined text-xl">visibility</span>
+                                </a>
+                                <a href={`/quotes/tracking/${quote.id}`} class="p-2 rounded-lg text-[var(--color-on-surface-variant)] hover:text-blue-400 hover:bg-blue-400/10 transition-all" title="Seguimiento">
+                                  <span class="material-symbols-outlined text-xl">monitoring</span>
+                                </a>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    )}
+  </div>
+
+  <script>
+    import { notifications } from "../../utils/notifications.js";
+
+    // Editar cliente
+    const editBtn = document.getElementById('edit-client-btn');
+    if (editBtn) {
+      editBtn.addEventListener('click', () => {
+        const pathParts = window.location.pathname.split('/');
+        const clientId = pathParts[pathParts.length - 1];
+        window.location.href = `/clients?edit=${clientId}`;
+      });
+    }
+
+    // Compartir perfil
+    const shareBtn = document.getElementById('share-profile-btn');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', () => {
+        const name = document.querySelector('h2')?.textContent || '';
+        const company = document.querySelector('p.text-lg')?.textContent || '';
+        const email = document.querySelector('a[href^="mailto:"] span.font-bold')?.textContent || '';
+        const phone = document.querySelector('a[href^="tel:"] span.font-bold')?.textContent || '';
+        
+        const textToCopy = `📋 *Datos de Cliente*\n\n👤 *Nombre:* ${name}\n🏢 *Empresa:* ${company}\n📧 *Email:* ${email}\n📞 *Tel:* ${phone}`;
+        
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          notifications.success("Datos copiados al portapapeles");
+        }).catch(err => {
+          console.error("Error al copiar:", err);
+          notifications.error("No se pudo copiar la información");
+        });
+      });
+    }
+  </script>
+</Dashboard>
