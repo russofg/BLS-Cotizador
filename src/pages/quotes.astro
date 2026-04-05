@@ -3,65 +3,63 @@ import Dashboard from "../layouts/Dashboard.astro";
 import { cotizacionService, clienteService } from "../utils/database";
 import { DateHelper } from "../utils/dateHelpers";
 import { QuoteHelper } from "../utils/quoteHelpers";
-import PageHeader from "../components/ui/PageHeader.astro";
-import Card from "../components/ui/Card.astro";
-import StatCard from "../components/ui/StatCard.astro";
-import Button from "../components/ui/Button.astro";
-import Badge from "../components/ui/Badge.astro";
 import ScrollbarStyles from "../components/ScrollbarStyles.astro";
 import {
   QuoteTrackingService,
   QuoteStatus,
 } from "../services/QuoteTrackingService";
 
-// Usar la función centralizada de formateo de fechas
 const safeFormatDate = DateHelper.safeFormatDate;
 
-// Obtener todas las cotizaciones y clientes
 let cotizaciones: any[] = [];
 let clientes: any[] = [];
 let trackingStats: any = null;
 let error = "";
 
+// ── Computed metrics ──────────────────────────────────────────────────────────
+let totalFacturadoAprobadas = 0;
+let topClientes: Array<{ nombre: string; empresa?: string; count: number; total: number }> = [];
+let tasaConversionReal = 0;
+
 try {
   cotizaciones = await cotizacionService.getAll();
   clientes = await clienteService.getAll();
 
-  // Cargar estadísticas de seguimiento
   try {
     trackingStats = await QuoteTrackingService.getTrackingStats();
   } catch (trackingError) {
     console.warn("Error loading tracking stats:", trackingError);
-    // Continuar sin estadísticas de seguimiento
   }
 
-  // Enriquecer cotizaciones con información del cliente usando utilidades centralizadas
   cotizaciones = cotizaciones.map((cotizacion) => {
     const normalizedQuote = QuoteHelper.normalizeQuoteData(cotizacion);
-    const enrichedQuote = QuoteHelper.enrichQuoteWithClient(
-      normalizedQuote,
-      clientes
-    );
+    const enrichedQuote = QuoteHelper.enrichQuoteWithClient(normalizedQuote, clientes);
 
-    // Determinar qué fecha mostrar: priorizar fecha del evento sobre fecha de creación
     const fechaParaMostrar =
       normalizedQuote.fechaEvento ||
       normalizedQuote.fecha_evento ||
       normalizedQuote.created_at ||
       normalizedQuote.createdAt;
 
-    const esEventoDate = !!(
-      normalizedQuote.fechaEvento || normalizedQuote.fecha_evento
-    );
+    const esEventoDate = !!(normalizedQuote.fechaEvento || normalizedQuote.fecha_evento);
+
+    // Normalize estado defensively
+    const rawEstado = String(cotizacion.estado || "").toLowerCase();
+    let estadoNorm = "borrador";
+    if (rawEstado.includes("aprob"))   estadoNorm = "aprobada";
+    else if (rawEstado.includes("enviad")) estadoNorm = "enviada";
+    else if (rawEstado.includes("recha")) estadoNorm = "rechazada";
+    else if (rawEstado.includes("vencid")) estadoNorm = "vencida";
+    else if (rawEstado.includes("revis"))  estadoNorm = "revisada";
+    else if (rawEstado.includes("convert")) estadoNorm = "convertida";
 
     return {
       ...enrichedQuote,
+      estado: estadoNorm,
       numero_display: QuoteHelper.generateQuoteNumber(
         normalizedQuote,
         clientes.find(
-          (c) =>
-            c.id === normalizedQuote.cliente_id ||
-            c.id === normalizedQuote.clienteId
+          (c) => c.id === normalizedQuote.cliente_id || c.id === normalizedQuote.clienteId
         )
       ),
       fecha_display: safeFormatDate(fechaParaMostrar),
@@ -69,296 +67,383 @@ try {
     };
   });
 
+  // ── Tasa de conversión real: aprobadas / total (no sobre enviadas) ──────────
+  const aprobadas = cotizaciones.filter(q => q.estado === "aprobada").length;
+  tasaConversionReal = cotizaciones.length > 0 ? (aprobadas / cotizaciones.length) * 100 : 0;
+
+  // ── Total facturado de cotizaciones aprobadas ─────────────────────────────
+  totalFacturadoAprobadas = cotizaciones
+    .filter(q => q.estado === "aprobada")
+    .reduce((sum, q) => sum + Number(q.total || 0), 0);
+
+  // ── Top clientes por cotizaciones aprobadas ───────────────────────────────
+  const clienteMap = new Map<string, { nombre: string; empresa?: string; count: number; total: number }>();
+  cotizaciones
+    .filter(q => q.estado === "aprobada")
+    .forEach(q => {
+      const clienteId = q.cliente_id || q.clienteId;
+      const cliente = clientes.find(c => c.id === clienteId);
+      if (!clienteId) return;
+      if (!clienteMap.has(clienteId)) {
+        clienteMap.set(clienteId, {
+          nombre: cliente?.nombre || q.cliente_nombre || "Sin nombre",
+          empresa: cliente?.empresa,
+          count: 0,
+          total: 0,
+        });
+      }
+      const entry = clienteMap.get(clienteId)!;
+      entry.count++;
+      entry.total += Number(q.total || 0);
+    });
+  topClientes = Array.from(clienteMap.values())
+    .sort((a, b) => b.count - a.count || b.total - a.total)
+    .slice(0, 5);
+
   console.log("Cotizaciones cargadas:", cotizaciones.length);
 } catch (e) {
   error = "Error al cargar las cotizaciones";
   console.error("Error loading quotes:", e);
 }
+
+// ── Helpers para el estado visual ─────────────────────────────────────────────
+function getStatusStyle(estado: string) {
+  switch (estado) {
+    case "aprobada":   return { badge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", dot: "bg-emerald-500", label: "Aprobada" };
+    case "enviada":    return { badge: "bg-blue-500/10 text-blue-400 border-blue-500/20",          dot: "bg-blue-500",    label: "Enviada" };
+    case "rechazada":  return { badge: "bg-red-500/10 text-red-400 border-red-500/20",             dot: "bg-red-500",     label: "Rechazada" };
+    case "vencida":    return { badge: "bg-orange-500/10 text-orange-400 border-orange-500/20",    dot: "bg-orange-500",  label: "Vencida" };
+    case "revisada":   return { badge: "bg-amber-500/10 text-amber-400 border-amber-500/20",       dot: "bg-amber-500",   label: "Revisada" };
+    case "convertida": return { badge: "bg-violet-500/10 text-violet-400 border-violet-500/20",    dot: "bg-violet-500",  label: "Convertida" };
+    default:           return { badge: "bg-slate-500/10 text-slate-400 border-slate-500/20",       dot: "bg-slate-500",   label: "Borrador" };
+  }
+}
+
+function getEstadoBarStyle(estado: string) {
+  switch (estado) {
+    case "aprobada":  return "bg-emerald-500";
+    case "enviada":   return "bg-blue-500";
+    case "rechazada": return "bg-red-500";
+    case "vencida":   return "bg-orange-500";
+    case "revisada":  return "bg-amber-500";
+    default:          return "bg-slate-500";
+  }
+}
 ---
 
-<Dashboard title="Cotizaciones">
+<Dashboard title="Cotizaciones - BLS Cotizador" activeSection="quotes">
   <ScrollbarStyles />
-  <div class="space-y-6 pb-6">
-    <!-- Header -->
-    <PageHeader
-      title="Cotizaciones"
-      subtitle="Gestiona todas las cotizaciones de tu negocio"
-    >
-      <div slot="actions" class="flex space-x-3">
-        <Button href="/quotes/wizard" variant="primary" size="md">
-          <span class="flex items-center">
-            <span class="mr-1">➕</span> Nueva Cotización
-          </span>
-        </Button>
+  <div class="space-y-6 pb-12">
+
+    <!-- ── Header ─────────────────────────────────────────────────────────── -->
+    <section class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
+      <div>
+        <nav class="flex items-center gap-2 mb-2">
+          <span class="text-[10px] font-bold tracking-widest text-[var(--color-on-surface-variant)] uppercase">Centro de Negocio</span>
+          <span class="material-symbols-outlined text-xs text-[var(--color-outline)]">chevron_right</span>
+          <span class="text-[10px] font-bold tracking-widest text-[var(--color-primary)] uppercase">Historial de Cotizaciones</span>
+        </nav>
+        <h2 class="text-4xl font-black tracking-tight text-[var(--color-on-surface)]">Cotizaciones</h2>
+        <p class="text-[var(--color-on-surface-variant)] mt-2 text-base">Gestión y seguimiento de todas tus propuestas comerciales.</p>
       </div>
-    </PageHeader>
-
-    {
-      error && (
-        <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded">
-          {error}
+      <div class="flex items-center gap-3">
+        <!-- Dollar widget: fetched client-side to avoid SSR delays -->
+        <div id="dolar-widget" class="hidden sm:flex items-center gap-3 bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)]/50 rounded-xl px-4 py-2.5 text-xs">
+          <span class="material-symbols-outlined text-base text-amber-400">monetization_on</span>
+          <div class="flex gap-3">
+            <div class="flex flex-col items-center">
+              <span class="text-[9px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">Oficial</span>
+              <span id="dolar-oficial" class="font-black text-[var(--color-on-surface)]">—</span>
+            </div>
+            <div class="w-px bg-[var(--color-outline-variant)]"></div>
+            <div class="flex flex-col items-center">
+              <span class="text-[9px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">MEP</span>
+              <span id="dolar-mep" class="font-black text-[var(--color-on-surface)]">—</span>
+            </div>
+            <div class="w-px bg-[var(--color-outline-variant)]"></div>
+            <div class="flex flex-col items-center">
+              <span class="text-[9px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">Blue</span>
+              <span id="dolar-blue" class="font-black text-blue-400">—</span>
+            </div>
+          </div>
         </div>
-      )
-    }
+        <a
+          href="/quotes/wizard"
+          class="flex items-center gap-2 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-[0_8px_16px_rgba(59,130,246,0.3)] transition-all hover:scale-[1.02] active:scale-[0.98] focus:ring-2 focus:ring-blue-500/50 whitespace-nowrap"
+        >
+          <span class="material-symbols-outlined text-lg">add_circle</span>
+          Nueva Cotización
+        </a>
+      </div>
+    </section>
 
-    <!-- Estadísticas de Seguimiento -->
-    {
-      trackingStats && (
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title="Total Cotizaciones"
-            value={trackingStats.totalCotizaciones.toString()}
-            icon="collection"
-            color="blue"
-          />
+    <!-- ── Error banner ───────────────────────────────────────────────────── -->
+    {error && (
+      <div class="flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 px-5 py-4 rounded-xl">
+        <span class="material-symbols-outlined">error</span>
+        {error}
+      </div>
+    )}
 
-          <StatCard
-            title="Tasa de Conversión"
-            value={`${trackingStats.conversionRate.toFixed(1)}%`}
-            icon="trending-up"
-            color="green"
-          />
+    <!-- ── Stats Bento ─────────────────────────────────────────────────────── -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10">
+      <div class="bg-[var(--color-surface-container-low)] p-5 sm:p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Total Cotizaciones</p>
+        <h4 class="text-3xl font-black text-[var(--color-on-surface)] flex items-baseline gap-2">
+          <span>{cotizaciones.length}</span>
+          <span class="text-sm font-medium text-[var(--color-on-surface-variant)]">Propuestas</span>
+        </h4>
+      </div>
+      <div class="bg-[var(--color-surface-container-low)] p-5 sm:p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Tasa de Conversión</p>
+        <h4 class="text-3xl font-black text-emerald-400 flex items-baseline gap-2">
+          <span>{tasaConversionReal.toFixed(1)}%</span>
+          <span class="text-sm font-medium text-[var(--color-on-surface-variant)]">Aprobadas</span>
+        </h4>
+      </div>
+      <div class="bg-[var(--color-surface-container-low)] p-5 sm:p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Total Facturado</p>
+        <h4 class="text-2xl font-black text-amber-400 leading-tight">
+          <span class="text-base font-medium mr-0.5">$</span>{totalFacturadoAprobadas.toLocaleString("es-AR")}
+        </h4>
+        <p class="text-[9px] text-[var(--color-on-surface-variant)] mt-0.5 uppercase tracking-widest">Solo aprobadas</p>
+      </div>
+      <div class="bg-[var(--color-surface-container-low)] p-5 sm:p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Vencidas</p>
+        <h4 class="text-3xl font-black text-red-400 flex items-baseline gap-2">
+          <span>{trackingStats?.cotizacionesVencidas ?? 0}</span>
+          <span class="text-sm font-medium text-[var(--color-on-surface-variant)]">Caducadas</span>
+        </h4>
+      </div>
+    </section>
 
-          <StatCard
-            title="Cotizaciones Vencidas"
-            value={trackingStats.cotizacionesVencidas.toString()}
-            icon="exclamation-circle"
-            color="red"
-          />
+    <!-- ── Analytics Row ─────────────────────────────────────────────────── -->
+    {trackingStats && (
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
 
-          <StatCard
-            title="Promedio Aprobación"
-            value={`${trackingStats.tiempoPromedioAprobacion.toFixed(0)} días`}
-            icon="clock"
-            color="purple"
-          />
-        </div>
-      )
-    }
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-      <!-- Distribución por Estado -->
-      {
-        trackingStats && trackingStats.porEstado.length > 0 && (
-          <Card title="Distribución por Estado" class="shadow-premium h-full">
+        <!-- Distribución por Estado -->
+        {trackingStats.porEstado.length > 0 && (
+          <div class="bg-[var(--color-surface-container-low)] p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
+            <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-5">Distribución por Estado</p>
             <div class="space-y-4">
-              {trackingStats.porEstado.map((estado: any) => (
-                <div class="group">
-                  <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center space-x-3">
-                      <div class={`w-2 h-2 rounded-full ${
-                        estado.estado === "aprobada" ? "bg-green-500" : 
-                        estado.estado === "enviada" ? "bg-blue-500" : 
-                        estado.estado === "revisada" ? "bg-orange-500" : 
-                        estado.estado === "rechazada" ? "bg-red-500" : "bg-gray-400"
-                      }`}></div>
-                      <span class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest">
-                        {QuoteTrackingService.getStatusDisplayName(estado.estado)}
-                      </span>
+              {trackingStats.porEstado.map((item: any) => {
+                const rawS = String(item.estado || "").toLowerCase();
+                let estadoKey = "borrador";
+                if (rawS.includes("aprob"))   estadoKey = "aprobada";
+                else if (rawS.includes("enviad")) estadoKey = "enviada";
+                else if (rawS.includes("recha")) estadoKey = "rechazada";
+                else if (rawS.includes("vencid")) estadoKey = "vencida";
+                else if (rawS.includes("revis"))  estadoKey = "revisada";
+                const style = getStatusStyle(estadoKey);
+                return (
+                  <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                      <div class="flex items-center gap-2">
+                        <span class={`w-2 h-2 rounded-full ${style.dot}`}></span>
+                        <span class="text-xs font-bold text-[var(--color-on-surface)] uppercase tracking-widest">{style.label}</span>
+                      </div>
+                      <span class="text-xs font-black text-[var(--color-on-surface)]">{item.count} <span class="text-[var(--color-on-surface-variant)] font-medium">({item.porcentaje.toFixed(0)}%)</span></span>
                     </div>
-                    <span class="text-xs font-heading font-extrabold text-gray-900 dark:text-white">
-                      {estado.count}
-                    </span>
+                    <div class="w-full bg-[var(--color-surface-container-high)] rounded-full h-1.5 overflow-hidden">
+                      <div class={`h-full rounded-full ${getEstadoBarStyle(estadoKey)}`} style={`width: ${item.porcentaje}%`}></div>
+                    </div>
                   </div>
-                  <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
-                    <div 
-                      class={`h-full rounded-full transition-all duration-1000 ${
-                        estado.estado === "aprobada" ? "bg-green-500" : 
-                        estado.estado === "enviada" ? "bg-blue-500" : 
-                        estado.estado === "revisada" ? "bg-orange-500" : 
-                        estado.estado === "rechazada" ? "bg-red-500" : "bg-gray-400"
-                      }`}
-                      style={`width: ${estado.porcentaje}%`}
-                    ></div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <!-- Top Clientes aprobados -->
+        {topClientes.length > 0 && (
+          <div class="bg-[var(--color-surface-container-low)] p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
+            <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-5">Top Clientes · Aprobadas</p>
+            <div class="space-y-3">
+              {topClientes.map((c, i) => (
+                <div class="flex items-center gap-3">
+                  <span class={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 ${i === 0 ? 'bg-amber-500/20 text-amber-400' : i === 1 ? 'bg-slate-500/20 text-slate-300' : 'bg-[var(--color-surface-container)] text-[var(--color-on-surface-variant)]'}`}>
+                    {i + 1}
+                  </span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-[var(--color-on-surface)] truncate">{c.nombre}</p>
+                    {c.empresa && <p class="text-[10px] text-[var(--color-primary)] truncate">{c.empresa}</p>}
+                  </div>
+                  <div class="text-right shrink-0">
+                    <p class="text-xs font-black text-emerald-400">{c.count} cot.</p>
+                    <p class="text-[10px] text-[var(--color-on-surface-variant)]">${c.total.toLocaleString("es-AR")}</p>
                   </div>
                 </div>
               ))}
             </div>
-          </Card>
-        )
-      }
+          </div>
+        )}
 
-      <!-- Próximos Vencimientos -->
-      {
-        trackingStats && trackingStats.proximosVencimientos.length > 0 && (
-          <Card title="Próximos Vencimientos" class="lg:col-span-2 shadow-premium h-full">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {trackingStats.proximosVencimientos
-                .slice(0, 4)
-                .map((cotizacion: any) => (
-                  <div class="group flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/40 rounded-2xl border border-gray-100 dark:border-gray-700 hover:border-orange-200 dark:hover:border-orange-900/50 transition-all duration-300">
-                    <div class="flex-1 truncate mr-4">
-                      <div class="font-heading font-bold text-gray-900 dark:text-white group-hover:text-orange-600 transition-colors truncate">
-                        {cotizacion.numero}
-                      </div>
-                      <div class="text-[10px] text-gray-500 dark:text-gray-500 uppercase tracking-widest mt-1 truncate">
-                        {cotizacion.clienteNombre} • ${cotizacion.total.toLocaleString()}
-                      </div>
-                    </div>
-                    <div class="flex flex-col items-end">
-                      <span class="text-lg font-heading font-extrabold text-orange-600 dark:text-orange-400">
-                        {cotizacion.diasVencimiento}
-                      </span>
-                      <span class="text-[8px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-tighter">Días</span>
-                    </div>
+        <!-- Próximos Vencimientos -->
+        {trackingStats.proximosVencimientos.length > 0 && (
+          <div class="bg-[var(--color-surface-container-low)] p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
+            <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-5">Próximos Vencimientos</p>
+            <div class="space-y-3">
+              {trackingStats.proximosVencimientos.slice(0, 5).map((cotizacion: any) => (
+                <a href={`/quotes/view/${cotizacion.id}`} class="flex items-center justify-between p-3 bg-[var(--color-surface-container)] rounded-xl border border-[var(--color-outline-variant)] hover:border-orange-500/40 transition-all group">
+                  <div class="flex-1 truncate mr-4">
+                    <div class="font-bold text-[var(--color-on-surface)] group-hover:text-orange-400 transition-colors truncate text-sm">{cotizacion.numero}</div>
+                    <div class="text-[10px] text-[var(--color-on-surface-variant)] uppercase tracking-widest mt-0.5 truncate">{cotizacion.clienteNombre}</div>
                   </div>
-                ))}
+                  <div class="flex flex-col items-end shrink-0">
+                    <span class="text-lg font-black text-orange-400">{cotizacion.diasVencimiento}</span>
+                    <span class="text-[9px] font-bold text-[var(--color-on-surface-variant)] uppercase tracking-widest">Días</span>
+                  </div>
+                </a>
+              ))}
             </div>
-          </Card>
-        )
-      }
-    </div>
+          </div>
+        )}
+      </div>
+    )}
 
-    <!-- Lista de Cotizaciones -->
-    <div class="space-y-4">
-      {
-        cotizaciones.length === 0 ? (
-          <Card class="shadow-premium py-20 px-6 text-center">
-            <div class="w-20 h-20 mx-auto mb-6 bg-gray-50 dark:bg-gray-900/50 rounded-3xl flex items-center justify-center border border-gray-100 dark:border-gray-800">
-              <svg
-                class="w-10 h-10 text-gray-300 dark:text-gray-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.5"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            <h3 class="text-2xl font-heading font-extrabold text-gray-900 dark:text-white mb-2">
-              No hay cotizaciones aún
-            </h3>
-            <p class="text-gray-500 dark:text-gray-400 mb-8 max-w-sm mx-auto">
-              Comienza creando tu primera cotización profesional para impresionar a tus clientes.
-            </p>
-            <Button href="/quotes/wizard" variant="primary" size="lg" class="shadow-premium">
-              Crear Primera Cotización
-            </Button>
-          </Card>
-        ) : (
-          <div class="grid grid-cols-1 gap-4">
-            {cotizaciones.map((cotizacion) => (
-              <Card padding="none" class="group hover:shadow-premium hover:-translate-y-1 transition-all duration-300 overflow-hidden border-transparent hover:border-primary-100 dark:hover:border-primary-900/30">
-                <div class="flex flex-col lg:flex-row">
-                  {/* Status Indicator (Vertical Stripe) */}
-                  <div class={`w-full lg:w-1.5 h-1.5 lg:h-auto ${(() => {
-                    const statusInfo = QuoteHelper.getQuoteStatusInfo(cotizacion.estado);
-                    return statusInfo.color === 'success' ? 'bg-green-500' :
-                           statusInfo.color === 'info' ? 'bg-blue-500' :
-                           statusInfo.color === 'danger' ? 'bg-red-500' : 'bg-orange-500';
-                  })()}`}></div>
+    <!-- ── Quote List ─────────────────────────────────────────────────────── -->
+    {cotizaciones.length === 0 ? (
+      <div class="text-center py-28 border border-dashed border-[var(--color-outline-variant)] rounded-2xl bg-[var(--color-surface-container-low)]">
+        <span class="material-symbols-outlined text-6xl opacity-30 block mb-4 text-[var(--color-on-surface-variant)]">description</span>
+        <h3 class="text-2xl font-black text-[var(--color-on-surface)] mb-2">Sin cotizaciones aún</h3>
+        <p class="text-[var(--color-on-surface-variant)] mb-8 max-w-sm mx-auto">Creá tu primera propuesta comercial para empezar a gestionar tu negocio.</p>
+        <a
+          href="/quotes/wizard"
+          class="inline-flex items-center gap-2 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-[0_8px_16px_rgba(59,130,246,0.3)] hover:scale-[1.02] transition-all"
+        >
+          <span class="material-symbols-outlined">add_circle</span>
+          Crear Primera Cotización
+        </a>
+      </div>
+    ) : (
+      <div class="space-y-3">
+        {cotizaciones.map((cotizacion) => {
+          const style = getStatusStyle(cotizacion.estado);
+          return (
+            <article class="group bg-[var(--color-surface-container-low)] rounded-xl border border-[var(--color-outline-variant)] shadow-[0_8px_24px_rgba(0,0,0,0.25)] hover:bg-[var(--color-surface-container)] hover:-translate-y-0.5 transition-all duration-300 overflow-hidden flex">
 
-                  <div class="flex-1 p-5 sm:p-6">
-                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-3 mb-2">
-                          <span class="text-[10px] font-mono font-bold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-2 py-0.5 rounded border border-primary-100 dark:border-primary-800">
-                            {cotizacion.numero_display}
-                          </span>
-                          {(() => {
-                            const statusInfo = QuoteHelper.getQuoteStatusInfo(cotizacion.estado);
-                            return (
-                              <Badge 
-                                variant={statusInfo.color as any}
-                                size="sm"
-                              >
-                                {statusInfo.label}
-                              </Badge>
-                            );
-                          })()}
-                        </div>
-                        
-                        <h3 class="text-xl font-heading font-extrabold text-gray-900 dark:text-white mb-2 group-hover:text-primary-600 transition-colors truncate">
-                          {cotizacion.titulo || "Sin título"}
-                        </h3>
-                        
-                        <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
-                          <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                            <span class="mr-2 text-gray-400">👤</span>
-                            <span class="font-bold text-gray-700 dark:text-gray-300">{cotizacion.cliente_nombre}</span>
-                          </div>
-                          <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                            <span class="mr-2 text-gray-400">📅</span>
-                            <span>{cotizacion.fecha_display}</span>
-                            {cotizacion.fecha_tipo === "evento" && (
-                              <span class="ml-1.5 px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[9px] font-bold uppercase tracking-widest border border-blue-100 dark:border-blue-800/50">Evento</span>
-                            )}
-                          </div>
-                        </div>
+              <!-- Color stripe -->
+              <div class={`w-1 shrink-0 ${style.dot}`}></div>
 
-                        {cotizacion.descripcion && (
-                          <p class="mt-4 text-sm text-gray-400 dark:text-gray-500 line-clamp-1 italic">
-                            {cotizacion.descripcion}
-                          </p>
-                        )}
-                      </div>
+              <div class="flex-1 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 
-                      <div class="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between lg:justify-center gap-4 py-4 lg:py-0 border-t sm:border-t-0 lg:border-l border-gray-100 dark:border-gray-800 lg:pl-8">
-                        <div class="text-left sm:text-left lg:text-right">
-                          <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Inversión Total</p>
-                          <p class="text-3xl font-heading font-extrabold text-gray-900 dark:text-white">
-                            <span class="text-primary-600 dark:text-primary-400 text-xl font-medium mr-0.5">$</span>
-                            {Number(cotizacion.total || 0).toLocaleString("es-AR")}
-                          </p>
-                        </div>
+                <!-- Left: Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                    <span class="text-[10px] font-mono font-bold text-[var(--color-primary)] bg-[var(--color-primary)]/10 px-2 py-0.5 rounded border border-[var(--color-primary)]/20">
+                      {cotizacion.numero_display}
+                    </span>
+                    <span class={`px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest rounded-full border ${style.badge}`}>
+                      {style.label}
+                    </span>
+                    {cotizacion.fecha_tipo === "evento" && (
+                      <span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/20">Evento</span>
+                    )}
+                  </div>
 
-                        <div class="flex items-center gap-2">
-                          <Button href={`/quotes/view/${cotizacion.id}`} variant="secondary" size="sm" class="px-3" title="Ver Detalle">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                          </Button>
-                          <Button href={`/quotes/edit/${cotizacion.id}`} variant="secondary" size="sm" class="px-3" title="Editar">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                          </Button>
-                          <Button href={`/quotes/tracking/${cotizacion.id}`} variant="secondary" size="sm" class="px-3" title="Seguimiento">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                          </Button>
-                          <button 
-                            onclick={`deleteQuote('${cotizacion.id}', '${cotizacion.titulo || cotizacion.numero_display}')`}
-                            class="p-2 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
-                            title="Eliminar"
-                          >
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
+                  <h3 class="text-base font-black text-[var(--color-on-surface)] mb-1.5 truncate group-hover:text-[var(--color-primary)] transition-colors">
+                    {cotizacion.titulo || "Sin título"}
+                  </h3>
+
+                  <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <div class="flex items-center gap-1.5 text-xs text-[var(--color-on-surface-variant)]">
+                      <span class="material-symbols-outlined text-sm opacity-70">person</span>
+                      <span class="font-bold text-[var(--color-on-surface)]">{cotizacion.cliente_nombre}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-xs text-[var(--color-on-surface-variant)]">
+                      <span class="material-symbols-outlined text-sm opacity-70">calendar_today</span>
+                      <span>{cotizacion.fecha_display}</span>
                     </div>
                   </div>
                 </div>
-              </Card>
-            ))}
-          </div>
-        )
-      }
-    </div>
+
+                <!-- Right: Amount + Actions -->
+                <div class="flex items-center justify-between sm:justify-end gap-6 shrink-0">
+                  <div class="text-right">
+                    <p class="text-[10px] font-black text-[var(--color-on-surface-variant)] uppercase tracking-widest mb-0.5">Total</p>
+                    <p class="text-xl font-black text-[var(--color-on-surface)]">
+                      <span class="text-[var(--color-primary)] text-sm font-medium mr-0.5">$</span>
+                      {Number(cotizacion.total || 0).toLocaleString("es-AR")}
+                    </p>
+                  </div>
+
+                  <div class="flex items-center gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
+                    <a href={`/quotes/view/${cotizacion.id}`} class="p-2 rounded-xl text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all" title="Ver detalle">
+                      <span class="material-symbols-outlined text-xl">visibility</span>
+                    </a>
+                    <a href={`/quotes/edit/${cotizacion.id}`} class="p-2 rounded-xl text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all" title="Editar">
+                      <span class="material-symbols-outlined text-xl">edit_document</span>
+                    </a>
+                    <a href={`/quotes/tracking/${cotizacion.id}`} class="p-2 rounded-xl text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all" title="Seguimiento">
+                      <span class="material-symbols-outlined text-xl">timeline</span>
+                    </a>
+                    <button
+                      onclick={`deleteQuote('${cotizacion.id}', '${(cotizacion.titulo || cotizacion.numero_display || "").replace(/'/g, "\\'")}')`}
+                      class="p-2 rounded-xl text-[var(--color-on-surface-variant)] hover:text-red-400 hover:bg-red-500/10 transition-all"
+                      title="Eliminar"
+                    >
+                      <span class="material-symbols-outlined text-xl">delete</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    )}
   </div>
 </Dashboard>
 
 <script>
   import { notifications } from "../utils/notifications.js";
 
-  // Función para eliminar cotización con confirmación elegante
-  (window as any).deleteQuote = async function (
-    quoteId: string,
-    quoteTitle: string
-  ) {
+  // ── Dollar widget ─────────────────────────────────────────────────────────
+  async function loadDolarRates() {
+    try {
+      const [oficialRes, mepRes, blueRes] = await Promise.allSettled([
+        fetch("https://dolarapi.com/v1/dolares/oficial"),
+        fetch("https://dolarapi.com/v1/dolares/bolsa"),
+        fetch("https://dolarapi.com/v1/dolares/blue"),
+      ]);
+
+      const fmt = (n: number) => n ? `$${Math.round(n).toLocaleString("es-AR")}` : "—";
+
+      if (oficialRes.status === "fulfilled" && oficialRes.value.ok) {
+        const d = await oficialRes.value.json();
+        const el = document.getElementById("dolar-oficial");
+        if (el) el.textContent = fmt(d.venta);
+      }
+      if (mepRes.status === "fulfilled" && mepRes.value.ok) {
+        const d = await mepRes.value.json();
+        const el = document.getElementById("dolar-mep");
+        if (el) el.textContent = fmt(d.venta);
+      }
+      if (blueRes.status === "fulfilled" && blueRes.value.ok) {
+        const d = await blueRes.value.json();
+        const el = document.getElementById("dolar-blue");
+        if (el) el.textContent = fmt(d.venta);
+      }
+
+      // Show the widget once we have data
+      const widget = document.getElementById("dolar-widget");
+      if (widget) widget.classList.remove("hidden");
+      if (widget) widget.classList.add("flex");
+    } catch (err) {
+      console.warn("No se pudo cargar el tipo de cambio:", err);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    loadDolarRates();
+  });
+
+  // ── Delete quote ──────────────────────────────────────────────────────────
+  (window as any).deleteQuote = async function (quoteId: string, quoteTitle: string) {
     try {
       const result = await notifications.confirmDelete(quoteTitle);
 
       if (result.isConfirmed) {
-        // Mostrar loading
         notifications.loading("Eliminando cotización", "Por favor espera...");
 
         const response = await fetch(`/api/quotes?id=${quoteId}`, {
@@ -366,10 +451,7 @@ try {
         });
 
         if (response.ok) {
-          await notifications.success(
-            "¡Eliminada!",
-            "La cotización ha sido eliminada exitosamente"
-          );
+          await notifications.success("¡Eliminada!", "La cotización ha sido eliminada exitosamente");
           window.location.reload();
         } else {
           throw new Error("Error al eliminar la cotización");
