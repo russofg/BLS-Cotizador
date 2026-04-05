@@ -1,6 +1,6 @@
 import { adminDb } from '../utils/firebaseAdmin';
 import { cache, CacheKeys, CacheTTL, invalidateRelatedCache } from '../utils/cache';
-
+import { QuoteHelper } from '../utils/quoteHelpers';
 export interface QuoteAnalytics {
   totalQuotes: number;
   quotesThisMonth: number;
@@ -408,16 +408,17 @@ export class AnalyticsService {
     const statusMap = new Map<string, number>();
     
     quotes.forEach(quote => {
-      const raw = String(quote.estado || '').toLowerCase().trim();
+      const rawNormalized = QuoteHelper.normalizeQuoteStatus(quote.estado);
+      
+      // Mapear de minúscula a Label UI para el Chart / Distribución original del dashboard
       let status = "Borrador";
-
-      if (raw.includes('aprob')) status = "Aprobada";
-      else if (raw.includes('enviad')) status = "Enviada";
-      else if (raw.includes('recha')) status = "Rechazada";
-      else if (raw.includes('vencid')) status = "Vencida";
-      else if (raw.includes('revis')) status = "Revisada";
-      else if (raw.includes('convert') || raw.includes('factur')) status = "Facturada";
-      else if (raw.includes('pendien')) status = "Pendiente";
+      if (rawNormalized === 'aprobada') status = "Aprobada";
+      else if (rawNormalized === 'enviada') status = "Enviada";
+      else if (rawNormalized === 'rechazada') status = "Rechazada";
+      else if (rawNormalized === 'vencida') status = "Vencida";
+      else if (rawNormalized === 'revisada') status = "Revisada";
+      else if (rawNormalized === 'convertida') status = "Facturada";
+      else if (rawNormalized === 'pendiente') status = "Pendiente";
 
       statusMap.set(status, (statusMap.get(status) || 0) + 1);
     });

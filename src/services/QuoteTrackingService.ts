@@ -3,7 +3,7 @@ import type {
   QueryDocumentSnapshot,
   DocumentSnapshot,
 } from "firebase-admin/firestore";
-import { cache, CacheTTL, invalidateRelatedCache } from "../utils/cache";
+import { cache, CacheTTL, invalidateRelatedCache, invalidateQuoteEverything } from "../utils/cache";
 import {
   EmailNotificationService,
   type ReminderEmailData,
@@ -545,20 +545,7 @@ export class QuoteTrackingService {
       clienteId: data.clienteId || data.cliente_id,
       clienteNombre,
       titulo: data.titulo || data.descripcion || "Sin título",
-      estado: (() => {
-        const s = String(data.estado || "").toLowerCase();
-        if (s.includes("borrador")) return QuoteStatus.BORRADOR;
-        if (s.includes("enviad"))   return QuoteStatus.ENVIADA;
-        if (s.includes("aprob"))    return QuoteStatus.APROBADA;
-        if (s.includes("recha"))    return QuoteStatus.RECHAZADA;
-        if (s.includes("revis"))    return QuoteStatus.REVISADA;
-        if (s.includes("vencid"))   return QuoteStatus.VENCIDA;
-        if (s.includes("convert") || s.includes("factur")) return QuoteStatus.CONVERTIDA;
-        if (s.includes("pendien"))  return QuoteStatus.PENDIENTE;
-        if (s.includes("enviad"))   return QuoteStatus.ENVIADA;
-        if (s.includes("borrad"))   return QuoteStatus.BORRADOR;
-        return (data.estado as QuoteStatus) || QuoteStatus.BORRADOR;
-      })(),
+      estado: QuoteHelper.normalizeQuoteStatus(data.estado) as QuoteStatus,
       fechaCreacion,
       fechaEnvio: data.fechaEnvio?.toDate?.() || data.fechaEnvio,
       fechaRevision: data.fechaRevision?.toDate?.() || data.fechaRevision,
@@ -585,13 +572,11 @@ export class QuoteTrackingService {
   /**
    * Invalida el caché relacionado con una cotización
    */
-  private static invalidateCache(quoteId?: string): void {
-    invalidateRelatedCache("quote");
+  public static invalidateCache(quoteId?: string): void {
+    invalidateQuoteEverything();
     if (quoteId) {
       cache.delete(`quote-tracking-${quoteId}`);
     }
-    cache.delete("quotes-tracking-all");
-    cache.delete("tracking-stats");
   }
 
   /**

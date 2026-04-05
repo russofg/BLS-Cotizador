@@ -152,6 +152,23 @@ export class QuoteHelper {
   }
 
   /**
+   * Única fuente de verdad para la normalización de estados de cotización.
+   * Devuelve SIEMPRE uno de los siguientes valores estandarizados (en minúscula):
+   * borrador, pendiente, enviada, revisada, aprobada, rechazada, vencida, convertida
+   */
+  static normalizeQuoteStatus(rawStatus: string | null | undefined): string {
+    const s = String(rawStatus || '').toLowerCase().trim();
+    if (s.includes('aprob')) return 'aprobada';
+    if (s.includes('enviad')) return 'enviada';
+    if (s.includes('recha')) return 'rechazada';
+    if (s.includes('vencid')) return 'vencida';
+    if (s.includes('revis')) return 'revisada';
+    if (s.includes('convert') || s.includes('factur')) return 'convertida';
+    if (s.includes('pendien')) return 'pendiente';
+    return (s === '' || s === 'borrador') ? 'borrador' : s.substring(0, 50); // fallback
+  }
+
+  /**
    * Normaliza los items de una cotización para asegurar que sea un array
    */
   static normalizeItems(items: any): QuoteItem[] {

@@ -231,23 +231,23 @@ try {
             </thead>
             <tbody class="divide-y divide-surface-container">
               {stats.cotizacionesRecientes.length > 0 ? stats.cotizacionesRecientes.slice(0, 5).map((cotizacion: any) => {
-                const s = String(cotizacion.estado || '').toLowerCase();
+                const normStatus = QuoteHelper.normalizeQuoteStatus(cotizacion.estado);
                 let statusBadge = "bg-gray-500/10 text-gray-400 border-gray-500/20";
-                let statusText = cotizacion.estado || "Borrador";
+                let statusText = "Borrador";
                 
-                if (s.includes('aprob')) {
+                if (normStatus === 'aprobada') {
                   statusBadge = "bg-green-500/10 text-green-400 border-green-500/20";
                   statusText = "Aprobada";
-                } else if (s.includes('enviad')) {
+                } else if (normStatus === 'enviada') {
                   statusBadge = "bg-primary-500/10 text-primary-400 border-primary-500/20";
                   statusText = "Enviada";
-                } else if (s.includes('recha')) {
+                } else if (normStatus === 'rechazada') {
                   statusBadge = "bg-red-500/10 text-red-400 border-red-500/20";
                   statusText = "Rechazada";
-                } else if (s.includes('pendien')) {
+                } else if (normStatus === 'pendiente') {
                   statusBadge = "bg-amber-500/10 text-amber-400 border-amber-500/20";
                   statusText = "Pendiente";
-                } else if (s.includes('convert') || s.includes('factur')) {
+                } else if (normStatus === 'convertida') {
                   statusBadge = "bg-violet-500/10 text-violet-400 border-violet-500/20";
                   statusText = "Facturada";
                 }

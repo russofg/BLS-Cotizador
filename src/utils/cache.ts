@@ -151,14 +151,29 @@ export const CacheTTL = {
 };
 
 // Helper function to invalidate related cache entries
-export function invalidateRelatedCache(type: 'client' | 'item' | 'category' | 'quote' | 'config' | 'analytics'): void {
+export function invalidateRelatedCache(type: 'client' | 'item' | 'category' | 'quote' | 'config' | 'analytics' | 'tracking'): void {
   const keys = Array.from(cache.getStats().keys);
   
   keys.forEach(key => {
-    if (key.startsWith(`${type}`) || key.includes(`${type}-`)) {
+    if (key.startsWith(`${type}`) || key.includes(`${type}-`) || (type === 'tracking' && key.includes('stats'))) {
       cache.delete(key);
     }
   });
+}
+
+/**
+ * Invalida TODO lo relacionado a cotizaciones:
+ * - cotizaciones (listas, detalles)
+ * - analytics (dashboard)
+ * - tracking (estadísticas)
+ */
+export function invalidateQuoteEverything(): void {
+  invalidateRelatedCache('quote');
+  invalidateRelatedCache('analytics');
+  invalidateRelatedCache('tracking');
+  // Claves extra que podrían no coincidir con el prefijo exacto
+  cache.delete('tracking-stats');
+  cache.delete('quotes-tracking-all');
 }
 
 // Helper function to invalidate all cache

@@ -44,14 +44,7 @@ try {
     const esEventoDate = !!(normalizedQuote.fechaEvento || normalizedQuote.fecha_evento);
 
     // Normalize estado defensively
-    const rawEstado = String(cotizacion.estado || "").toLowerCase();
-    let estadoNorm = "borrador";
-    if (rawEstado.includes("aprob"))   estadoNorm = "aprobada";
-    else if (rawEstado.includes("enviad")) estadoNorm = "enviada";
-    else if (rawEstado.includes("recha")) estadoNorm = "rechazada";
-    else if (rawEstado.includes("vencid")) estadoNorm = "vencida";
-    else if (rawEstado.includes("revis"))  estadoNorm = "revisada";
-    else if (rawEstado.includes("convert") || rawEstado.includes("factur")) estadoNorm = "convertida";
+    const estadoNorm = QuoteHelper.normalizeQuoteStatus(cotizacion.estado);
 
     return {
       ...enrichedQuote,
@@ -230,15 +223,7 @@ function getEstadoBarStyle(estado: string) {
             <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-5">Distribución por Estado</p>
             <div class="space-y-4">
               {trackingStats.porEstado.map((item: any) => {
-                const rawS = String(item.estado || "").toLowerCase();
-                let estadoKey = "borrador";
-                if (rawS.includes("aprob"))   estadoKey = "aprobada";
-                else if (rawS.includes("enviad")) estadoKey = "enviada";
-                else if (rawS.includes("pendien")) estadoKey = "pendiente";
-                else if (rawS.includes("recha")) estadoKey = "rechazada";
-                else if (rawS.includes("vencid")) estadoKey = "vencida";
-                else if (rawS.includes("revis"))  estadoKey = "revisada";
-                else if (rawS.includes("convert") || rawS.includes("factur")) estadoKey = "convertida";
+                const estadoKey = QuoteHelper.normalizeQuoteStatus(item.estado);
                 const style = getStatusStyle(estadoKey);
                 return (
                   <div>

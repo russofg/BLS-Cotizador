@@ -2,6 +2,7 @@
 import Dashboard from "../../../layouts/Dashboard.astro";
 import ScrollbarStyles from "../../../components/ScrollbarStyles.astro";
 import { QuoteTrackingService, QuoteStatus } from "../../../services/QuoteTrackingService";
+import { QuoteHelper } from "../../../utils/quoteHelpers";
 
 const ARGENTINA_TIMEZONE = "America/Argentina/Buenos_Aires";
 const formatArgentinaDateTime = (value: string | Date) =>
@@ -44,19 +45,20 @@ const getAvailableStatuses = (currentStatus: QuoteStatus): QuoteStatus[] => {
     [QuoteStatus.APROBADA]:   [QuoteStatus.CONVERTIDA],
     [QuoteStatus.RECHAZADA]:  [QuoteStatus.BORRADOR],
     [QuoteStatus.VENCIDA]:    [QuoteStatus.BORRADOR],
-    [QuoteStatus.CONVERTIDA]: [],
+    [QuoteStatus.CONVERTIDA]: [QuoteStatus.APROBADA],
   };
   return transitions[currentStatus] || [];
 };
 
 function getStatusBadge(estado: string) {
-  const s = String(estado || "").toLowerCase();
-  if (s.includes("aprob"))   return { badge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", dot: "bg-emerald-500", label: "Aprobada" };
-  if (s.includes("enviad"))  return { badge: "bg-blue-500/10 text-blue-400 border-blue-500/20",          dot: "bg-blue-500",    label: "Enviada" };
-  if (s.includes("recha"))   return { badge: "bg-red-500/10 text-red-400 border-red-500/20",             dot: "bg-red-500",     label: "Rechazada" };
-  if (s.includes("vencid"))  return { badge: "bg-orange-500/10 text-orange-400 border-orange-500/20",    dot: "bg-orange-500",  label: "Vencida" };
-  if (s.includes("revis"))   return { badge: "bg-amber-500/10 text-amber-400 border-amber-500/20",       dot: "bg-amber-500",   label: "Revisada" };
-  if (s.includes("convert")) return { badge: "bg-violet-500/10 text-violet-400 border-violet-500/20",    dot: "bg-violet-500",  label: "Facturada" };
+  const norm = QuoteHelper.normalizeQuoteStatus(estado);
+  if (norm === 'aprobada')   return { badge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", dot: "bg-emerald-500", label: "Aprobada" };
+  if (norm === 'enviada')    return { badge: "bg-blue-500/10 text-blue-400 border-blue-500/20",          dot: "bg-blue-500",    label: "Enviada" };
+  if (norm === 'rechazada')  return { badge: "bg-red-500/10 text-red-400 border-red-500/20",             dot: "bg-red-500",     label: "Rechazada" };
+  if (norm === 'vencida')    return { badge: "bg-orange-500/10 text-orange-400 border-orange-500/20",    dot: "bg-orange-500",  label: "Vencida" };
+  if (norm === 'revisada')   return { badge: "bg-amber-500/10 text-amber-400 border-amber-500/20",       dot: "bg-amber-500",   label: "Revisada" };
+  if (norm === 'convertida') return { badge: "bg-violet-500/10 text-violet-400 border-violet-500/20",    dot: "bg-violet-500",  label: "Facturada" };
+  if (norm === 'pendiente')  return { badge: "bg-amber-500/10 text-amber-400 border-amber-500/20",       dot: "bg-amber-500",   label: "Pendiente" };
   return { badge: "bg-slate-500/10 text-slate-400 border-slate-500/20", dot: "bg-slate-500", label: "Borrador" };
 }
 

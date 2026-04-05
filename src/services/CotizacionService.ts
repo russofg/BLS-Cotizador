@@ -1,5 +1,6 @@
 import { adminDb } from '../utils/firebaseAdmin';
 import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { QuoteTrackingService } from './QuoteTrackingService';
 
 export interface Cotizacion {
   id: string;
@@ -63,7 +64,12 @@ export class CotizacionService {
       });
       
       const docSnap = await docRef.get();
-      return this.mapDocumentToCotizacion(docSnap);
+      const newQuote = this.mapDocumentToCotizacion(docSnap);
+      
+      // Invalidar cachés
+      QuoteTrackingService.invalidateCache();
+      
+      return newQuote;
     } catch (error) {
       console.error('Error creating quote:', error);
       throw error;
@@ -76,6 +82,9 @@ export class CotizacionService {
         ...updates,
         updatedAt: new Date()
       });
+
+      // Invalidar cachés
+      QuoteTrackingService.invalidateCache(id);
     } catch (error) {
       console.error('Error updating quote:', error);
       throw error;
@@ -85,6 +94,9 @@ export class CotizacionService {
   static async delete(id: string): Promise<void> {
     try {
       await adminDb.collection(this.COLLECTION_NAME).doc(id).delete();
+      
+      // Invalidar cachés
+      QuoteTrackingService.invalidateCache(id);
     } catch (error) {
       console.error('Error deleting quote:', error);
       throw error;
