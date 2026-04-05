@@ -7,7 +7,7 @@ type ScheduledHandlerResponse = {
 };
 
 export const config = {
-  schedule: "* * * * *",
+  schedule: "0 * * * *", // cada hora, en punto
 };
 
 export async function handler(): Promise<ScheduledHandlerResponse> {
