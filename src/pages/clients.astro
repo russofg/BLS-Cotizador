@@ -849,6 +849,16 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
 
       // Handle edit from URL query param
       const urlParams = new URLSearchParams(window.location.search);
+      // Handle search from URL query param
+      const searchQuery = urlParams.get("search");
+      if (searchQuery) {
+        const searchInput = document.getElementById("search") as HTMLInputElement;
+        if (searchInput) {
+          searchInput.value = searchQuery;
+          filterClients();
+        }
+      }
+
       const editId = urlParams.get("edit");
       if (editId) {
         // Use a small timeout to ensure the clients are loaded/rendered if needed, 

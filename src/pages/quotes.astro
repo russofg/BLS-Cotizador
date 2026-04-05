@@ -16,10 +16,14 @@ let clientes: any[] = [];
 let trackingStats: any = null;
 let error = "";
 
+let tasaConversionReal = 0;
+
 // ── Computed metrics ──────────────────────────────────────────────────────────
 let totalFacturadoAprobadas = 0;
 let topClientes: Array<{ nombre: string; empresa?: string; count: number; total: number }> = [];
-let tasaConversionReal = 0;
+
+// ── Search functionality ──────────────────────────────────────────────────────
+const search = Astro.url.searchParams.get("search");
 
 try {
   cotizaciones = await cotizacionService.getAll();
@@ -59,6 +63,18 @@ try {
       fecha_tipo: esEventoDate ? "evento" : "creacion",
     };
   });
+
+  // Apply search filter if present
+  if (search) {
+    const searchTerm = search.toLowerCase();
+    cotizaciones = cotizaciones.filter(
+      (c) =>
+        c.numero_display.toLowerCase().includes(searchTerm) ||
+        (c.cliente_nombre && c.cliente_nombre.toLowerCase().includes(searchTerm)) ||
+        (c.titulo && c.titulo.toLowerCase().includes(searchTerm)) ||
+        (c.lugar_evento && c.lugar_evento.toLowerCase().includes(searchTerm))
+    );
+  }
 
   // ── Tasa de conversión real: (aprobadas + facturadas) / total ──────────
   const exitosas = cotizaciones.filter(q => q.estado === "aprobada" || q.estado === "convertida").length;
@@ -294,16 +310,26 @@ function getEstadoBarStyle(estado: string) {
     <!-- ── Quote List ─────────────────────────────────────────────────────── -->
     {cotizaciones.length === 0 ? (
       <div class="text-center py-28 border border-dashed border-[var(--color-outline-variant)] rounded-2xl bg-[var(--color-surface-container-low)]">
-        <span class="material-symbols-outlined text-6xl opacity-30 block mb-4 text-[var(--color-on-surface-variant)]">description</span>
-        <h3 class="text-2xl font-black text-[var(--color-on-surface)] mb-2">Sin cotizaciones aún</h3>
-        <p class="text-[var(--color-on-surface-variant)] mb-8 max-w-sm mx-auto">Creá tu primera propuesta comercial para empezar a gestionar tu negocio.</p>
-        <a
-          href="/quotes/wizard"
-          class="inline-flex items-center gap-2 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-[0_8px_16px_rgba(59,130,246,0.3)] hover:scale-[1.02] transition-all"
-        >
-          <span class="material-symbols-outlined">add_circle</span>
-          Crear Primera Cotización
-        </a>
+        <span class="material-symbols-outlined text-6xl opacity-30 block mb-4 text-[var(--color-on-surface-variant)]">
+          {search ? "search_off" : "description"}
+        </span>
+        <h3 class="text-2xl font-black text-[var(--color-on-surface)] mb-2">
+          {search ? `No encontramos resultados para "${search}"` : "Sin cotizaciones aún"}
+        </h3>
+        <p class="text-[var(--color-on-surface-variant)] mb-8 max-w-sm mx-auto">
+          {search 
+            ? "Probá con otros términos o verificá que esté bien escrito." 
+            : "Creá tu primera propuesta comercial para empezar a gestionar tu negocio."}
+        </p>
+        {!search && (
+          <a
+            href="/quotes/wizard"
+            class="inline-flex items-center gap-2 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-[0_8px_16px_rgba(59,130,246,0.3)] hover:scale-[1.02] transition-all"
+          >
+            <span class="material-symbols-outlined">add_circle</span>
+            Crear Primera Cotización
+          </a>
+        )}
       </div>
     ) : (
       <div class="space-y-3">

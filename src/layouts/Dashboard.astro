@@ -67,7 +67,7 @@ const { title, activeSection } = Astro.props;
           
           <div class="relative w-full max-w-md hidden sm:block">
             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm select-none">search</span>
-            <input class="w-full bg-surface-container-lowest border-none rounded-lg pl-10 pr-4 py-2 text-sm text-gray-200 focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-gray-600 shadow-sm" placeholder="Buscar en datos corporativos..." type="text"/>
+            <input id="global-search-input" class="w-full bg-surface-container-lowest border-none rounded-lg pl-10 pr-4 py-2 text-sm text-gray-200 focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-gray-600 shadow-sm" placeholder="Buscar en datos corporativos..." type="text"/>
           </div>
         </div>
 
@@ -77,10 +77,28 @@ const { title, activeSection } = Astro.props;
           </nav>
           
           <div class="flex items-center gap-2 sm:gap-4">
-            <button class="text-gray-400 hover:text-primary-500 transition-colors hidden sm:block">
-              <span class="material-symbols-outlined select-none">notifications</span>
-            </button>
-            <button class="text-gray-400 hover:text-primary-500 transition-colors hidden sm:block">
+            <div class="relative">
+              <button id="notification-button" class="text-gray-400 hover:text-primary-500 transition-colors hidden sm:block p-1 relative">
+                <span class="material-symbols-outlined select-none text-[22px]">notifications</span>
+                <span id="notification-badge" class="hidden absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full border border-background shadow-glow-sm"></span>
+              </button>
+
+              <!-- Notifications Dropdown -->
+              <div id="notifications-menu" class="hidden absolute right-0 top-12 mt-3 w-80 bg-surface-container-lowest rounded-2xl shadow-premium z-50 border border-outline-variant/15 overflow-hidden transform origin-top-right transition-all duration-200">
+                <div class="px-4 py-3 border-b border-gray-800 flex justify-between items-center bg-surface-container-low/30">
+                  <span class="font-bold text-xs uppercase tracking-widest text-gray-400">Recordatorios</span>
+                  <span id="notification-count" class="bg-primary-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span>
+                </div>
+                <div id="notification-items-container" class="max-h-64 overflow-y-auto py-1">
+                  <div class="px-4 py-8 text-center text-gray-500 text-sm italic">Sin recordatorios hoy</div>
+                </div>
+                <div class="p-2 bg-surface-container-low/10 border-t border-gray-800">
+                  <a href="/quotes" class="block w-full text-center py-2 text-[10px] font-bold text-primary-400 hover:text-primary-300 transition-colors uppercase tracking-widest">Ver todo el historial</a>
+                </div>
+              </div>
+            </div>
+
+            <button id="help-button" class="text-gray-400 hover:text-primary-500 transition-colors hidden sm:block">
               <span class="material-symbols-outlined select-none">help_outline</span>
             </button>
             
@@ -310,6 +328,47 @@ const { title, activeSection } = Astro.props;
         }
       }
     });
+    // Global Search Functionality
+    const globalSearchInput = document.getElementById("global-search-input") as HTMLInputElement;
+    globalSearchInput?.addEventListener("keypress", (e) => {
+      if (e.key === "Enter" && globalSearchInput.value.trim() !== "") {
+        const query = encodeURIComponent(globalSearchInput.value.trim());
+        const isClientsPage = window.location.pathname.includes("clients");
+        const isItemsPage = window.location.pathname.includes("items");
+        
+        let targetPage = "/quotes";
+        if (isClientsPage) targetPage = "/clients";
+        else if (isItemsPage) targetPage = "/items";
+        
+        window.location.href = `${targetPage}?search=${query}`;
+      }
+    });
+
+    // Help Button Functionality
+    const helpButton = document.getElementById("help-button");
+    helpButton?.addEventListener("click", () => {
+      notifications.info(
+        "Centro de Ayuda",
+        "Esta es la plataforma BLS Audiovisuales. Para soporte técnico, contacte a administración."
+      );
+    });
+
+    // Notifications Dropdown Functionality
+    const notificationButton = document.getElementById("notification-button");
+    const notificationsMenu = document.getElementById("notifications-menu");
+
+    notificationButton?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      notificationsMenu?.classList.toggle("hidden");
+      userMenu?.classList.add("hidden"); // Close user menu if open
+    });
+
+    // Close notifications when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!notificationButton?.contains(e.target as Node) && !notificationsMenu?.contains(e.target as Node)) {
+        notificationsMenu?.classList.add("hidden");
+      }
+    });
   });
 
   // Mobile menu functionality
@@ -517,7 +576,7 @@ const { title, activeSection } = Astro.props;
     }
 
     /**
-     * Verifica recordatorios pendientes
+     * Verifica recordatorios pendientes y actualiza la UI del Nav Bar
      */
     async checkPendingReminders() {
       try {
@@ -525,11 +584,44 @@ const { title, activeSection } = Astro.props;
         if (response.ok) {
           const stats = await response.json();
 
-          // Mostrar notificación si hay seguimientos pendientes
+          // Actualizar Badge y Dropdown en el Nav Bar
+          const badge = document.getElementById("notification-badge");
+          const count = document.getElementById("notification-count");
+          const container = document.getElementById("notification-items-container");
+          
+          if (stats.seguimientosPendientes && stats.seguimientosPendientes.length > 0) {
+            const items = stats.seguimientosPendientes;
+            
+            if (badge) badge.classList.remove("hidden");
+            if (count) count.textContent = items.length.toString();
+            
+            if (container) {
+              container.innerHTML = items.map((s: any) => `
+                <a href="/quotes/tracking/${s.id}" class="block px-4 py-3 hover:bg-surface-container-low transition-colors border-b border-gray-800/50 last:border-0">
+                  <div class="flex justify-between items-start mb-1">
+                    <span class="text-[10px] font-bold text-primary-400 uppercase tracking-tighter">${s.numero}</span>
+                    <span class="text-[9px] text-gray-500">${new Date(s.proximoSeguimiento).toLocaleDateString()}</span>
+                  </div>
+                  <p class="text-xs text-white font-medium truncate">${s.clienteNombre}</p>
+                  <p class="text-[10px] text-gray-400 truncate mt-0.5">${s.proximoSeguimientoMensaje || 'Sin mensaje de seguimiento'}</p>
+                </a>
+              `).join('');
+            }
+          } else {
+            if (badge) badge.classList.add("hidden");
+            if (count) count.textContent = "0";
+            if (container) {
+              container.innerHTML = '<div class="px-4 py-8 text-center text-gray-500 text-sm italic">Sin recordatorios hoy</div>';
+            }
+          }
+
+          // Mostrar notificación si hay seguimientos pendientes (lógica existente...)
           if (
             stats.seguimientosPendientes &&
             stats.seguimientosPendientes.length > 0
           ) {
+            ... (lógica de toast recortada por brevedad en el chunk, pero la mantengo)
+
             // Crear mensaje más específico
             const seguimientos = stats.seguimientosPendientes;
             let mensaje = "";

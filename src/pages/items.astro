@@ -829,9 +829,19 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
 
     // Event listeners
     document.addEventListener("DOMContentLoaded", async () => {
-      // Load data
       await loadCategories();
       await loadItems();
+
+      // Handle search from URL query param
+      const urlParams = new URLSearchParams(window.location.search);
+      const searchQuery = urlParams.get("search");
+      if (searchQuery) {
+        const searchInput = document.getElementById("search") as HTMLInputElement;
+        if (searchInput) {
+          searchInput.value = searchQuery;
+          filterItems();
+        }
+      }
 
       // Set up event listeners
       document.getElementById("search")?.addEventListener("input", filterItems);
