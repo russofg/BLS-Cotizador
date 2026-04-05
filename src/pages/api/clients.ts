@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { clienteService, cotizacionService } from '../../utils/database';
+import { FieldValue } from 'firebase-admin/firestore';
 import { cache, CacheKeys, CacheTTL } from '../../utils/cache';
 import { checkRateLimit } from '../../utils/rateLimit';
 import { AnalyticsService } from '../../services/AnalyticsService';
@@ -116,6 +117,7 @@ export const POST: APIRoute = async ({ request }) => {
       telefono: clientData.telefono || '',
       direccion: clientData.direccion || '',
       activo: true,
+      ...(clientData.imagenBase64 ? { imagenBase64: clientData.imagenBase64 } : {}),
       createdAt: new Date()
     });
     
@@ -167,7 +169,12 @@ export const PUT: APIRoute = async ({ request }) => {
       email: clientData.email || '',
       telefono: clientData.telefono || '',
       direccion: clientData.direccion || '',
-      activo: clientData.activo !== undefined ? clientData.activo : true
+      activo: clientData.activo !== undefined ? clientData.activo : true,
+      ...(clientData.imagenBase64 === null
+        ? { imagenBase64: FieldValue.delete() as any }  // Explicit removal
+        : clientData.imagenBase64 !== undefined
+          ? { imagenBase64: clientData.imagenBase64 }   // New upload
+          : {})                                          // No change
     });
     
     // Get updated client

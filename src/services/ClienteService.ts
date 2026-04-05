@@ -28,6 +28,7 @@ export interface ClienteCreateData {
   telefono?: string;
   direccion?: string;
   activo?: boolean;
+  imagenBase64?: string;
 }
 
 export interface ClienteUpdateData {
@@ -37,6 +38,7 @@ export interface ClienteUpdateData {
   telefono?: string;
   direccion?: string;
   activo?: boolean;
+  imagenBase64?: string;
 }
 
 export interface ClienteFilters {
@@ -396,7 +398,7 @@ export class ClienteService {
   /**
    * Mapea un documento de Firestore a un objeto Cliente
    */
-  private static mapDocumentToCliente(doc: DocumentSnapshot | QueryDocumentSnapshot): Cliente {
+  private static mapDocumentToCliente(doc: DocumentSnapshot | QueryDocumentSnapshot): Cliente & { imagenBase64?: string } {
     const data = doc.data() || {};
     return {
       id: doc.id,
@@ -405,9 +407,10 @@ export class ClienteService {
       email: data.email || '',
       telefono: data.telefono || undefined,
       direccion: data.direccion || undefined,
-      activo: data.activo !== false, // Default to true if not specified
+      activo: data.activo !== false,
       createdAt: data.createdAt?.toDate() || new Date(),
-      updatedAt: data.updatedAt?.toDate()
+      updatedAt: data.updatedAt?.toDate(),
+      ...(data.imagenBase64 ? { imagenBase64: data.imagenBase64 } : {})
     };
   }
 }

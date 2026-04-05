@@ -13,239 +13,104 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
 <Dashboard title="Clientes - BLS Cotizador" activeSection="clients">
   <ScrollbarStyles />
   <div class="space-y-6">
-    <!-- Header -->
-    <PageHeader
-      title="Gestión de Clientes"
-      subtitle="Administra la base de datos de clientes y venues"
-    >
-      <div slot="actions" class="flex space-x-3">
-        <Button id="refresh-btn" variant="secondary" size="md">
-          <svg
-            class="-ml-1 mr-2 h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            ></path>
-          </svg>
-          Actualizar
-        </Button>
-        <Button id="add-client-btn" variant="primary" size="md">
-          <svg
-            class="-ml-1 mr-2 h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 4.5v15m7.5-7.5h-15"></path>
-          </svg>
-          Nuevo Cliente
-        </Button>
+    <!-- Screen Header -->
+    <section class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
+      <div>
+        <nav class="flex items-center gap-2 mb-2">
+          <span class="text-[10px] font-bold tracking-widest text-[var(--color-on-surface-variant)] uppercase">Directorio</span>
+          <span class="material-symbols-outlined text-xs text-[var(--color-outline)]">chevron_right</span>
+          <span class="text-[10px] font-bold tracking-widest text-[var(--color-primary)] uppercase">Clientes Corporativos</span>
+        </nav>
+        <h2 class="text-4xl font-black tracking-tight text-[var(--color-on-surface)]">Portafolio de Clientes</h2>
+        <p class="text-[var(--color-on-surface-variant)] mt-2 text-base">Gestione y rastree sus relaciones a nivel empresarial.</p>
       </div>
-    </PageHeader>
+      <div class="flex items-center gap-3">
+        <button id="refresh-btn" class="flex items-center gap-2 px-5 py-3 rounded-xl font-bold transition-all border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)] focus:ring-2 focus:ring-[var(--color-primary)]/50">
+          <span class="material-symbols-outlined text-lg">refresh</span>
+          Actualizar
+        </button>
+        <button id="add-client-btn" class="flex items-center gap-2 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-[0_8px_16px_rgba(59,130,246,0.3)] transition-all hover:scale-[1.02] active:scale-[0.98] focus:ring-2 focus:ring-blue-500/50">
+          <span class="material-symbols-outlined text-lg">person_add</span>
+          Nuevo Cliente
+        </button>
+      </div>
+    </section>
 
-    <!-- Statistics -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <StatCard
-        title="Total Clientes"
-        value="0"
-        valueId="total-clients"
-        icon="users"
-        color="blue"
-      />
-
-      <StatCard
-        title="Clientes Activos"
-        value="0"
-        valueId="active-clients"
-        icon="check-circle"
-        color="green"
-      />
-
-      <StatCard
-        title="Con Cotizaciones"
-        value="0"
-        valueId="clients-with-quotes"
-        icon="document-check"
-        color="purple"
-      />
-
-      <StatCard
-        title="Últimos 30 días"
-        value="0"
-        valueId="recent-clients"
-        icon="calendar"
-        color="yellow"
-      />
-    </div>
+    <!-- Stats Grid (Stitch Editorial Shadows) -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <div class="bg-[var(--color-surface-container-low)] p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Total Clientes</p>
+        <h4 class="text-3xl font-black text-[var(--color-on-surface)] flex items-baseline gap-2">
+            <span id="total-clients">0</span> <span class="text-sm font-medium text-[var(--color-on-surface-variant)]">Entidades</span>
+        </h4>
+      </div>
+      <div class="bg-[var(--color-surface-container-low)] p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Clientes Activos</p>
+        <h4 class="text-3xl font-black text-emerald-400 flex items-baseline gap-2">
+            <span id="active-clients">0</span> <span class="text-sm font-medium text-[var(--color-on-surface-variant)]">Validados</span>
+        </h4>
+      </div>
+      <div class="bg-[var(--color-surface-container-low)] p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Con Cotizaciones</p>
+        <h4 class="text-3xl font-black text-blue-400 flex items-baseline gap-2">
+            <span id="clients-with-quotes">0</span> <span class="text-sm font-medium text-[var(--color-on-surface-variant)]">Pendientes</span>
+        </h4>
+      </div>
+      <div class="bg-[var(--color-surface-container-low)] p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Adjudicados (30 días)</p>
+        <h4 class="text-3xl font-black text-amber-400 flex items-baseline gap-2">
+            <span id="recent-clients">0</span> <span class="text-sm font-medium text-[var(--color-on-surface-variant)]">Nuevos</span>
+        </h4>
+      </div>
+    </section>
 
     <!-- Filters -->
-    <Card class="mb-8 shadow-premium overflow-visible">
+    <div class="bg-[var(--color-surface-container-low)]/50 p-6 rounded-xl border border-[var(--color-outline-variant)]/30 backdrop-blur-md mb-8 shadow-[0_8px_16px_rgba(0,0,0,0.2)]">
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 items-end">
-        <Input id="search" placeholder="Buscar clientes..." label="Buscar por nombre o email" />
+        <Input id="search" placeholder="Ej: John Doe, john@..." label="Buscar cliente" />
         <Select
           id="status"
-          label="Estado del cliente"
+          label="Estado Comercial"
           options={[
-            { value: "", label: "Todos los estados" },
-            { value: "active", label: "Solo Activos" },
-            { value: "inactive", label: "Solo Inactivos" },
+            { value: "", label: "Cualquier estado" },
+            { value: "active", label: "Activos" },
+            { value: "inactive", label: "Inactivos" },
           ]}
         />
         <Input
           id="company"
-          placeholder="Filtrar por empresa..."
-          label="Empresa / Institución"
+          placeholder="Ej: Globant, Mercado Libre"
+          label="Empresa"
         />
         <div class="flex space-x-2">
-          <Button id="clear-filters" variant="secondary" class="flex-1">
-            Limpiar
-          </Button>
-        </div>
-      </div>
-    </Card>
-
-    <!-- Clients Table/Cards Container -->
-    <Card class="shadow-premium overflow-hidden">
-      <div class="">
-        <!-- Desktop Table View (hidden on mobile) -->
-        <div class="hidden sm:block">
-          <div class="flow-root">
-            <div
-              class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8 custom-scrollbar"
-            >
-              <div
-                class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
-              >
-                <table
-                  class="min-w-full divide-y divide-gray-200 dark:divide-gray-700"
-                >
-                  <thead>
-                    <tr>
-                      <th
-                        scope="col"
-                        class="py-4 pl-4 pr-3 text-left text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 sm:pl-0"
-                      >
-                        Cliente
-                      </th>
-                      <th
-                        scope="col"
-                        class="px-3 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500"
-                      >
-                        Empresa
-                      </th>
-                      <th
-                        scope="col"
-                        class="px-3 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500"
-                      >
-                        Contacto
-                      </th>
-                      <th
-                        scope="col"
-                        class="px-3 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500"
-                      >
-                        Cotizaciones
-                      </th>
-                      <th
-                        scope="col"
-                        class="px-3 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500"
-                      >
-                        Estado
-                      </th>
-                      <th
-                        scope="col"
-                        class="px-3 py-4 text-left text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500"
-                      >
-                        Acciones
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody
-                    class="divide-y divide-gray-200 dark:divide-gray-600"
-                    id="clients-tbody-desktop"
-                  >
-                    <tr>
-                      <td
-                        colspan="6"
-                        class="text-center py-8 text-gray-500 dark:text-gray-400"
-                      >
-                        <svg
-                          class="animate-spin h-8 w-8 mx-auto mb-2"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            class="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            stroke-width="4"></circle>
-                          <path
-                            class="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
-                        Cargando clientes...
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Mobile Card View (visible only on mobile) -->
-        <div class="sm:hidden">
-          <div id="clients-cards-mobile" class="space-y-4">
-            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-              <svg
-                class="animate-spin h-8 w-8 mx-auto mb-2"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  class="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  stroke-width="4"></circle>
-                <path
-                  class="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              Cargando clientes...
-            </div>
-          </div>
+          <button id="clear-filters" class="w-full flex-1 py-3 px-4 rounded-xl font-bold bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-highest)] border border-[var(--color-outline-variant)] transition-all focus:ring-2 focus:ring-[var(--color-primary)]/50">
+            Limpiar Filtros
+          </button>
         </div>
       </div>
     </div>
 
+    <!-- Client Grid Container -->
+    <section id="clients-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-6 pb-12">
+      <!-- Loading State -->
+      <div class="xl:col-span-2 text-center py-20 text-[var(--color-on-surface-variant)]">
+        <svg class="animate-spin h-10 w-10 mx-auto mb-4 text-[var(--color-primary)] opacity-80" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="text-sm font-bold uppercase tracking-widest text-slate-500">Cargando portafolio...</p>
+      </div>
+    </section>
+
     <!-- Client Modal -->
     <div
       id="client-modal"
-      class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden overflow-y-auto h-full w-full z-50 transition-all duration-300"
+      class="fixed inset-0 bg-slate-950/80 backdrop-blur-xl hidden overflow-y-auto h-full w-full z-50 transition-all duration-500"
     >
-      <div
-        class="relative top-5 sm:top-20 mx-auto p-0 border-1 border-outline-variant/15 w-11/12 sm:w-[450px] shadow-[0_20px_40px_rgba(0,0,0,0.4)] rounded-3xl bg-surface overflow-hidden anime-fade-in"
-      >
-        <div class="px-8 py-6 bg-surface-container-lowest border-b border-outline-variant/15 flex justify-between items-center">
+      <div class="relative top-5 sm:top-20 mx-auto p-0 border border-[var(--color-outline-variant)] w-11/12 sm:w-[450px] shadow-[0_24px_48px_rgba(0,0,0,0.6)] rounded-3xl bg-[var(--color-surface-container-low)] overflow-hidden anime-fade-in">
+        <div class="px-8 py-6 bg-[var(--color-surface-container)] border-b border-[var(--color-outline-variant)] flex justify-between items-center">
           <h3
-            class="text-2xl font-heading font-extrabold text-gray-900 dark:text-white"
+            class="text-2xl font-black text-white"
             id="modal-title"
           >
             Nuevo Cliente
@@ -253,17 +118,53 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
           <button
             type="button"
             id="modal-close-btn"
-            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            class="text-slate-400 hover:text-blue-400 transition-colors bg-slate-900/50 p-2 rounded-full"
             aria-label="Cerrar"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <span class="material-symbols-outlined text-lg block">close</span>
           </button>
         </div>
 
         <div class="p-8">
           <form id="client-form" class="space-y-5">
+
+            <!-- Avatar Upload -->
+            <div class="flex flex-col items-center gap-4">
+              <div class="relative">
+                <div
+                  id="photo-preview-container"
+                  class="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-dashed border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] flex items-center justify-center cursor-pointer group hover:border-[var(--color-primary)] transition-all"
+                >
+                  <img
+                    id="photo-preview"
+                    src=""
+                    alt="Preview"
+                    class="absolute inset-0 w-full h-full object-cover hidden"
+                  />
+                  <div id="photo-placeholder" class="flex flex-col items-center gap-1 text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)] transition-colors">
+                    <span class="material-symbols-outlined text-3xl">add_a_photo</span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest">Foto</span>
+                  </div>
+                  <input
+                    id="client-foto"
+                    type="file"
+                    accept="image/*"
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                </div>
+                <!-- Remove photo button: only visible when there's a photo -->
+                <button
+                  type="button"
+                  id="remove-photo-btn"
+                  title="Quitar foto"
+                  class="hidden absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors z-10"
+                >
+                  <span class="material-symbols-outlined text-sm leading-none">close</span>
+                </button>
+              </div>
+              <p class="text-[10px] text-[var(--color-on-surface-variant)] text-center">Foto de perfil (opcional)<br/>Se comprime automáticamente</p>
+            </div>
+
             <Input id="client-nombre" required label="Nombre completo" placeholder="Ej: Juan Pérez" />
             <Input id="client-empresa" label="Empresa / Organización" placeholder="Opcional" />
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -342,6 +243,66 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
 
     let allClients: any[] = [];
     let editingClient: any = null;
+    let currentImageBase64: string | null = null;
+    let shouldRemovePhoto: boolean = false;
+
+    // Show/hide the remove-photo button
+    function syncRemoveBtn() {
+      const btn = document.getElementById('remove-photo-btn') as HTMLButtonElement;
+      const preview = document.getElementById('photo-preview') as HTMLImageElement;
+      if (!btn) return;
+      const hasPhoto = preview && !preview.classList.contains('hidden');
+      if (hasPhoto) {
+        btn.classList.remove('hidden');
+        btn.classList.add('flex');
+      } else {
+        btn.classList.add('hidden');
+        btn.classList.remove('flex');
+      }
+    }
+
+    // Reset the photo preview to empty state
+    function resetPhotoUI() {
+      currentImageBase64 = null;
+      const preview = document.getElementById('photo-preview') as HTMLImageElement;
+      const placeholder = document.getElementById('photo-placeholder') as HTMLDivElement;
+      const fileInput = document.getElementById('client-foto') as HTMLInputElement;
+      if (preview) { preview.src = ''; preview.classList.add('hidden'); }
+      if (placeholder) placeholder.classList.remove('hidden');
+      if (fileInput) fileInput.value = '';
+      syncRemoveBtn();
+    }
+
+    // Compress and convert image to base64 using Canvas API
+    function compressImage(file: File): Promise<string> {
+      return new Promise((resolve, reject) => {
+        const MAX_SIZE = 256;
+        const QUALITY = 0.8;
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+          const img = new Image();
+          img.src = e.target?.result as string;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let { width, height } = img;
+            // Scale down to MAX_SIZE keeping aspect ratio
+            if (width > height) {
+              if (width > MAX_SIZE) { height = (height * MAX_SIZE) / width; width = MAX_SIZE; }
+            } else {
+              if (height > MAX_SIZE) { width = (width * MAX_SIZE) / height; height = MAX_SIZE; }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d')!;
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', QUALITY));
+          };
+          img.onerror = reject;
+        };
+        reader.onerror = reject;
+      });
+    }
 
     // Show/Hide loading
     function showLoading() {
@@ -386,16 +347,14 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
     // Clear form
     function clearForm() {
       (document.getElementById("client-nombre") as HTMLInputElement).value = "";
-      (document.getElementById("client-empresa") as HTMLInputElement).value =
-        "";
+      (document.getElementById("client-empresa") as HTMLInputElement).value = "";
       (document.getElementById("client-email") as HTMLInputElement).value = "";
-      (document.getElementById("client-telefono") as HTMLInputElement).value =
-        "";
-      (
-        document.getElementById("client-direccion") as HTMLTextAreaElement
-      ).value = "";
-      (document.getElementById("client-activo") as HTMLInputElement).checked =
-        true;
+      (document.getElementById("client-telefono") as HTMLInputElement).value = "";
+      (document.getElementById("client-direccion") as HTMLTextAreaElement).value = "";
+      (document.getElementById("client-activo") as HTMLInputElement).checked = true;
+      // Reset photo state
+      shouldRemovePhoto = false;
+      resetPhotoUI();
     }
 
     // Load clients from API with quote counts
@@ -425,145 +384,91 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
     }
 
     // Render clients in table and mobile cards
+    // Render clients responsive Bento Grid
     function renderClients(clients: any[]) {
-      // Get both containers
-      const tbodyDesktop = document.getElementById("clients-tbody-desktop");
-      const mobileCards = document.getElementById("clients-cards-mobile");
-
-      if (!tbodyDesktop || !mobileCards) return;
+      const clientsGrid = document.getElementById("clients-grid");
+      if (!clientsGrid) return;
 
       if (clients.length === 0) {
-        // Empty state for desktop
-        tbodyDesktop.innerHTML = `
-        <tr>
-          <td colspan="6" class="text-center py-8 text-gray-500 dark:text-gray-400">
-            <svg class="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No se encontraron clientes</h3>
-            <p class="text-gray-500 dark:text-gray-400">Comienza agregando tu primer cliente.</p>
-          </td>
-        </tr>
-        `;
-
-        // Empty state for mobile
-        mobileCards.innerHTML = `
-        <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-          <svg class="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No se encontraron clientes</h3>
-          <p class="text-gray-500 dark:text-gray-400">Comienza agregando tu primer cliente.</p>
+        clientsGrid.innerHTML = `
+        <div class="xl:col-span-2 text-center py-20 text-[var(--color-on-surface-variant)] border border-dashed border-[var(--color-outline-variant)] rounded-2xl bg-[var(--color-surface-container-low)]">
+          <span class="material-symbols-outlined text-5xl mb-4 opacity-50 block">sentiment_neutral</span>
+          <h3 class="text-xl font-bold text-[var(--color-on-surface)] mb-2">Sin clientes encontrados</h3>
+          <p class="text-[var(--color-on-surface-variant)] text-sm">Comienza agregando un cliente o cambia tus filtros de búsqueda.</p>
         </div>
         `;
         return;
       }
 
-      // Render desktop view
-      tbodyDesktop.innerHTML = clients
+      clientsGrid.innerHTML = clients
         .map((client) => {
-          return `
-          <tr class="group hover:bg-surface-container transition-colors">
-            <td class="py-5 pl-4 pr-3 text-sm sm:pl-0">
-              <div class="flex flex-col">
-                <div class="font-heading font-bold text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors">${client.nombre || "Sin nombre"}</div>
-                <div class="text-gray-400 dark:text-gray-500 text-xs mt-0.5">${client.email || "Sin email"}</div>
-              </div>
-            </td>
-            <td class="px-3 py-5 text-sm text-gray-600 dark:text-gray-400 font-medium">
-              ${client.empresa || "—"}
-            </td>
-            <td class="px-3 py-5 text-sm text-gray-500 dark:text-gray-400">
-              <div class="flex flex-col">
-                <div class="text-gray-700 dark:text-gray-300 font-medium">${client.telefono || "—"}</div>
-                <div class="text-xs text-gray-400 dark:text-gray-500 italic mt-0.5 truncate max-w-[150px]">${client.direccion || "Sin dirección"}</div>
-              </div>
-            </td>
-            <td class="px-3 py-5 text-sm">
-              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                (client.cotizaciones || 0) > 0
-                  ? "bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 border border-primary-100 dark:border-primary-800"
-                  : "bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-500 border border-gray-100 dark:border-gray-700"
-              }">
-                ${client.cotizaciones || 0} cotiz.
-              </span>
-            </td>
-            <td class="px-3 py-5 text-sm">
-              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                client.activo
-                  ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-100 dark:border-green-800"
-                  : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-100 dark:border-red-800"
-              }">
-                ${client.activo ? "Activo" : "Inactivo"}
-              </span>
-            </td>
-            <td class="px-3 py-5 text-sm text-gray-500 dark:text-gray-400">
-              <div class="flex space-x-3">
-                <button class="font-bold text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 transition-colors edit-client" data-id="${client.id}">
-                  Editar
-                </button>
-                <button class="font-bold text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors delete-client" data-id="${client.id}">
-                  Eliminar
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
-        })
-        .join("");
+          const initials = client.nombre
+            ? client.nombre
+                .split(" ")
+                .map((n: string) => n[0])
+                .join("")
+                .substring(0, 2)
+                .toUpperCase()
+            : "CL";
 
-      // Render mobile cards
-      mobileCards.innerHTML = clients
-        .map((client) => {
+          const activeBadgeClass = client.activo
+            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+            : "bg-slate-500/10 text-slate-400 border-slate-500/20";
+          const activeBadgeText = client.activo ? "Activo" : "Inactivo";
+
+          const avatarHtml = client.imagenBase64
+            ? `<img src="${client.imagenBase64}" alt="${client.nombre}" class="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-2xl object-cover group-hover:scale-105 transition-transform border border-[var(--color-outline-variant)] shadow-[0_4px_12px_rgba(0,0,0,0.3)] grayscale-[20%] group-hover:grayscale-0 transition-all duration-500" />`
+            : `<div class="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-2xl bg-gradient-to-br from-[var(--color-surface-container-highest)] to-[var(--color-surface-container)] flex items-center justify-center text-[var(--color-primary)] font-black text-2xl group-hover:scale-105 transition-transform border border-[var(--color-outline-variant)] shadow-inner">${initials}</div>`;
+
           return `
-          <div class="group bg-surface-container rounded-2xl shadow-sm p-5 hover:bg-surface-container-highest hover:shadow-[0_12px_32px_rgba(31,41,55,0.06)] dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)] hover:-translate-y-1 transition-all duration-300">
-            <div class="flex justify-between items-start mb-4">
-              <div class="flex-1">
-                <h3 class="text-lg font-heading font-bold text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors">${client.nombre || "Sin nombre"}</h3>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wider font-bold">${client.empresa || "Sin empresa"}</p>
-              </div>
-              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                client.activo
-                  ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-100 dark:border-green-800"
-                  : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-100 dark:border-red-800"
-              }">
-                ${client.activo ? "Activo" : "Inactivo"}
-              </span>
-            </div>
+          <!-- Client Card -->
+          <div class="bg-[var(--color-surface-container-low)] p-6 sm:p-8 rounded-xl border border-[var(--color-outline-variant)] shadow-[0_12px_32px_rgba(0,0,0,0.3)] flex flex-col sm:flex-row items-center sm:items-start gap-6 hover:bg-[var(--color-surface-container)] transition-all cursor-default group relative">
+            ${avatarHtml}
             
-            <div class="grid grid-cols-2 gap-4 mb-5 p-4 bg-surface-container-lowest rounded-xl border border-outline-variant/15">
-              <div>
-                <span class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Email</span>
-                <span class="text-sm text-gray-700 dark:text-gray-300 font-medium truncate block">${client.email || "—"}</span>
-              </div>
-              <div>
-                <span class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Teléfono</span>
-                <span class="text-sm text-gray-700 dark:text-gray-300 font-medium block">${client.telefono || "—"}</span>
-              </div>
-              <div class="col-span-2">
-                <span class="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Cotizaciones</span>
-                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                  (client.cotizaciones || 0) > 0
-                    ? "bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 border border-primary-100 dark:border-primary-800"
-                    : "bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-500 border border-gray-100 dark:border-gray-700"
-                }">
-                  ${client.cotizaciones || 0} realizadas
+            <div class="flex-1 w-full">
+              <div class="flex flex-col sm:flex-row justify-between items-center sm:items-start gap-3 sm:gap-0 text-center sm:text-left">
+                <div>
+                  <h3 class="text-xl font-black text-[var(--color-on-surface)]">${client.nombre || "Sin nombre"}</h3>
+                  <p class="text-[var(--color-primary)] font-bold text-sm tracking-wide">${client.empresa || "Sin empresa"}</p>
+                </div>
+                <!-- Status Badge -->
+                <span class="px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border ${activeBadgeClass}">
+                  ${activeBadgeText}
                 </span>
               </div>
-            </div>
-            
-            <div class="flex justify-end space-x-3 pt-1">
-              <button class="px-4 py-2 text-sm font-bold text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 transition-colors edit-client" data-id="${client.id}">
-                Editar
-              </button>
-              <button class="px-4 py-2 text-sm font-bold text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors delete-client" data-id="${client.id}">
-                Eliminar
-              </button>
+              
+              <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="flex items-center gap-3 text-[var(--color-on-surface-variant)] justify-center sm:justify-start">
+                  <span class="material-symbols-outlined text-sm opacity-70">mail</span>
+                  <span class="text-xs truncate max-w-[140px]" title="${client.email || ''}">${client.email || "—"}</span>
+                </div>
+                <div class="flex items-center gap-3 text-[var(--color-on-surface-variant)] justify-center sm:justify-start">
+                  <span class="material-symbols-outlined text-sm opacity-70">phone</span>
+                  <span class="text-xs">${client.telefono || "—"}</span>
+                </div>
+              </div>
+              
+              <div class="mt-6 pt-5 border-t border-[var(--color-outline-variant)]/50 flex justify-between items-center w-full">
+                <p class="text-[10px] font-black text-[var(--color-on-surface-variant)] uppercase tracking-widest">
+                  ${client.cotizaciones || 0} Cotizaciones
+                </p>
+                
+                <!-- Silent Actions that reveal on hover on desktop, always visible subtly on mobile -->
+                <div class="flex items-center gap-4 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button class="edit-client flex items-center text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors" data-id="${client.id}" title="Editar Cliente">
+                      <span class="material-symbols-outlined text-xl pointer-events-none">edit_document</span>
+                  </button>
+                  <button class="delete-client flex items-center text-[var(--color-on-surface-variant)] hover:text-red-500 transition-colors" data-id="${client.id}" title="Borrar Cliente">
+                      <span class="material-symbols-outlined text-xl pointer-events-none">delete</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
           `;
         })
         .join("");
+
 
       // Add event listeners to action buttons (for both desktop and mobile)
       document.querySelectorAll(".edit-client").forEach((btn) => {
@@ -703,26 +608,14 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       try {
         showLoading();
 
-        const nombre = (
-          document.getElementById("client-nombre") as HTMLInputElement
-        ).value;
-        const empresa = (
-          document.getElementById("client-empresa") as HTMLInputElement
-        ).value;
-        const email = (
-          document.getElementById("client-email") as HTMLInputElement
-        ).value;
-        const telefono = (
-          document.getElementById("client-telefono") as HTMLInputElement
-        ).value;
-        const direccion = (
-          document.getElementById("client-direccion") as HTMLTextAreaElement
-        ).value;
-        const activo = (
-          document.getElementById("client-activo") as HTMLInputElement
-        ).checked;
+        const nombre = (document.getElementById("client-nombre") as HTMLInputElement).value;
+        const empresa = (document.getElementById("client-empresa") as HTMLInputElement).value;
+        const email = (document.getElementById("client-email") as HTMLInputElement).value;
+        const telefono = (document.getElementById("client-telefono") as HTMLInputElement).value;
+        const direccion = (document.getElementById("client-direccion") as HTMLTextAreaElement).value;
+        const activo = (document.getElementById("client-activo") as HTMLInputElement).checked;
 
-        const clientData = {
+        const clientData: any = {
           nombre,
           empresa: empresa || "",
           email,
@@ -731,6 +624,15 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
           activo,
           updatedAt: new Date(),
         };
+
+        // Photo logic: new upload wins, explicit removal sends null, otherwise preserve existing
+        if (currentImageBase64) {
+          clientData.imagenBase64 = currentImageBase64;
+        } else if (shouldRemovePhoto) {
+          clientData.imagenBase64 = null; // Signal API to delete the field
+        } else if (editingClient && editingClient.imagenBase64) {
+          clientData.imagenBase64 = editingClient.imagenBase64;
+        }
 
         if (editingClient) {
           // Update existing client via API
@@ -763,11 +665,13 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
           }
         }
 
+        // ⚠️ Capture BEFORE hideModal() nukes editingClient
+        const wasEditing = !!editingClient;
         hideModal();
         await loadClients();
         notifications.success(
-          editingClient ? "¡Cliente actualizado!" : "¡Cliente creado!",
-          editingClient
+          wasEditing ? "¡Cliente actualizado!" : "¡Cliente creado!",
+          wasEditing
             ? "Los datos del cliente se han actualizado exitosamente"
             : "El nuevo cliente ha sido agregado al sistema"
         );
@@ -788,20 +692,28 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       if (!client) return;
 
       editingClient = client;
+      currentImageBase64 = null; // New upload will override; existing preserved on save
 
-      (document.getElementById("client-nombre") as HTMLInputElement).value =
-        client.nombre || "";
-      (document.getElementById("client-empresa") as HTMLInputElement).value =
-        client.empresa || "";
-      (document.getElementById("client-email") as HTMLInputElement).value =
-        client.email || "";
-      (document.getElementById("client-telefono") as HTMLInputElement).value =
-        client.telefono || "";
-      (
-        document.getElementById("client-direccion") as HTMLTextAreaElement
-      ).value = client.direccion || "";
-      (document.getElementById("client-activo") as HTMLInputElement).checked =
-        client.activo !== false;
+      (document.getElementById("client-nombre") as HTMLInputElement).value = client.nombre || "";
+      (document.getElementById("client-empresa") as HTMLInputElement).value = client.empresa || "";
+      (document.getElementById("client-email") as HTMLInputElement).value = client.email || "";
+      (document.getElementById("client-telefono") as HTMLInputElement).value = client.telefono || "";
+      (document.getElementById("client-direccion") as HTMLTextAreaElement).value = client.direccion || "";
+      (document.getElementById("client-activo") as HTMLInputElement).checked = client.activo !== false;
+
+      // Show existing photo in preview if present
+      const preview = document.getElementById('photo-preview') as HTMLImageElement;
+      const placeholder = document.getElementById('photo-placeholder') as HTMLDivElement;
+      if (client.imagenBase64 && preview && placeholder) {
+        preview.src = client.imagenBase64;
+        preview.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+      } else if (preview && placeholder) {
+        preview.src = '';
+        preview.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+      }
+      syncRemoveBtn();
 
       document.getElementById("modal-title")!.textContent = "Editar Cliente";
       showModal();
@@ -851,6 +763,35 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
 
     // Event listeners
     document.addEventListener("DOMContentLoaded", async () => {
+      // Photo file input → compress → preview
+      document.getElementById('client-foto')?.addEventListener('change', async (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (!file) return;
+        try {
+          const base64 = await compressImage(file);
+          currentImageBase64 = base64;
+          shouldRemovePhoto = false; // New upload overrides any remove intention
+          const preview = document.getElementById('photo-preview') as HTMLImageElement;
+          const placeholder = document.getElementById('photo-placeholder') as HTMLDivElement;
+          if (preview && placeholder) {
+            preview.src = base64;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+          }
+          syncRemoveBtn();
+        } catch {
+          notifications.error('Error', 'No se pudo procesar la imagen. Intenta con otra.');
+        }
+      });
+
+      // Remove photo button
+      document.getElementById('remove-photo-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        shouldRemovePhoto = true;
+        resetPhotoUI();
+      });
+
       // Load initial data
       await loadClients();
 
