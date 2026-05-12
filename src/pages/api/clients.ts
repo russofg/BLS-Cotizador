@@ -1,56 +1,75 @@
 import type { APIRoute } from 'astro';
 import { clienteService, cotizacionService } from '../../utils/database';
+import { ClienteService, InvalidCursorError } from '../../services/ClienteService';
 import { FieldValue } from 'firebase-admin/firestore';
-import { cache, CacheKeys, CacheTTL } from '../../utils/cache';
+// cache/CacheKeys used by ClienteService internally
 import { checkRateLimit } from '../../utils/rateLimit';
 import { AnalyticsService } from '../../services/AnalyticsService';
+
+const JSON_HEADERS = {
+  'Content-Type': 'application/json',
+  'Cache-Control': 'no-cache, no-store, must-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0'
+};
 
 export const GET: APIRoute = async ({ url, request }) => {
   try {
     const limited = checkRateLimit(request, 'READ', 'clients');
     if (limited) return limited;
+
+    // ── Parse query params ──────────────────────────────────────────────────
     const includeQuoteCount = url.searchParams.get('includeQuoteCount') === 'true';
-    
-    // Always get fresh data from the service (which has its own cache)
-    // Filter to show only active clients
-    const allClientes = await clienteService.getAll();
-    const clientes = allClientes.filter(cliente => cliente.activo !== false);
-    
+    const cursor = url.searchParams.get('cursor') ?? null;
+    const rawPageSize = url.searchParams.get('pageSize');
+    const pageSize = rawPageSize ? parseInt(rawPageSize, 10) : 25;
+    const search = url.searchParams.get('search') ?? undefined;
+
+    // Existing filter params (preserved for backward compat)
+    const activoParam = url.searchParams.get('activo');
+    const empresaParam = url.searchParams.get('empresa');
+    const filters: Record<string, any> = {};
+    if (activoParam !== null) filters.activo = activoParam === 'true';
+    if (empresaParam) filters.empresa = empresaParam;
+
+    // ── Paginated listing via list() ────────────────────────────────────────
+    const listResult = await ClienteService.list({
+      filters: Object.keys(filters).length > 0 ? filters : undefined,
+      search,
+      cursor,
+      pageSize
+    });
+
+    let items: any[] = listResult.items;
+
     if (includeQuoteCount) {
-      // Optimized: Get all quotes once instead of N+1 queries
+      // Quote counts computed only over the current page items (not full collection)
       const allQuotes = await cotizacionService.getAll();
-      
-      // Create a map of client ID to quotes for O(1) lookup
+
       const quotesByClient = new Map<string, any[]>();
       allQuotes.forEach(quote => {
         const clientId = quote.clienteId || (quote as any).cliente_id;
         if (clientId) {
-          if (!quotesByClient.has(clientId)) {
-            quotesByClient.set(clientId, []);
-          }
+          if (!quotesByClient.has(clientId)) quotesByClient.set(clientId, []);
           quotesByClient.get(clientId)!.push(quote);
         }
       });
 
-      // Process clients with optimized quote lookup
-      const clientesWithCounts = clientes.map((cliente: any) => {
+      items = items.map((cliente: any) => {
         try {
           const clientQuotes = quotesByClient.get(cliente.id) || [];
-          
-          const quoteCount = clientQuotes.length;
-          const latestQuote = clientQuotes.length > 0 
-            ? clientQuotes.reduce((latest: any, current: any) => 
+          const latestQuote = clientQuotes.length > 0
+            ? clientQuotes.reduce((latest: any, current: any) =>
                 new Date(current.createdAt || 0) > new Date(latest.createdAt || 0) ? current : latest
               ).createdAt
             : cliente.createdAt;
-          
+
           return {
             ...cliente,
-            cotizaciones: quoteCount,
+            cotizaciones: clientQuotes.length,
             ultimaCotizacion: new Date(latestQuote).toISOString().split('T')[0]
           };
-        } catch (error) {
-          console.error('Error getting quote count for client:', cliente.id, error);
+        } catch {
           return {
             ...cliente,
             cotizaciones: 0,
@@ -58,37 +77,29 @@ export const GET: APIRoute = async ({ url, request }) => {
           };
         }
       });
-      
-      return new Response(JSON.stringify(clientesWithCounts), {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
     }
-    
-    return new Response(JSON.stringify(clientes), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
-    });
+
+    return new Response(
+      JSON.stringify({
+        items,
+        nextCursor: listResult.nextCursor,
+        hasMore: listResult.hasMore,
+        pageSize: listResult.pageSize
+      }),
+      { status: 200, headers: JSON_HEADERS }
+    );
   } catch (error) {
+    if (error instanceof InvalidCursorError) {
+      return new Response(
+        JSON.stringify({ error: 'invalid_cursor', message: error.message }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
     console.error('Error fetching clients:', error);
-    return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : 'Error al obtener clientes'
-    }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Error al obtener clientes' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 };
 
