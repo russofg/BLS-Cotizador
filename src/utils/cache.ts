@@ -104,9 +104,39 @@ class SimpleCache {
 // Export singleton instance
 export const cache = new SimpleCache();
 
+// ── Stable hash for cache keys ────────────────────────────────────────────────
+// Deterministic: keys are sorted before serialising so {a:1,b:2} === {b:2,a:1}
+function stableStringify(value: unknown): string {
+  if (value === null || value === undefined) return String(value);
+  if (typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
+  const sorted = Object.keys(value as Record<string, unknown>)
+    .sort()
+    .map(k => `${JSON.stringify(k)}:${stableStringify((value as any)[k])}`);
+  return `{${sorted.join(',')}}`;
+}
+
 // Cache key generators for common use cases
 export const CacheKeys = {
-  // Client cache keys
+  // Client list — paginated (v2)
+  clientsList: (params?: {
+    filters?: any;
+    search?: string;
+    cursor?: string | null;
+    pageSize?: number;
+  }) =>
+    `clients:list:v2:${stableStringify({
+      filters: params?.filters ?? {},
+      search: params?.search ?? '',
+      cursor: params?.cursor ?? '',
+      pageSize: params?.pageSize ?? 25
+    })}`,
+
+  // Client aggregates — full unbounded list (v2)
+  clientsAggregates: (filters?: any) =>
+    `clients:aggregates:v2:${stableStringify(filters ?? {})}`,
+
+  // Legacy alias kept for call sites that pass raw filters
   clients: (filters?: any) => CacheKeys.generateKey('clients', JSON.stringify(filters || {})),
   clientById: (id: string) => CacheKeys.generateKey('client', id),
   clientStats: () => CacheKeys.generateKey('client-stats'),
