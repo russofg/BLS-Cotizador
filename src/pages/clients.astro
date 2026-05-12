@@ -43,6 +43,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
         <h4 class="text-3xl font-black text-[var(--color-on-surface)] flex items-baseline gap-2">
             <span id="total-clients">0</span> <span class="text-sm font-medium text-[var(--color-on-surface-variant)]">Entidades</span>
         </h4>
+        <p id="stats-scope-label" class="text-[10px] text-[var(--color-on-surface-variant)] mt-1 hidden">(de los cargados)</p>
       </div>
       <div class="bg-[var(--color-surface-container-low)] p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
         <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Clientes Activos</p>
@@ -67,7 +68,10 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
     <!-- Filters -->
     <div class="bg-[var(--color-surface-container-low)]/50 p-6 rounded-xl border border-[var(--color-outline-variant)]/30 backdrop-blur-md mb-8 shadow-[0_8px_16px_rgba(0,0,0,0.2)]">
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 items-end">
-        <Input id="search" placeholder="Ej: John Doe, john@..." label="Buscar cliente" />
+        <div>
+          <Input id="search" placeholder="Buscar por inicio de nombre..." label="Buscar cliente" />
+          <p class="text-[10px] text-[var(--color-on-surface-variant)] mt-1 ml-1">Búsqueda por prefijo de nombre</p>
+        </div>
         <Select
           id="status"
           label="Estado Comercial"
@@ -91,9 +95,9 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
     </div>
 
     <!-- Client Grid Container -->
-    <section id="clients-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-6 pb-12">
-      <!-- Loading State -->
-      <div class="xl:col-span-2 text-center py-20 text-[var(--color-on-surface-variant)]">
+    <section id="clients-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-6 pb-6">
+      <!-- Skeleton initial loading state -->
+      <div id="skeleton-loader" class="xl:col-span-2 text-center py-20 text-[var(--color-on-surface-variant)]">
         <svg class="animate-spin h-10 w-10 mx-auto mb-4 text-[var(--color-primary)] opacity-80" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -101,6 +105,23 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
         <p class="text-sm font-bold uppercase tracking-widest text-slate-500">Cargando portafolio...</p>
       </div>
     </section>
+
+    <!-- "Cargar más" button — outside the grid, shown only when hasMore === true -->
+    <div id="load-more-container" class="hidden flex justify-center pb-12">
+      <button
+        id="load-more-btn"
+        class="flex items-center gap-3 px-8 py-4 rounded-xl font-bold border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] bg-[var(--color-surface-container-low)] hover:bg-[var(--color-surface-container-high)] transition-all focus:ring-2 focus:ring-[var(--color-primary)]/50 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <span id="load-more-spinner" class="hidden">
+          <svg class="animate-spin h-5 w-5 text-[var(--color-primary)]" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </span>
+        <span class="material-symbols-outlined text-lg" id="load-more-icon">expand_more</span>
+        <span id="load-more-text">Cargar más clientes</span>
+      </button>
+    </div>
 
     <!-- Client Modal -->
     <div
@@ -172,7 +193,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
               <Input id="client-telefono" type="tel" label="Teléfono" placeholder="+54..." />
             </div>
             <Textarea id="client-direccion" rows={2} label="Dirección física" placeholder="Opcional" />
-            
+
             <div class="flex items-center p-4 bg-surface-container-lowest rounded-xl border border-outline-variant/15 transition-all hover:bg-surface-container">
               <input
                 id="client-activo"
@@ -240,13 +261,56 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
 
   <script>
     import { notifications } from "../utils/notifications.js";
+    import {
+      initialState,
+      onLoadStart,
+      onPageLoaded,
+      onMoreLoaded,
+      onFilterChange,
+      onMutationSuccess,
+      onFetchError,
+      canLoadMore,
+      type ClientsListState,
+    } from "../utils/clientsListState";
 
-    let allClients: any[] = [];
+    // ──────────────────────────────────────────────────────────────
+    // State
+    // ──────────────────────────────────────────────────────────────
+    let state: ClientsListState = initialState();
     let editingClient: any = null;
     let currentImageBase64: string | null = null;
     let shouldRemovePhoto: boolean = false;
+    let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-    // Show/hide the remove-photo button
+    // ──────────────────────────────────────────────────────────────
+    // Derived filter helpers
+    // ──────────────────────────────────────────────────────────────
+    function buildApiUrl(cursor: string | null = null): string {
+      const params = new URLSearchParams();
+      params.set("includeQuoteCount", "true");
+      params.set("pageSize", String(state.pageSize));
+
+      if (state.search.trim()) {
+        params.set("search", state.search.trim());
+      }
+      if (state.filters.activo === "active") {
+        params.set("activo", "true");
+      } else if (state.filters.activo === "inactive") {
+        params.set("activo", "false");
+      }
+      if (state.filters.empresa && state.filters.empresa.trim()) {
+        params.set("empresa", state.filters.empresa.trim());
+      }
+      if (cursor) {
+        params.set("cursor", cursor);
+      }
+
+      return `/api/clients?${params.toString()}`;
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Photo utilities (unchanged from before)
+    // ──────────────────────────────────────────────────────────────
     function syncRemoveBtn() {
       const btn = document.getElementById('remove-photo-btn') as HTMLButtonElement;
       const preview = document.getElementById('photo-preview') as HTMLImageElement;
@@ -261,7 +325,6 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       }
     }
 
-    // Reset the photo preview to empty state
     function resetPhotoUI() {
       currentImageBase64 = null;
       const preview = document.getElementById('photo-preview') as HTMLImageElement;
@@ -273,7 +336,6 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       syncRemoveBtn();
     }
 
-    // Compress and convert image to base64 using Canvas API
     function compressImage(file: File): Promise<string> {
       return new Promise((resolve, reject) => {
         const MAX_SIZE = 256;
@@ -286,7 +348,6 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
           img.onload = () => {
             const canvas = document.createElement('canvas');
             let { width, height } = img;
-            // Scale down to MAX_SIZE keeping aspect ratio
             if (width > height) {
               if (width > MAX_SIZE) { height = (height * MAX_SIZE) / width; width = MAX_SIZE; }
             } else {
@@ -304,7 +365,9 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       });
     }
 
-    // Show/Hide loading
+    // ──────────────────────────────────────────────────────────────
+    // Loading overlay (for modal save/delete operations)
+    // ──────────────────────────────────────────────────────────────
     function showLoading() {
       const overlay = document.getElementById("loading-overlay");
       if (overlay) {
@@ -321,30 +384,74 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       }
     }
 
-    // Show/Hide modal
+    // ──────────────────────────────────────────────────────────────
+    // Skeleton loader (first page only)
+    // ──────────────────────────────────────────────────────────────
+    function showSkeleton() {
+      const grid = document.getElementById("clients-grid");
+      if (!grid) return;
+      grid.innerHTML = `
+        <div class="xl:col-span-2 text-center py-20 text-[var(--color-on-surface-variant)]">
+          <svg class="animate-spin h-10 w-10 mx-auto mb-4 text-[var(--color-primary)] opacity-80" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p class="text-sm font-bold uppercase tracking-widest text-slate-500">Cargando portafolio...</p>
+        </div>
+      `;
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // "Cargar más" button state
+    // ──────────────────────────────────────────────────────────────
+    function syncLoadMoreButton() {
+      const container = document.getElementById("load-more-container");
+      const btn = document.getElementById("load-more-btn") as HTMLButtonElement;
+      const spinner = document.getElementById("load-more-spinner");
+      const icon = document.getElementById("load-more-icon");
+      const text = document.getElementById("load-more-text");
+
+      if (!container || !btn) return;
+
+      if (state.hasMore) {
+        container.classList.remove("hidden");
+      } else {
+        container.classList.add("hidden");
+      }
+
+      if (state.isLoading && state.allClients.length > 0) {
+        // "Cargar más" in progress
+        btn.disabled = true;
+        spinner?.classList.remove("hidden");
+        icon?.classList.add("hidden");
+        if (text) text.textContent = "Cargando...";
+      } else {
+        btn.disabled = false;
+        spinner?.classList.add("hidden");
+        icon?.classList.remove("hidden");
+        if (text) text.textContent = "Cargar más clientes";
+      }
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Modal helpers
+    // ──────────────────────────────────────────────────────────────
     function showModal() {
       document.getElementById("client-modal")?.classList.remove("hidden");
-      // Prevent body scroll when modal is open
       document.body.style.overflow = "hidden";
-
-      // Focus first input for accessibility
       setTimeout(() => {
-        const firstInput = document.querySelector(
-          "#client-form input"
-        ) as HTMLElement;
+        const firstInput = document.querySelector("#client-form input") as HTMLElement;
         firstInput?.focus();
       }, 100);
     }
 
     function hideModal() {
       document.getElementById("client-modal")?.classList.add("hidden");
-      // Restore body scroll
       document.body.style.overflow = "";
       clearForm();
       editingClient = null;
     }
 
-    // Clear form
     function clearForm() {
       (document.getElementById("client-nombre") as HTMLInputElement).value = "";
       (document.getElementById("client-empresa") as HTMLInputElement).value = "";
@@ -352,52 +459,24 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       (document.getElementById("client-telefono") as HTMLInputElement).value = "";
       (document.getElementById("client-direccion") as HTMLTextAreaElement).value = "";
       (document.getElementById("client-activo") as HTMLInputElement).checked = true;
-      // Reset photo state
       shouldRemovePhoto = false;
       resetPhotoUI();
     }
 
-    // Load clients from API with quote counts
-    async function loadClients() {
-      try {
-        showLoading();
-
-        const response = await fetch("/api/clients?includeQuoteCount=true");
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        // API now returns { items, nextCursor, hasMore, pageSize }
-        allClients = Array.isArray(data) ? data : (data.items ?? []);
-
-        console.log("Clientes cargados:", allClients.length);
-        renderClients(allClients);
-        updateStats();
-        hideLoading();
-      } catch (error) {
-        console.error("Error loading clients:", error);
-        showError(
-          "Error al cargar los clientes: " +
-            (error instanceof Error ? error.message : String(error))
-        );
-        hideLoading();
-      }
-    }
-
-    // Render clients in table and mobile cards
-    // Render clients responsive Bento Grid
+    // ──────────────────────────────────────────────────────────────
+    // Render clients grid
+    // ──────────────────────────────────────────────────────────────
     function renderClients(clients: any[]) {
       const clientsGrid = document.getElementById("clients-grid");
       if (!clientsGrid) return;
 
       if (clients.length === 0) {
         clientsGrid.innerHTML = `
-        <div class="xl:col-span-2 text-center py-20 text-[var(--color-on-surface-variant)] border border-dashed border-[var(--color-outline-variant)] rounded-2xl bg-[var(--color-surface-container-low)]">
-          <span class="material-symbols-outlined text-5xl mb-4 opacity-50 block">sentiment_neutral</span>
-          <h3 class="text-xl font-bold text-[var(--color-on-surface)] mb-2">Sin clientes encontrados</h3>
-          <p class="text-[var(--color-on-surface-variant)] text-sm">Comienza agregando un cliente o cambia tus filtros de búsqueda.</p>
-        </div>
+          <div class="xl:col-span-2 text-center py-20 text-[var(--color-on-surface-variant)] border border-dashed border-[var(--color-outline-variant)] rounded-2xl bg-[var(--color-surface-container-low)]">
+            <span class="material-symbols-outlined text-5xl mb-4 opacity-50 block">sentiment_neutral</span>
+            <h3 class="text-xl font-bold text-[var(--color-on-surface)] mb-2">Sin clientes encontrados</h3>
+            <p class="text-[var(--color-on-surface-variant)] text-sm">Comienza agregando un cliente o cambia tus filtros de búsqueda.</p>
+          </div>
         `;
         return;
       }
@@ -423,64 +502,55 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
             : `<div class="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-2xl bg-gradient-to-br from-[var(--color-surface-container-highest)] to-[var(--color-surface-container)] flex items-center justify-center text-[var(--color-primary)] font-black text-2xl group-hover:scale-105 transition-transform border border-[var(--color-outline-variant)] shadow-inner">${initials}</div>`;
 
           return `
-          <div class="bg-[var(--color-surface-container-low)] p-6 sm:p-8 rounded-xl border border-[var(--color-outline-variant)] shadow-[0_12px_32px_rgba(0,0,0,0.3)] hover:bg-[var(--color-surface-container)] transition-all group relative overflow-hidden">
-            <a href="/clients/${client.id}" class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-              ${avatarHtml}
-              
-              <div class="flex-1 w-full text-center sm:text-left">
-                <div class="flex flex-col sm:flex-row justify-between items-center sm:items-start gap-3 sm:gap-0">
-                  <div>
-                    <h3 class="text-xl font-black text-[var(--color-on-surface)] group-hover:text-[var(--color-primary)] transition-colors">${client.nombre || "Sin nombre"}</h3>
-                    <p class="text-[var(--color-primary)] font-bold text-sm tracking-wide opacity-80">${client.empresa || "Sin empresa"}</p>
+            <div class="bg-[var(--color-surface-container-low)] p-6 sm:p-8 rounded-xl border border-[var(--color-outline-variant)] shadow-[0_12px_32px_rgba(0,0,0,0.3)] hover:bg-[var(--color-surface-container)] transition-all group relative overflow-hidden">
+              <a href="/clients/${client.id}" class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                ${avatarHtml}
+                <div class="flex-1 w-full text-center sm:text-left">
+                  <div class="flex flex-col sm:flex-row justify-between items-center sm:items-start gap-3 sm:gap-0">
+                    <div>
+                      <h3 class="text-xl font-black text-[var(--color-on-surface)] group-hover:text-[var(--color-primary)] transition-colors">${client.nombre || "Sin nombre"}</h3>
+                      <p class="text-[var(--color-primary)] font-bold text-sm tracking-wide opacity-80">${client.empresa || "Sin empresa"}</p>
+                    </div>
+                    <span class="px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border ${activeBadgeClass}">
+                      ${activeBadgeText}
+                    </span>
                   </div>
-                  <!-- Status Badge -->
-                  <span class="px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border ${activeBadgeClass}">
-                    ${activeBadgeText}
-                  </span>
-                </div>
-                
-                <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div class="flex items-center gap-3 text-[var(--color-on-surface-variant)] justify-center sm:justify-start">
-                    <span class="material-symbols-outlined text-sm opacity-70">mail</span>
-                    <span class="text-xs truncate max-w-[140px]" title="${client.email || ''}">${client.email || "—"}</span>
-                  </div>
-                  <div class="flex items-center gap-3 text-[var(--color-on-surface-variant)] justify-center sm:justify-start">
-                    <span class="material-symbols-outlined text-sm opacity-70">phone</span>
-                    <span class="text-xs">${client.telefono || "—"}</span>
+                  <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="flex items-center gap-3 text-[var(--color-on-surface-variant)] justify-center sm:justify-start">
+                      <span class="material-symbols-outlined text-sm opacity-70">mail</span>
+                      <span class="text-xs truncate max-w-[140px]" title="${client.email || ''}">${client.email || "—"}</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-[var(--color-on-surface-variant)] justify-center sm:justify-start">
+                      <span class="material-symbols-outlined text-sm opacity-70">phone</span>
+                      <span class="text-xs">${client.telefono || "—"}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </a>
-            
-            <div class="mt-6 pt-5 border-t border-[var(--color-outline-variant)]/50 flex justify-between items-center w-full">
-              <p class="text-[10px] font-black text-[var(--color-on-surface-variant)] uppercase tracking-widest">
-                ${client.cotizaciones || 0} Cotizaciones
-              </p>
-              
-              <!-- Silent Actions that reveal on hover on desktop, always visible subtly on mobile -->
-              <div class="flex items-center gap-4 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                <button class="edit-client flex items-center text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors" data-id="${client.id}" title="Editar Cliente">
+              </a>
+              <div class="mt-6 pt-5 border-t border-[var(--color-outline-variant)]/50 flex justify-between items-center w-full">
+                <p class="text-[10px] font-black text-[var(--color-on-surface-variant)] uppercase tracking-widest">
+                  ${client.cotizaciones || 0} Cotizaciones
+                </p>
+                <div class="flex items-center gap-4 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button class="edit-client flex items-center text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors" data-id="${client.id}" title="Editar Cliente">
                     <span class="material-symbols-outlined text-xl pointer-events-none">edit_document</span>
-                </button>
-                <button class="delete-client flex items-center text-[var(--color-on-surface-variant)] hover:text-red-500 transition-colors" data-id="${client.id}" title="Borrar Cliente">
+                  </button>
+                  <button class="delete-client flex items-center text-[var(--color-on-surface-variant)] hover:text-red-500 transition-colors" data-id="${client.id}" title="Borrar Cliente">
                     <span class="material-symbols-outlined text-xl pointer-events-none">delete</span>
-                </button>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
           `;
         })
         .join("");
 
-
-      // Add event listeners to action buttons (for both desktop and mobile)
+      // Re-attach event listeners after innerHTML replacement
       document.querySelectorAll(".edit-client").forEach((btn) => {
         btn.addEventListener("click", (e) => {
           const target = e.target as HTMLElement;
           const clientId = target?.getAttribute("data-id");
-          if (clientId) {
-            editClient(clientId);
-          }
+          if (clientId) editClient(clientId);
         });
       });
 
@@ -488,125 +558,151 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
         btn.addEventListener("click", (e) => {
           const target = e.target as HTMLElement;
           const clientId = target?.getAttribute("data-id");
-          if (clientId) {
-            deleteClient(clientId);
-          }
+          if (clientId) deleteClient(clientId);
         });
       });
     }
 
-    // Update statistics
+    // ──────────────────────────────────────────────────────────────
+    // Stats update — computed from accumulated loaded clients
+    // ──────────────────────────────────────────────────────────────
     function updateStats() {
-      const totalClients = allClients.length;
-      const activeClients = allClients.filter((client) => client.activo).length;
-      const clientsWithQuotes = allClients.filter(
-        (client) => (client.cotizaciones || 0) > 0
-      ).length;
+      const clients = state.allClients;
+      const totalClients = clients.length;
+      const activeClients = clients.filter((c) => c.activo).length;
+      const clientsWithQuotes = clients.filter((c) => (c.cotizaciones || 0) > 0).length;
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const recentClients = allClients.filter((client) => {
-        if (!client.createdAt) return false;
-        // Handle different date formats from API
-        let clientDate;
-        if (typeof client.createdAt === "string") {
-          clientDate = new Date(client.createdAt);
-        } else if (client.createdAt.seconds) {
-          clientDate = new Date(client.createdAt.seconds * 1000);
+      const recentClients = clients.filter((c) => {
+        if (!c.createdAt) return false;
+        let d;
+        if (typeof c.createdAt === "string") {
+          d = new Date(c.createdAt);
+        } else if (c.createdAt.seconds) {
+          d = new Date(c.createdAt.seconds * 1000);
         } else {
-          clientDate = new Date(client.createdAt);
+          d = new Date(c.createdAt);
         }
-        return clientDate >= thirtyDaysAgo;
+        return d >= thirtyDaysAgo;
       }).length;
 
-      document.getElementById("total-clients")!.textContent =
-        totalClients.toString();
-      document.getElementById("active-clients")!.textContent =
-        activeClients.toString();
-      document.getElementById("clients-with-quotes")!.textContent =
-        clientsWithQuotes.toString();
-      document.getElementById("recent-clients")!.textContent =
-        recentClients.toString();
+      document.getElementById("total-clients")!.textContent = totalClients.toString();
+      document.getElementById("active-clients")!.textContent = activeClients.toString();
+      document.getElementById("clients-with-quotes")!.textContent = clientsWithQuotes.toString();
+      document.getElementById("recent-clients")!.textContent = recentClients.toString();
+
+      // Show scope label when there might be more pages not yet loaded
+      const scopeLabel = document.getElementById("stats-scope-label");
+      if (scopeLabel) {
+        if (state.hasMore || state.nextCursor) {
+          scopeLabel.textContent = `(de los ${totalClients} cargados)`;
+          scopeLabel.classList.remove("hidden");
+        } else {
+          scopeLabel.classList.add("hidden");
+        }
+      }
     }
 
-    // Show error message
-    function showError(message: string) {
-      // For desktop view
-      const tbodyDesktop = document.getElementById("clients-tbody-desktop");
-      if (tbodyDesktop) {
-        tbodyDesktop.innerHTML = `
-        <tr>
-          <td colspan="6" class="text-center py-8 text-red-500">
-            <svg class="w-12 h-12 mx-auto mb-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-            <h3 class="text-lg font-medium text-red-900 mb-2">Error</h3>
-            <p class="text-red-700">${message}</p>
-            <div class="mt-4">
-              <a href="/quick-fix-firestore" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-bold">
-                🔒 Arreglar Firebase
-              </a>
-            </div>
-          </td>
-        </tr>
-      `;
+    // ──────────────────────────────────────────────────────────────
+    // Fetch helpers
+    // ──────────────────────────────────────────────────────────────
+
+    /**
+     * Load first page. Replaces accumulated list.
+     * Shows skeleton during load.
+     */
+    async function loadFirstPage() {
+      state = onLoadStart(state);
+      showSkeleton();
+      syncLoadMoreButton();
+
+      try {
+        const response = await fetch(buildApiUrl(null));
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        state = onPageLoaded(state, {
+          items: data.items ?? [],
+          nextCursor: data.nextCursor ?? null,
+          hasMore: data.hasMore ?? false,
+          pageSize: data.pageSize ?? 25,
+        });
+      } catch (err) {
+        state = onFetchError(state, err instanceof Error ? err.message : String(err));
+        showFetchError(state.error!);
       }
 
-      // For mobile view
-      const mobileCards = document.getElementById("clients-cards-mobile");
-      if (mobileCards) {
-        mobileCards.innerHTML = `
-        <div class="text-center py-8 text-red-500">
-          <svg class="w-12 h-12 mx-auto mb-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
-          <h3 class="text-lg font-medium text-red-900 mb-2">Error</h3>
-          <p class="text-red-700">${message}</p>
-          <div class="mt-4">
-            <a href="/quick-fix-firestore" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-bold">
-              🔒 Arreglar Firebase
-            </a>
-          </div>
+      renderClients(state.allClients);
+      updateStats();
+      syncLoadMoreButton();
+    }
+
+    /**
+     * Load next page and append to accumulated list.
+     */
+    async function loadMorePage() {
+      if (!canLoadMore(state)) return;
+
+      const cursorToUse = state.nextCursor;
+      state = onLoadStart(state);
+      syncLoadMoreButton();
+
+      try {
+        const response = await fetch(buildApiUrl(cursorToUse));
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        state = onMoreLoaded(state, {
+          items: data.items ?? [],
+          nextCursor: data.nextCursor ?? null,
+          hasMore: data.hasMore ?? false,
+          pageSize: data.pageSize ?? 25,
+        });
+      } catch (err) {
+        state = onFetchError(state, err instanceof Error ? err.message : String(err));
+        notifications.error("Error al cargar más clientes", state.error ?? "");
+      }
+
+      // Always re-render full accumulated list (append is handled by state machine)
+      renderClients(state.allClients);
+      updateStats();
+      syncLoadMoreButton();
+    }
+
+    function showFetchError(message: string) {
+      const grid = document.getElementById("clients-grid");
+      if (!grid) return;
+      grid.innerHTML = `
+        <div class="xl:col-span-2 text-center py-20 border border-dashed border-red-500/30 rounded-2xl bg-[var(--color-surface-container-low)]">
+          <span class="material-symbols-outlined text-5xl mb-4 text-red-400 block">error</span>
+          <h3 class="text-xl font-bold text-[var(--color-on-surface)] mb-2">Error al cargar clientes</h3>
+          <p class="text-[var(--color-on-surface-variant)] text-sm mb-4">${message}</p>
+          <button onclick="location.reload()" class="px-6 py-3 rounded-xl font-bold bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all">
+            Reintentar
+          </button>
         </div>
       `;
-      }
     }
 
-    // Filter functionality
-    function filterClients() {
-      const search =
-        (
-          document.getElementById("search") as HTMLInputElement
-        )?.value.toLowerCase() || "";
-      const status =
-        (document.getElementById("status") as HTMLSelectElement)?.value || "";
-      const company =
-        (
-          document.getElementById("company") as HTMLInputElement
-        )?.value.toLowerCase() || "";
+    // ──────────────────────────────────────────────────────────────
+    // Filter / search (server-driven)
+    // ──────────────────────────────────────────────────────────────
+    function applyFiltersAndReload() {
+      const search = (document.getElementById("search") as HTMLInputElement)?.value ?? "";
+      const status = (document.getElementById("status") as HTMLSelectElement)?.value ?? "";
+      const company = (document.getElementById("company") as HTMLInputElement)?.value ?? "";
 
-      let filtered = allClients.filter((client) => {
-        const matchesSearch =
-          !search ||
-          client.nombre?.toLowerCase().includes(search) ||
-          client.email?.toLowerCase().includes(search) ||
-          client.empresa?.toLowerCase().includes(search);
-
-        const matchesStatus =
-          !status ||
-          (status === "active" && client.activo) ||
-          (status === "inactive" && !client.activo);
-
-        const matchesCompany =
-          !company || client.empresa?.toLowerCase().includes(company);
-
-        return matchesSearch && matchesStatus && matchesCompany;
-      });
-
-      renderClients(filtered);
+      state = onFilterChange(state, { activo: status, empresa: company }, search);
+      loadFirstPage();
     }
 
-    // Save client
+    function debouncedSearch() {
+      if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(applyFiltersAndReload, 300);
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // CRUD operations
+    // ──────────────────────────────────────────────────────────────
     async function saveClient() {
       try {
         showLoading();
@@ -628,57 +724,44 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
           updatedAt: new Date(),
         };
 
-        // Photo logic: new upload wins, explicit removal sends null, otherwise preserve existing
         if (currentImageBase64) {
           clientData.imagenBase64 = currentImageBase64;
         } else if (shouldRemovePhoto) {
-          clientData.imagenBase64 = null; // Signal API to delete the field
+          clientData.imagenBase64 = null;
         } else if (editingClient && editingClient.imagenBase64) {
           clientData.imagenBase64 = editingClient.imagenBase64;
         }
 
         if (editingClient) {
-          // Update existing client via API
           const response = await fetch(`/api/clients`, {
             method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              id: editingClient.id,
-              ...clientData,
-            }),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: editingClient.id, ...clientData }),
           });
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         } else {
-          // Create new client via API
           const response = await fetch("/api/clients", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(clientData),
           });
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // ⚠️ Capture BEFORE hideModal() nukes editingClient
         const wasEditing = !!editingClient;
         hideModal();
-        await loadClients();
+        hideLoading();
+
+        // Reset + refetch after mutation
+        state = onMutationSuccess(state);
+        await loadFirstPage();
+
         notifications.success(
           wasEditing ? "¡Cliente actualizado!" : "¡Cliente creado!",
           wasEditing
             ? "Los datos del cliente se han actualizado exitosamente"
             : "El nuevo cliente ha sido agregado al sistema"
         );
-        hideLoading();
       } catch (error) {
         console.error("Error saving client:", error);
         notifications.error(
@@ -689,13 +772,12 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       }
     }
 
-    // Edit client
     function editClient(clientId: string) {
-      const client = allClients.find((c) => c.id === clientId);
+      const client = state.allClients.find((c) => c.id === clientId);
       if (!client) return;
 
       editingClient = client;
-      currentImageBase64 = null; // New upload will override; existing preserved on save
+      currentImageBase64 = null;
 
       (document.getElementById("client-nombre") as HTMLInputElement).value = client.nombre || "";
       (document.getElementById("client-empresa") as HTMLInputElement).value = client.empresa || "";
@@ -704,7 +786,6 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       (document.getElementById("client-direccion") as HTMLTextAreaElement).value = client.direccion || "";
       (document.getElementById("client-activo") as HTMLInputElement).checked = client.activo !== false;
 
-      // Show existing photo in preview if present
       const preview = document.getElementById('photo-preview') as HTMLImageElement;
       const placeholder = document.getElementById('photo-placeholder') as HTMLDivElement;
       if (client.imagenBase64 && preview && placeholder) {
@@ -722,12 +803,9 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       showModal();
     }
 
-    // Delete client
     async function deleteClient(clientId: string) {
-      const client = allClients.find((c) => c.id === clientId);
-      const clientName = client
-        ? `${client.nombre} - ${client.empresa}`
-        : "este cliente";
+      const client = state.allClients.find((c) => c.id === clientId);
+      const clientName = client ? `${client.nombre} - ${client.empresa}` : "este cliente";
 
       const result = await notifications.confirmDelete(clientName);
       if (!result.isConfirmed) return;
@@ -737,24 +815,20 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
 
         const response = await fetch("/api/clients", {
           method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: clientId }),
         });
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(
-            errorData.error || `HTTP error! status: ${response.status}`
-          );
+          throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
         }
 
-        await loadClients();
-        notifications.success(
-          "¡Cliente eliminado!",
-          "El cliente ha sido eliminado exitosamente"
-        );
+        // Reset + refetch after delete
+        state = onMutationSuccess(state);
+        await loadFirstPage();
+
+        notifications.success("¡Cliente eliminado!", "El cliente ha sido eliminado exitosamente");
       } catch (error) {
         console.error("Error deleting client:", error);
         notifications.error(
@@ -764,7 +838,9 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       }
     }
 
-    // Event listeners
+    // ──────────────────────────────────────────────────────────────
+    // Bootstrap
+    // ──────────────────────────────────────────────────────────────
     document.addEventListener("DOMContentLoaded", async () => {
       // Photo file input → compress → preview
       document.getElementById('client-foto')?.addEventListener('change', async (e) => {
@@ -773,7 +849,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
         try {
           const base64 = await compressImage(file);
           currentImageBase64 = base64;
-          shouldRemovePhoto = false; // New upload overrides any remove intention
+          shouldRemovePhoto = false;
           const preview = document.getElementById('photo-preview') as HTMLImageElement;
           const placeholder = document.getElementById('photo-placeholder') as HTMLDivElement;
           if (preview && placeholder) {
@@ -795,77 +871,66 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
         resetPhotoUI();
       });
 
-      // Load initial data
-      await loadClients();
+      // Initial load
+      await loadFirstPage();
 
-      // Set up event listeners
-      document
-        .getElementById("search")
-        ?.addEventListener("input", filterClients);
-      document
-        .getElementById("status")
-        ?.addEventListener("change", filterClients);
-      document
-        .getElementById("company")
-        ?.addEventListener("input", filterClients);
+      // Search — debounced 300ms → server fetch with reset
+      document.getElementById("search")?.addEventListener("input", debouncedSearch);
 
-      document
-        .getElementById("clear-filters")
-        ?.addEventListener("click", () => {
-          (document.getElementById("search") as HTMLInputElement).value = "";
-          (document.getElementById("status") as HTMLSelectElement).value = "";
-          (document.getElementById("company") as HTMLInputElement).value = "";
-          filterClients();
-        });
+      // Status filter → immediate server fetch with reset
+      document.getElementById("status")?.addEventListener("change", applyFiltersAndReload);
 
-      document
-        .getElementById("refresh-btn")
-        ?.addEventListener("click", loadClients);
+      // Company filter → immediate server fetch with reset
+      document.getElementById("company")?.addEventListener("input", applyFiltersAndReload);
 
-      document
-        .getElementById("add-client-btn")
-        ?.addEventListener("click", () => {
-          document.getElementById("modal-title")!.textContent = "Nuevo Cliente";
-          showModal();
-        });
+      // Clear filters
+      document.getElementById("clear-filters")?.addEventListener("click", () => {
+        (document.getElementById("search") as HTMLInputElement).value = "";
+        (document.getElementById("status") as HTMLSelectElement).value = "";
+        (document.getElementById("company") as HTMLInputElement).value = "";
+        applyFiltersAndReload();
+      });
 
-      document
-        .getElementById("cancel-client-btn")
-        ?.addEventListener("click", hideModal);
+      // Refresh button
+      document.getElementById("refresh-btn")?.addEventListener("click", () => {
+        state = onMutationSuccess(state);
+        loadFirstPage();
+      });
 
-      document
-        .getElementById("modal-close-btn")
-        ?.addEventListener("click", hideModal);
-      document
-        .getElementById("save-client-btn")
-        ?.addEventListener("click", saveClient);
+      // "Cargar más" button
+      document.getElementById("load-more-btn")?.addEventListener("click", loadMorePage);
 
-      // Close modal when clicking outside
-      document
-        .getElementById("client-modal")
-        ?.addEventListener("click", (e) => {
-          if (e.target === document.getElementById("client-modal")) {
-            hideModal();
-          }
-        });
+      // Add client
+      document.getElementById("add-client-btn")?.addEventListener("click", () => {
+        document.getElementById("modal-title")!.textContent = "Nuevo Cliente";
+        showModal();
+      });
 
-      // Handle edit from URL query param
+      document.getElementById("cancel-client-btn")?.addEventListener("click", hideModal);
+      document.getElementById("modal-close-btn")?.addEventListener("click", hideModal);
+      document.getElementById("save-client-btn")?.addEventListener("click", saveClient);
+
+      // Close modal when clicking backdrop
+      document.getElementById("client-modal")?.addEventListener("click", (e) => {
+        if (e.target === document.getElementById("client-modal")) hideModal();
+      });
+
+      // Handle URL params
       const urlParams = new URLSearchParams(window.location.search);
-      // Handle search from URL query param
+
       const searchQuery = urlParams.get("search");
       if (searchQuery) {
         const searchInput = document.getElementById("search") as HTMLInputElement;
         if (searchInput) {
           searchInput.value = searchQuery;
-          filterClients();
+          // Trigger server search with the pre-filled value
+          applyFiltersAndReload();
         }
       }
 
       const editId = urlParams.get("edit");
       if (editId) {
-        // Use a small timeout to ensure the clients are loaded/rendered if needed, 
-        // though editClient will search in allClients which should be ready.
-        setTimeout(() => editClient(editId), 100);
+        setTimeout(() => editClient(editId), 300);
       }
     });
   </script>
