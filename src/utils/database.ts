@@ -155,28 +155,28 @@ export const itemService = {
 // Clientes Service
 
 export const clienteService = {
-  async getAll(): Promise<Cliente[]> {
-    // Usar el nuevo servicio mejorado internamente
-    return ClienteService.getAll();
+  /**
+   * Returns the full unbounded collection — for aggregate consumers only
+   * (quote dropdowns, delete reference checks, stats).
+   * Do NOT use for UI listing.
+   */
+  async getAllForAggregates(): Promise<Cliente[]> {
+    return ClienteService.getAllForAggregates();
   },
 
   async getById(id: string): Promise<Cliente | null> {
-    // Usar el nuevo servicio mejorado internamente
     return ClienteService.getById(id);
   },
 
   async create(cliente: Omit<Cliente, 'id'>): Promise<Cliente> {
-    // Usar el nuevo servicio mejorado internamente
     return ClienteService.create(cliente);
   },
 
   async update(id: string, updates: Partial<Cliente>): Promise<void> {
-    // Usar el nuevo servicio mejorado internamente
     return ClienteService.update(id, updates);
   },
 
   async delete(id: string): Promise<void> {
-    // Usar el nuevo servicio mejorado internamente
     return ClienteService.delete(id);
   }
 }

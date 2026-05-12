@@ -27,7 +27,7 @@ const search = Astro.url.searchParams.get("search");
 
 try {
   cotizaciones = await cotizacionService.getAll();
-  clientes = await clienteService.getAll();
+  clientes = await clienteService.getAllForAggregates();
 
   try {
     trackingStats = await QuoteTrackingService.getTrackingStats();

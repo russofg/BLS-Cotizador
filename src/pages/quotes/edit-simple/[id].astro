@@ -23,7 +23,7 @@ try {
     if (!cotizacion) {
       error = "Cotización no encontrada";
     } else {
-      clientes = await clienteService.getAll();
+      clientes = await clienteService.getAllForAggregates();
       
       
       // Asegurar que items sea un array

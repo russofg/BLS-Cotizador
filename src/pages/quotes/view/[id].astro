@@ -23,7 +23,7 @@ try {
     cotizacion = cotizaciones.find((c: any) => c.id === id);
 
     if (cotizacion) {
-      const clientes = await clienteService.getAll();
+      const clientes = await clienteService.getAllForAggregates();
       cliente = clientes.find(
         (c: any) => c.id === cotizacion.cliente_id || c.id === cotizacion.clienteId
       );

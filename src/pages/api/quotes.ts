@@ -46,7 +46,7 @@ export const GET: APIRoute = async ({ url, request }) => {
 
       // Also get client data
       const { clienteService } = await import("../../utils/database");
-      const clientes = await clienteService.getAll();
+      const clientes = await clienteService.getAllForAggregates();
       const cliente = clientes.find(
         (c: any) =>
           c.id === (cotizacion as any).cliente_id ||

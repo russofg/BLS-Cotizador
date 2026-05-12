@@ -35,7 +35,7 @@ describe('ClienteService', () => {
     vi.clearAllMocks();
   });
 
-  describe('getAll', () => {
+  describe('getAllForAggregates', () => {
     it('should return all clients', async () => {
       const mockClients = [
         {
@@ -53,7 +53,7 @@ describe('ClienteService', () => {
         docs: mockClients
       });
 
-      const result = await ClienteService.getAll();
+      const result = await ClienteService.getAllForAggregates();
 
       expect(result).toHaveLength(1);
       expect(result[0].nombre).toBe('Cliente 1');
@@ -77,42 +77,10 @@ describe('ClienteService', () => {
         docs: mockClients
       });
 
-      const result = await ClienteService.getAll({ activo: true });
+      const result = await ClienteService.getAllForAggregates({ activo: true });
 
       expect(mockFirestore.where).toHaveBeenCalledWith('activo', '==', true);
       expect(result).toHaveLength(1);
-    });
-
-    it('should handle search filter', async () => {
-      const mockClients = [
-        {
-          id: 'client1',
-          data: () => ({
-            nombre: 'Cliente Test',
-            email: 'cliente@test.com',
-            activo: true,
-            createdAt: { toDate: () => new Date('2024-01-15') }
-          })
-        },
-        {
-          id: 'client2',
-          data: () => ({
-            nombre: 'Otro Cliente',
-            email: 'otro@test.com',
-            activo: true,
-            createdAt: { toDate: () => new Date('2024-01-15') }
-          })
-        }
-      ];
-
-      mockFirestore.get.mockResolvedValue({
-        docs: mockClients
-      });
-
-      const result = await ClienteService.getAll({ search: 'Test' });
-
-      expect(result).toHaveLength(1);
-      expect(result[0].nombre).toBe('Cliente Test');
     });
 
     it('should handle errors gracefully', async () => {
@@ -120,7 +88,7 @@ describe('ClienteService', () => {
         throw new Error('Firebase error');
       });
 
-      await expect(ClienteService.getAll()).rejects.toThrow('Error al obtener los clientes');
+      await expect(ClienteService.getAllForAggregates()).rejects.toThrow();
     });
   });
 

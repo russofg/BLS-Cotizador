@@ -28,7 +28,7 @@ try {
     if (!cotizacion) {
       error = "Cotización no encontrada";
     } else {
-      clientes = await clienteService.getAll();
+      clientes = await clienteService.getAllForAggregates();
 
       // Normalize items using centralized helper
       cotizacion.items = QuoteHelper.normalizeItems(cotizacion.items);
