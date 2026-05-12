@@ -217,7 +217,15 @@ export class ClienteService {
       const cached = cache.get<Cliente[]>(cacheKey);
       if (cached) return cached;
 
-      const q = this.buildBaseQuery(filters);
+      let q: FirebaseFirestore.Query = adminDb
+        .collection(this.COLLECTION_NAME)
+        .orderBy('nombre', 'asc');
+      if (filters?.activo !== undefined) {
+        q = q.where('activo', '==', filters.activo);
+      }
+      if (filters?.empresa) {
+        q = q.where('empresa', '==', filters.empresa);
+      }
       const snapshot = await q.get();
       const clientes = snapshot.docs.map(doc => this.mapDocumentToCliente(doc));
 
