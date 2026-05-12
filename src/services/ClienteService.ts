@@ -4,11 +4,22 @@
  */
 
 import { adminDb } from '../utils/firebaseAdmin';
+import { FieldPath } from 'firebase-admin/firestore';
 import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { ValidationHelper } from '../utils/validationHelpers';
 import { cache, CacheKeys, CacheTTL, invalidateRelatedCache } from '../utils/cache';
 
-// Interfaces mejoradas
+// ─── Error types ────────────────────────────────────────────────────────────
+
+export class InvalidCursorError extends Error {
+  readonly name = 'InvalidCursorError' as const;
+  constructor(message = 'Invalid or expired cursor') {
+    super(message);
+  }
+}
+
+// ─── Interfaces ─────────────────────────────────────────────────────────────
+
 export interface Cliente {
   id: string;
   nombre: string;
@@ -47,6 +58,7 @@ export interface ClienteFilters {
   search?: string;
 }
 
+/** @deprecated Use ListClientesResult instead */
 export interface ClienteSearchResult {
   clientes: Cliente[];
   total: number;
@@ -61,55 +73,158 @@ export interface ClienteStats {
   sinEmpresa: number;
 }
 
+// ─── Pagination types ────────────────────────────────────────────────────────
+
+export interface ListClientesParams {
+  filters?: ClienteFilters;
+  search?: string;
+  cursor?: string | null;
+  pageSize?: number;
+}
+
+export interface ListClientesResult {
+  items: Cliente[];
+  nextCursor: string | null;
+  hasMore: boolean;
+  pageSize: number;
+}
+
+// Internal cursor payload — opaque to callers
+interface CursorPayload {
+  n: string; // nombreLower
+  id: string;
+}
+
+// ─── Service ─────────────────────────────────────────────────────────────────
+
 /**
- * ClienteService mejorado con validaciones, búsqueda avanzada y estadísticas
+ * ClienteService — paginación, caché v2, búsqueda por prefijo en nombreLower
  */
 export class ClienteService {
   private static readonly COLLECTION_NAME = 'clientes';
+  private static readonly DEFAULT_PAGE_SIZE = 25;
+  private static readonly MAX_PAGE_SIZE = 100;
+
+  // ── Cursor helpers ──────────────────────────────────────────────────────
+
+  static encodeCursor(payload: CursorPayload): string {
+    return Buffer.from(JSON.stringify(payload)).toString('base64url');
+  }
+
+  static decodeCursor(s: string): CursorPayload {
+    try {
+      const decoded = JSON.parse(Buffer.from(s, 'base64url').toString('utf8'));
+      if (typeof decoded.n !== 'string' || typeof decoded.id !== 'string') {
+        throw new InvalidCursorError();
+      }
+      return decoded as CursorPayload;
+    } catch {
+      throw new InvalidCursorError(`Cannot decode cursor: ${s}`);
+    }
+  }
+
+  // ── Private query builder ───────────────────────────────────────────────
+
+  private static buildBaseQuery(
+    filters?: ClienteFilters,
+    search?: string
+  ): FirebaseFirestore.Query {
+    let q: FirebaseFirestore.Query = adminDb
+      .collection(this.COLLECTION_NAME)
+      .orderBy('nombreLower', 'asc')
+      .orderBy(FieldPath.documentId(), 'asc');
+
+    if (filters?.activo !== undefined) {
+      q = q.where('activo', '==', filters.activo);
+    }
+
+    if (filters?.empresa) {
+      q = q.where('empresa', '==', filters.empresa);
+    }
+
+    if (search) {
+      const q_lower = search.toLowerCase();
+      // Prefix search on nombreLower
+      q = q
+        .where('nombreLower', '>=', q_lower)
+        .where('nombreLower', '<', q_lower + '￿');
+    }
+
+    return q;
+  }
+
+  // ── list() — paginated UI listing ──────────────────────────────────────
+
+  static async list(params: ListClientesParams): Promise<ListClientesResult> {
+    try {
+      const rawPageSize = params.pageSize ?? this.DEFAULT_PAGE_SIZE;
+      const pageSize = Math.max(1, Math.min(rawPageSize, this.MAX_PAGE_SIZE));
+      const cursor = params.cursor ?? null;
+      const search = params.search;
+      const filters = params.filters;
+
+      // Cache key includes all pagination dimensions
+      const cacheKey = CacheKeys.clientsList({ filters, search, cursor, pageSize });
+      const cached = cache.get<ListClientesResult>(cacheKey);
+      if (cached) return cached;
+
+      let q = this.buildBaseQuery(filters, search);
+
+      if (cursor) {
+        const payload = this.decodeCursor(cursor); // throws InvalidCursorError if bad
+        q = q.startAfter(payload.n, payload.id);
+      }
+
+      q = q.limit(pageSize + 1);
+      const snapshot = await q.get();
+
+      const docs = snapshot.docs;
+      const hasMore = docs.length > pageSize;
+      const keptDocs = hasMore ? docs.slice(0, pageSize) : docs;
+      const items = keptDocs.map(doc => this.mapDocumentToCliente(doc));
+
+      let nextCursor: string | null = null;
+      if (hasMore && keptDocs.length > 0) {
+        const lastDoc = keptDocs[keptDocs.length - 1];
+        const data = lastDoc.data() || {};
+        nextCursor = this.encodeCursor({
+          n: data.nombreLower ?? data.nombre?.toLowerCase() ?? '',
+          id: lastDoc.id
+        });
+      }
+
+      const result: ListClientesResult = { items, nextCursor, hasMore, pageSize };
+      cache.set(cacheKey, result, CacheTTL.SHORT); // 60s for paginated pages
+      return result;
+    } catch (error) {
+      if (error instanceof InvalidCursorError) throw error;
+      console.error('Error in ClienteService.list():', error);
+      throw error;
+    }
+  }
+
+  // ── getAllForAggregates() — full unbounded list for aggregate consumers ──
 
   /**
-   * Obtiene todos los clientes con filtros opcionales (optimizado con caché)
+   * Returns the full unbounded collection. Use ONLY for:
+   * - DELETE reference checks
+   * - Quote count joins
+   * Do NOT use this for UI listing.
    */
-  static async getAll(filters?: ClienteFilters): Promise<Cliente[]> {
+  static async getAllForAggregates(filters?: ClienteFilters): Promise<Cliente[]> {
     try {
-      // Check cache first
-      const cacheKey = CacheKeys.clients(filters);
-      const cachedData = cache.get<Cliente[]>(cacheKey);
-      if (cachedData) {
-        return cachedData;
-      }
+      const cacheKey = CacheKeys.clientsAggregates(filters);
+      const cached = cache.get<Cliente[]>(cacheKey);
+      if (cached) return cached;
 
-      let q: FirebaseFirestore.Query = adminDb.collection(this.COLLECTION_NAME).orderBy('nombre', 'asc');
-      
-      // Aplicar filtros
-      if (filters?.activo !== undefined) {
-        q = q.where('activo', '==', filters.activo);
-      }
-      
-      if (filters?.empresa) {
-        q = q.where('empresa', '==', filters.empresa);
-      }
-      
+      const q = this.buildBaseQuery(filters);
       const snapshot = await q.get();
-      let clientes = snapshot.docs.map(doc => this.mapDocumentToCliente(doc));
-      
-      // Aplicar filtro de búsqueda si existe
-      if (filters?.search) {
-        const searchTerm = filters.search.toLowerCase();
-        clientes = clientes.filter(cliente => 
-          cliente.nombre.toLowerCase().includes(searchTerm) ||
-          cliente.email.toLowerCase().includes(searchTerm) ||
-          (cliente.empresa && cliente.empresa.toLowerCase().includes(searchTerm)) ||
-          (cliente.telefono && cliente.telefono.includes(searchTerm))
-        );
-      }
-      
-      // Cache the result
+      const clientes = snapshot.docs.map(doc => this.mapDocumentToCliente(doc));
+
       cache.set(cacheKey, clientes, CacheTTL.MEDIUM);
-      
       return clientes;
     } catch (error) {
-      console.error('Error getting all clients:', error);
+      console.error('Error in ClienteService.getAllForAggregates():', error);
       throw error;
     }
   }
@@ -123,7 +238,6 @@ export class ClienteService {
         throw new Error('ID de cliente es requerido');
       }
 
-      // Check cache first
       const cacheKey = CacheKeys.clientById(id);
       const cachedData = cache.get<Cliente>(cacheKey);
       if (cachedData) {
@@ -134,12 +248,9 @@ export class ClienteService {
       if (!docSnap.exists) {
         return null;
       }
-      
+
       const cliente = this.mapDocumentToCliente(docSnap);
-      
-      // Cache the result
       cache.set(cacheKey, cliente, CacheTTL.MEDIUM);
-      
       return cliente;
     } catch (error) {
       console.error('Error getting client by ID:', error);
@@ -152,13 +263,11 @@ export class ClienteService {
    */
   static async create(clienteData: ClienteCreateData): Promise<Cliente> {
     try {
-      // Validar datos de entrada
       const validation = this.validateClienteData(clienteData);
       if (!validation.isValid) {
         throw new Error(validation.errors.join(', '));
       }
 
-      // Verificar que el email no esté en uso solo si no está vacío
       if (clienteData.email && clienteData.email.trim().length > 0) {
         const existingClient = await this.getByEmail(clienteData.email);
         if (existingClient) {
@@ -167,19 +276,19 @@ export class ClienteService {
       }
 
       const now = new Date();
+      const nombreLower = clienteData.nombre.trim().toLowerCase();
       const docRef = await adminDb.collection(this.COLLECTION_NAME).add({
         ...clienteData,
+        nombreLower,
         activo: clienteData.activo ?? true,
         createdAt: now,
         updatedAt: now
       });
-      
+
       const docSnap = await docRef.get();
       const newCliente = this.mapDocumentToCliente(docSnap);
-      
-      // Invalidate related cache
+
       invalidateRelatedCache('client');
-      
       return newCliente;
     } catch (error) {
       console.error('Error creating client:', error);
@@ -196,21 +305,17 @@ export class ClienteService {
         throw new Error('ID de cliente es requerido');
       }
 
-      // Validar datos de actualización
       const validation = this.validateClienteData(updates, true);
       if (!validation.isValid) {
         throw new Error(validation.errors.join(', '));
       }
 
-      // Si se está actualizando el email, verificar que no esté en uso
       if (updates.email && updates.email.trim().length > 0) {
-        // Primero obtener el cliente actual para comparar emails
         const currentClient = await this.getById(id);
         if (!currentClient) {
           throw new Error('Cliente no encontrado');
         }
-        
-        // Solo validar si el email está cambiando
+
         if (currentClient.email !== updates.email) {
           const existingClient = await this.getByEmail(updates.email);
           if (existingClient && existingClient.id !== id) {
@@ -219,12 +324,17 @@ export class ClienteService {
         }
       }
 
-      await adminDb.collection(this.COLLECTION_NAME).doc(id).update({
+      const updatePayload: any = {
         ...updates,
         updatedAt: new Date()
-      });
-      
-      // Invalidate related cache
+      };
+
+      // Keep nombreLower in sync when nombre is updated
+      if (updates.nombre !== undefined) {
+        updatePayload.nombreLower = updates.nombre.trim().toLowerCase();
+      }
+
+      await adminDb.collection(this.COLLECTION_NAME).doc(id).update(updatePayload);
       invalidateRelatedCache('client');
     } catch (error) {
       console.error('Error updating client:', error);
@@ -241,16 +351,12 @@ export class ClienteService {
         throw new Error('ID de cliente es requerido');
       }
 
-      // Verificar que el cliente existe
       const existingClient = await this.getById(id);
       if (!existingClient) {
         throw new Error('Cliente no encontrado');
       }
 
-      // Eliminar permanentemente de Firebase
       await adminDb.collection(this.COLLECTION_NAME).doc(id).delete();
-      
-      // Invalidate related cache
       invalidateRelatedCache('client');
     } catch (error) {
       console.error('Error deleting client:', error);
@@ -275,7 +381,7 @@ export class ClienteService {
   }
 
   /**
-   * Busca clientes por término de búsqueda
+   * Busca clientes por término de búsqueda (uses getAllForAggregates — not for UI listing)
    */
   static async search(searchTerm: string, limitCount: number = 10): Promise<Cliente[]> {
     try {
@@ -283,11 +389,11 @@ export class ClienteService {
         return [];
       }
 
-      const allClients = await this.getAll();
+      const allClients = await this.getAllForAggregates();
       const term = searchTerm.toLowerCase();
-      
+
       return allClients
-        .filter(cliente => 
+        .filter(cliente =>
           cliente.nombre.toLowerCase().includes(term) ||
           cliente.email.toLowerCase().includes(term) ||
           (cliente.empresa && cliente.empresa.toLowerCase().includes(term)) ||
@@ -309,14 +415,16 @@ export class ClienteService {
         return null;
       }
 
-      const snapshot = await adminDb.collection(this.COLLECTION_NAME)
+      const snapshot = await adminDb
+        .collection(this.COLLECTION_NAME)
         .where('email', '==', email.toLowerCase())
         .limit(1)
         .get();
+
       if (snapshot.empty) {
         return null;
       }
-      
+
       return this.mapDocumentToCliente(snapshot.docs[0]);
     } catch (error) {
       console.error('Error getting client by email:', error);
@@ -325,12 +433,12 @@ export class ClienteService {
   }
 
   /**
-   * Obtiene estadísticas de clientes
+   * Obtiene estadísticas de clientes (uses getAllForAggregates)
    */
   static async getStats(): Promise<ClienteStats> {
     try {
-      const allClients = await this.getAll();
-      
+      const allClients = await this.getAllForAggregates();
+
       return {
         total: allClients.length,
         activos: allClients.filter(c => c.activo).length,
@@ -345,10 +453,10 @@ export class ClienteService {
   }
 
   /**
-   * Obtiene clientes activos únicamente
+   * Obtiene clientes activos únicamente (uses getAllForAggregates)
    */
   static async getActive(): Promise<Cliente[]> {
-    return this.getAll({ activo: true });
+    return this.getAllForAggregates({ activo: true });
   }
 
   /**
@@ -361,44 +469,42 @@ export class ClienteService {
   /**
    * Valida los datos de un cliente
    */
-  private static validateClienteData(data: Partial<ClienteCreateData | ClienteUpdateData>, isUpdate: boolean = false): { isValid: boolean; errors: string[] } {
+  private static validateClienteData(
+    data: Partial<ClienteCreateData | ClienteUpdateData>,
+    isUpdate = false
+  ): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
-    // Validar nombre
     if (data.nombre !== undefined) {
       const nameValidation = ValidationHelper.validateName(data.nombre, 'Nombre del cliente');
       errors.push(...nameValidation.errors);
     }
 
-    // Validar email solo si no está vacío
     if (data.email !== undefined && data.email.trim().length > 0) {
       const emailValidation = ValidationHelper.validateEmail(data.email);
       errors.push(...emailValidation.errors);
     }
 
-    // Validar teléfono si está presente
     if (data.telefono !== undefined && data.telefono.trim().length > 0) {
       const phoneValidation = ValidationHelper.validatePhone(data.telefono, 'Teléfono');
       errors.push(...phoneValidation.errors);
     }
 
-    // Para creación, solo el nombre es obligatorio
     if (!isUpdate) {
       if (!data.nombre) {
         errors.push('Nombre es obligatorio');
       }
     }
 
-    return {
-      isValid: errors.length === 0,
-      errors
-    };
+    return { isValid: errors.length === 0, errors };
   }
 
   /**
    * Mapea un documento de Firestore a un objeto Cliente
    */
-  private static mapDocumentToCliente(doc: DocumentSnapshot | QueryDocumentSnapshot): Cliente & { imagenBase64?: string } {
+  private static mapDocumentToCliente(
+    doc: DocumentSnapshot | QueryDocumentSnapshot
+  ): Cliente & { imagenBase64?: string } {
     const data = doc.data() || {};
     return {
       id: doc.id,
@@ -415,10 +521,17 @@ export class ClienteService {
   }
 }
 
+// ─── Compat shim ──────────────────────────────────────────────────────────────
 // Exportar también las funciones individuales para compatibilidad con el código existente
+
 export const clienteService = {
-  async getAll(): Promise<Cliente[]> {
-    return ClienteService.getAll();
+  /** @deprecated Use ClienteService.getAllForAggregates() for aggregate consumers */
+  async getAllForAggregates(): Promise<Cliente[]> {
+    return ClienteService.getAllForAggregates();
+  },
+
+  async list(params: ListClientesParams) {
+    return ClienteService.list(params);
   },
 
   async getById(id: string): Promise<Cliente | null> {
