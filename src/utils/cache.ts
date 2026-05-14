@@ -154,7 +154,23 @@ export const CacheKeys = {
   categoryById: (id: string) => CacheKeys.generateKey('category', id),
   categoryStats: () => CacheKeys.generateKey('category-stats'),
   
-  // Quote cache keys
+  // Quote list — paginated (v2)
+  quotesList: (params?: {
+    cursor?: string | null;
+    pageSize?: number;
+    estado?: string | null;
+  }) =>
+    `quotes:list:v2:${stableStringify({
+      cursor: params?.cursor ?? '',
+      pageSize: params?.pageSize ?? 25,
+      estado: params?.estado ?? '',
+    })}`,
+
+  // Quote aggregates — full unbounded list (v2)
+  quotesAggregates: (filters?: any) =>
+    `quotes:aggregates:v2:${stableStringify(filters ?? {})}`,
+
+  // Quote cache keys (legacy)
   quotes: (filters?: any) => CacheKeys.generateKey('quotes', JSON.stringify(filters || {})),
   quoteById: (id: string) => CacheKeys.generateKey('quote', id),
   quoteStats: () => CacheKeys.generateKey('quote-stats'),
