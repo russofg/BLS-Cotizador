@@ -154,21 +154,24 @@ describe('ClienteService.list()', () => {
     expect(result.nextCursor).toBeNull();
   });
 
-  it('SC-05: search forwards where clauses for nombreLower prefix', async () => {
+  it('SC-05: search filters in-memory matching nombre and empresa prefix', async () => {
     const { ClienteService } = await loadService();
 
-    getMock.mockResolvedValue(makeSnapshot([]));
+    const docs = [
+      makeFirestoreDoc('id-1', { nombre: 'García Juan', nombreLower: 'garcía juan', empresa: 'Globant', email: 'a@test.com', activo: true, createdAt: { toDate: () => new Date() } }),
+      makeFirestoreDoc('id-2', { nombre: 'Pérez María', nombreLower: 'pérez maría', empresa: 'Garcia Tech', email: 'b@test.com', activo: true, createdAt: { toDate: () => new Date() } }),
+      makeFirestoreDoc('id-3', { nombre: 'López Pedro', nombreLower: 'lópez pedro', empresa: 'Acme', email: 'c@test.com', activo: true, createdAt: { toDate: () => new Date() } }),
+    ];
+    getMock.mockResolvedValue(makeSnapshot(docs));
 
-    await ClienteService.list({ search: 'garc' });
+    const result = await ClienteService.list({ search: 'garc' });
 
-    const whereCalls = whereMock.mock.calls;
-    const geCall = whereCalls.find((c: any[]) => c[0] === 'nombreLower' && c[1] === '>=');
-    const ltCall = whereCalls.find((c: any[]) => c[0] === 'nombreLower' && c[1] === '<');
-
-    expect(geCall).toBeDefined();
-    expect(ltCall).toBeDefined();
-    expect(geCall?.[2]).toBe('garc');
-    expect(ltCall?.[2]).toBe('garc' + '￿');
+    // id-1 matches by nombre prefix, id-2 matches by empresa prefix, id-3 does not match
+    expect(result.items.map(i => i.id)).toContain('id-1');
+    expect(result.items.map(i => i.id)).toContain('id-2');
+    expect(result.items.map(i => i.id)).not.toContain('id-3');
+    expect(result.hasMore).toBe(false);
+    expect(result.nextCursor).toBeNull();
   });
 
   it('SC-07: invalid cursor throws InvalidCursorError', async () => {

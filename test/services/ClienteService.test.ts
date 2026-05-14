@@ -21,6 +21,11 @@ vi.mock('../../src/utils/firebaseAdmin', () => ({
   adminDb: mockFirestore
 }));
 
+vi.mock('firebase-admin/firestore', () => ({
+  FieldPath: { documentId: () => '__name__' },
+  FieldValue: { increment: (n: number) => n },
+}));
+
 // Mock ValidationHelper
 vi.mock('../../src/utils/validationHelpers', () => ({
   ValidationHelper: {

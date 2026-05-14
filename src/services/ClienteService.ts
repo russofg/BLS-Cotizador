@@ -161,7 +161,7 @@ export class ClienteService {
       const rawPageSize = params.pageSize ?? this.DEFAULT_PAGE_SIZE;
       const pageSize = Math.max(1, Math.min(rawPageSize, this.MAX_PAGE_SIZE));
       const cursor = params.cursor ?? null;
-      const search = params.search;
+      const search = params.search?.trim();
       const filters = params.filters;
 
       // Cache key includes all pagination dimensions
@@ -169,7 +169,26 @@ export class ClienteService {
       const cached = cache.get<ListClientesResult>(cacheKey);
       if (cached) return cached;
 
-      let q = this.buildBaseQuery(filters, search);
+      // When searching, filter in-memory over all clients to match nombre OR empresa.
+      // This avoids two parallel Firestore range queries and works well with the aggregates cache.
+      if (search) {
+        const q_lower = search.toLowerCase();
+        const all = await this.getAllForAggregates(filters);
+        const matched = all.filter(c =>
+          c.nombre.toLowerCase().startsWith(q_lower) ||
+          (c.empresa?.toLowerCase().startsWith(q_lower))
+        );
+        const result: ListClientesResult = {
+          items: matched.slice(0, pageSize),
+          nextCursor: null,
+          hasMore: false,
+          pageSize,
+        };
+        cache.set(cacheKey, result, CacheTTL.SHORT);
+        return result;
+      }
+
+      let q = this.buildBaseQuery(filters);
 
       if (cursor) {
         const payload = this.decodeCursor(cursor); // throws InvalidCursorError if bad
