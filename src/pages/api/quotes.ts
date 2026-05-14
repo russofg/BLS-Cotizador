@@ -1,5 +1,7 @@
 import type { APIRoute } from "astro";
 import { cotizacionService } from "../../utils/database";
+import { ClienteService } from "../../services/ClienteService";
+import { CotizacionService } from "../../services/CotizacionService";
 import { DateHelper } from "../../utils/dateHelpers";
 import { QuoteHelper } from "../../utils/quoteHelpers";
 import { ValidationHelper } from "../../utils/validationHelpers";
@@ -202,6 +204,11 @@ export const POST: APIRoute = async ({ request }) => {
       created_at: new Date(), // For compatibility
       createdAt: new Date(), // Standard field
     } as any);
+
+    // Increment denormalized quoteCount on client
+    if (quoteData.cliente_id) {
+      ClienteService.incrementQuoteCount(quoteData.cliente_id, 1);
+    }
 
     // Invalidate analytics cache
     AnalyticsService.invalidateCache();
@@ -517,7 +524,14 @@ export const DELETE: APIRoute = async ({ request, url }) => {
     }
 
     console.log("🗑️ Eliminando cotización con ID:", id);
+    const quoteToDelete = await CotizacionService.getById(id);
     await cotizacionService.delete(id);
+
+    // Decrement denormalized quoteCount on client
+    const deletedClienteId = quoteToDelete?.clienteId ?? (quoteToDelete as any)?.cliente_id;
+    if (deletedClienteId) {
+      ClienteService.incrementQuoteCount(deletedClienteId, -1);
+    }
 
     // Invalidate analytics cache
     AnalyticsService.invalidateCache();

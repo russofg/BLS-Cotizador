@@ -49,40 +49,10 @@ export const GET: APIRoute = async ({ url, request }) => {
     let items: any[] = listResult.items;
 
     if (includeQuoteCount) {
-      // Quote counts computed only over the current page items (not full collection)
-      const allQuotes = await cotizacionService.getAll();
-
-      const quotesByClient = new Map<string, any[]>();
-      allQuotes.forEach(quote => {
-        const clientId = quote.clienteId || (quote as any).cliente_id;
-        if (clientId) {
-          if (!quotesByClient.has(clientId)) quotesByClient.set(clientId, []);
-          quotesByClient.get(clientId)!.push(quote);
-        }
-      });
-
-      items = items.map((cliente: any) => {
-        try {
-          const clientQuotes = quotesByClient.get(cliente.id) || [];
-          const latestQuote = clientQuotes.length > 0
-            ? clientQuotes.reduce((latest: any, current: any) =>
-                new Date(current.createdAt || 0) > new Date(latest.createdAt || 0) ? current : latest
-              ).createdAt
-            : cliente.createdAt;
-
-          return {
-            ...cliente,
-            cotizaciones: clientQuotes.length,
-            ultimaCotizacion: new Date(latestQuote).toISOString().split('T')[0]
-          };
-        } catch {
-          return {
-            ...cliente,
-            cotizaciones: 0,
-            ultimaCotizacion: new Date(cliente.createdAt).toISOString().split('T')[0]
-          };
-        }
-      });
+      items = items.map((cliente: any) => ({
+        ...cliente,
+        cotizaciones: cliente.quoteCount ?? 0,
+      }));
     }
 
     return new Response(

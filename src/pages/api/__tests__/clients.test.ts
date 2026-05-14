@@ -164,17 +164,12 @@ describe('GET /api/clients', () => {
     expect(body.error).toBe('invalid_cursor');
   });
 
-  it('includeQuoteCount=true computes counts only for page items, not all clients', async () => {
+  it('includeQuoteCount=true reads quoteCount from denormalized field on each item', async () => {
     const pageItems = [
-      { id: 'c1', nombre: 'Cliente 1', activo: true, email: 'c1@test.com', createdAt: new Date() },
+      { id: 'c1', nombre: 'Cliente 1', activo: true, email: 'c1@test.com', createdAt: new Date(), quoteCount: 2 },
       { id: 'c2', nombre: 'Cliente 2', activo: true, email: 'c2@test.com', createdAt: new Date() },
     ];
     listMock.mockResolvedValue({ items: pageItems, nextCursor: null, hasMore: false, pageSize: 25 });
-
-    cotizacionGetAllMock.mockResolvedValue([
-      { clienteId: 'c1', numero: 'Q-001', createdAt: new Date() },
-      { clienteId: 'c1', numero: 'Q-002', createdAt: new Date() },
-    ]);
 
     const GET = await getHandler();
     const ctx = makeContext({ includeQuoteCount: 'true' });
@@ -189,7 +184,7 @@ describe('GET /api/clients', () => {
     expect(c1.cotizaciones).toBe(2);
     expect(c2.cotizaciones).toBe(0);
 
-    // getAllForAggregates should NOT have been called for the listing path
+    // Neither aggregate read nor full collection scan should happen
     expect(getAllForAggregatesMock).not.toHaveBeenCalled();
   });
 

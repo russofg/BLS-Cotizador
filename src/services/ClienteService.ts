@@ -4,7 +4,7 @@
  */
 
 import { adminDb } from '../utils/firebaseAdmin';
-import { FieldPath } from 'firebase-admin/firestore';
+import { FieldPath, FieldValue } from 'firebase-admin/firestore';
 import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { ValidationHelper } from '../utils/validationHelpers';
 import { cache, CacheKeys, CacheTTL, invalidateRelatedCache } from '../utils/cache';
@@ -30,6 +30,7 @@ export interface Cliente {
   activo: boolean;
   createdAt: Date;
   updatedAt?: Date;
+  quoteCount?: number;
 }
 
 export interface ClienteCreateData {
@@ -510,6 +511,18 @@ export class ClienteService {
   /**
    * Mapea un documento de Firestore a un objeto Cliente
    */
+  static async incrementQuoteCount(clienteId: string, delta: 1 | -1): Promise<void> {
+    try {
+      await adminDb
+        .collection(this.COLLECTION_NAME)
+        .doc(clienteId)
+        .update({ quoteCount: FieldValue.increment(delta) });
+      invalidateRelatedCache('clients');
+    } catch (error) {
+      console.error('Error updating quoteCount for client', clienteId, error);
+    }
+  }
+
   private static mapDocumentToCliente(
     doc: DocumentSnapshot | QueryDocumentSnapshot
   ): Cliente & { imagenBase64?: string } {
@@ -524,6 +537,7 @@ export class ClienteService {
       activo: data.activo !== false,
       createdAt: data.createdAt?.toDate() || new Date(),
       updatedAt: data.updatedAt?.toDate(),
+      quoteCount: typeof data.quoteCount === 'number' ? data.quoteCount : undefined,
       ...(data.imagenBase64 ? { imagenBase64: data.imagenBase64 } : {})
     };
   }

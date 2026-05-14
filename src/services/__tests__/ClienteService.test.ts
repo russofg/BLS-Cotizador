@@ -52,6 +52,9 @@ vi.mock('firebase-admin/firestore', () => ({
   FieldPath: {
     documentId: () => '__name__',
   },
+  FieldValue: {
+    increment: (n: number) => n,
+  },
 }));
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
