@@ -169,15 +169,29 @@ export class ClienteService {
       const cached = cache.get<ListClientesResult>(cacheKey);
       if (cached) return cached;
 
-      // When searching, filter in-memory over all clients to match nombre OR empresa.
-      // This avoids two parallel Firestore range queries and works well with the aggregates cache.
-      if (search) {
-        const q_lower = search.toLowerCase();
-        const all = await this.getAllForAggregates(filters);
-        const matched = all.filter(c =>
-          c.nombre.toLowerCase().startsWith(q_lower) ||
-          (c.empresa?.toLowerCase().startsWith(q_lower))
-        );
+      // When searching or filtering by empresa, use in-memory matching so that:
+      // - text search matches nombre OR empresa prefix (case-insensitive)
+      // - empresa filter is case-insensitive (avoids needing empresaLower field)
+      // getAllForAggregates() is cached at 60s so this is cheap on repeat calls.
+      if (search || filters?.empresa) {
+        const firestoreFilters = filters?.activo !== undefined ? { activo: filters.activo } : undefined;
+        const all = await this.getAllForAggregates(firestoreFilters);
+
+        let matched = all;
+
+        if (filters?.empresa) {
+          const emp_lower = filters.empresa.toLowerCase();
+          matched = matched.filter(c => c.empresa?.toLowerCase().startsWith(emp_lower));
+        }
+
+        if (search) {
+          const q_lower = search.toLowerCase();
+          matched = matched.filter(c =>
+            c.nombre.toLowerCase().startsWith(q_lower) ||
+            c.empresa?.toLowerCase().startsWith(q_lower)
+          );
+        }
+
         const result: ListClientesResult = {
           items: matched.slice(0, pageSize),
           nextCursor: null,
