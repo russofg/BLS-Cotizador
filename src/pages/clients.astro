@@ -564,8 +564,19 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
     }
 
     // ──────────────────────────────────────────────────────────────
-    // Stats update — computed from accumulated loaded clients
+    // Stats — server-driven total + client-side derived stats
     // ──────────────────────────────────────────────────────────────
+    async function loadServerStats() {
+      try {
+        const res = await fetch("/api/clients?stats=true");
+        if (!res.ok) return;
+        const stats = await res.json();
+        document.getElementById("total-clients")!.textContent = stats.total.toString();
+      } catch {
+        // non-critical — page-scoped count already shown by updateStats()
+      }
+    }
+
     function updateStats() {
       const clients = state.allClients;
       const totalClients = clients.length;
@@ -592,16 +603,8 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       document.getElementById("clients-with-quotes")!.textContent = clientsWithQuotes.toString();
       document.getElementById("recent-clients")!.textContent = recentClients.toString();
 
-      // Show scope label when there might be more pages not yet loaded
       const scopeLabel = document.getElementById("stats-scope-label");
-      if (scopeLabel) {
-        if (state.hasMore || state.nextCursor) {
-          scopeLabel.textContent = `(de los ${totalClients} cargados)`;
-          scopeLabel.classList.remove("hidden");
-        } else {
-          scopeLabel.classList.add("hidden");
-        }
-      }
+      if (scopeLabel) scopeLabel.classList.add("hidden");
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -635,6 +638,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       renderClients(state.allClients);
       updateStats();
       syncLoadMoreButton();
+      loadServerStats();
     }
 
     /**

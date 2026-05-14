@@ -18,6 +18,12 @@ export const GET: APIRoute = async ({ url, request }) => {
     const limited = checkRateLimit(request, 'READ', 'clients');
     if (limited) return limited;
 
+    // ── Stats shortcut ──────────────────────────────────────────────────────
+    if (url.searchParams.get('stats') === 'true') {
+      const stats = await ClienteService.getStats();
+      return new Response(JSON.stringify(stats), { status: 200, headers: JSON_HEADERS });
+    }
+
     // ── Parse query params ──────────────────────────────────────────────────
     const includeQuoteCount = url.searchParams.get('includeQuoteCount') === 'true';
     const cursor = url.searchParams.get('cursor') ?? null;
