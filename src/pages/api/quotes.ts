@@ -1,12 +1,14 @@
 import type { APIRoute } from "astro";
 import { cotizacionService } from "../../utils/database";
 import { ClienteService } from "../../services/ClienteService";
-import { CotizacionService } from "../../services/CotizacionService";
+import { CotizacionService, InvalidCursorError } from "../../services/CotizacionService";
 import { DateHelper } from "../../utils/dateHelpers";
 import { QuoteHelper } from "../../utils/quoteHelpers";
 import { ValidationHelper } from "../../utils/validationHelpers";
 import { checkRateLimit } from "../../utils/rateLimit";
 import { AnalyticsService } from "../../services/AnalyticsService";
+
+const VALID_ESTADOS = new Set(['borrador', 'enviada', 'aprobada', 'rechazada', 'vencida']);
 
 /**
  * Cotizador-Online API
@@ -69,14 +71,61 @@ export const GET: APIRoute = async ({ url, request }) => {
         },
       );
     } else {
-      // Get all quotes (existing functionality)
-      const cotizaciones = await cotizacionService.getAll();
+      // Paginated listing
+      const cursor = url.searchParams.get("cursor") ?? null;
+      const rawPageSize = url.searchParams.get("pageSize");
+      const pageSize = rawPageSize ? parseInt(rawPageSize, 10) : 25;
+      const search = url.searchParams.get("search") ?? null;
+      const estadoParam = url.searchParams.get("estado") ?? null;
 
-      return new Response(JSON.stringify(cotizaciones), {
+      // Validate estado
+      if (estadoParam !== null && !VALID_ESTADOS.has(estadoParam)) {
+        return new Response(
+          JSON.stringify({ error: "invalid_estado" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      const estado = estadoParam as 'borrador' | 'enviada' | 'aprobada' | 'rechazada' | 'vencida' | null;
+
+      let listResult;
+      let warning: string | undefined;
+      try {
+        listResult = await CotizacionService.list({ cursor, pageSize, estado });
+      } catch (err) {
+        if (err instanceof InvalidCursorError) {
+          return new Response(
+            JSON.stringify({ error: "invalid_cursor", message: (err as Error).message }),
+            { status: 400, headers: { "Content-Type": "application/json" } }
+          );
+        }
+        throw err;
+      }
+
+      let items = listResult.items as any[];
+
+      // In-memory search over { numero, titulo, lugar_evento }
+      // clienteNombre is not denormalized — omitted from search for now
+      if (search) {
+        const term = search.toLowerCase();
+        items = items.filter(q =>
+          (q.numero && String(q.numero).toLowerCase().includes(term)) ||
+          (q.titulo && String(q.titulo).toLowerCase().includes(term)) ||
+          (q.lugar_evento && String(q.lugar_evento).toLowerCase().includes(term))
+        );
+      }
+
+      const responseBody: Record<string, unknown> = {
+        items,
+        nextCursor: listResult.nextCursor,
+        hasMore: listResult.hasMore,
+        pageSize: listResult.pageSize,
+      };
+      if (warning) responseBody.warning = warning;
+
+      return new Response(JSON.stringify(responseBody), {
         status: 200,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
     }
   } catch (error) {
