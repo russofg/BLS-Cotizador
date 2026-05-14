@@ -1,33 +1,74 @@
 ---
 import Dashboard from "../layouts/Dashboard.astro";
 import { cotizacionService, clienteService } from "../utils/database";
+import { CotizacionService } from "../services/CotizacionService";
+import { AnalyticsService } from "../services/AnalyticsService";
 import { DateHelper } from "../utils/dateHelpers";
 import { QuoteHelper } from "../utils/quoteHelpers";
 import ScrollbarStyles from "../components/ScrollbarStyles.astro";
 import {
   QuoteTrackingService,
-  QuoteStatus,
 } from "../services/QuoteTrackingService";
 
 const safeFormatDate = DateHelper.safeFormatDate;
 
-let cotizaciones: any[] = [];
+let initialQuotes: any[] = [];
+let initialNextCursor: string | null = null;
+let initialHasMore = false;
+let initialPageSize = 25;
 let clientes: any[] = [];
 let trackingStats: any = null;
+let analyticsStats: any = null;
 let error = "";
 
-let tasaConversionReal = 0;
-
-// ── Computed metrics ──────────────────────────────────────────────────────────
-let totalFacturadoAprobadas = 0;
-let topClientes: Array<{ nombre: string; empresa?: string; count: number; total: number }> = [];
-
-// ── Search functionality ──────────────────────────────────────────────────────
-const search = Astro.url.searchParams.get("search");
-
 try {
-  cotizaciones = await cotizacionService.getAll();
-  clientes = await clienteService.getAllForAggregates();
+  // U4: stats come from AnalyticsService, NOT computed from page slice
+  const [listResult, clientesData, analyticsData] = await Promise.allSettled([
+    CotizacionService.list({ pageSize: 25 }),
+    clienteService.getAllForAggregates(),
+    AnalyticsService.getQuoteAnalytics(),
+  ]);
+
+  if (listResult.status === "fulfilled") {
+    const result = listResult.value;
+    initialNextCursor = result.nextCursor;
+    initialHasMore = result.hasMore;
+    initialPageSize = result.pageSize;
+
+    clientes = clientesData.status === "fulfilled" ? clientesData.value : [];
+    analyticsStats = analyticsData.status === "fulfilled" ? analyticsData.value : null;
+
+    initialQuotes = result.items.map((cotizacion) => {
+      const normalizedQuote = QuoteHelper.normalizeQuoteData(cotizacion);
+      const enrichedQuote = QuoteHelper.enrichQuoteWithClient(normalizedQuote, clientes);
+
+      const fechaParaMostrar =
+        normalizedQuote.fechaEvento ||
+        normalizedQuote.fecha_evento ||
+        normalizedQuote.created_at ||
+        normalizedQuote.createdAt;
+
+      const esEventoDate = !!(normalizedQuote.fechaEvento || normalizedQuote.fecha_evento);
+
+      const estadoNorm = QuoteHelper.normalizeQuoteStatus(cotizacion.estado);
+
+      return {
+        ...enrichedQuote,
+        estado: estadoNorm,
+        numero_display: QuoteHelper.generateQuoteNumber(
+          { ...normalizedQuote, id: cotizacion.id },
+          clientes.find(
+            (c) => c.id === normalizedQuote.cliente_id || c.id === normalizedQuote.clienteId
+          )
+        ),
+        fecha_display: safeFormatDate(fechaParaMostrar),
+        fecha_tipo: esEventoDate ? "evento" : "creacion",
+      };
+    });
+  } else {
+    error = "Error al cargar las cotizaciones";
+    console.error("Error loading quotes:", listResult.reason);
+  }
 
   try {
     trackingStats = await QuoteTrackingService.getTrackingStats();
@@ -35,85 +76,23 @@ try {
     console.warn("Error loading tracking stats:", trackingError);
   }
 
-  cotizaciones = cotizaciones.map((cotizacion) => {
-    const normalizedQuote = QuoteHelper.normalizeQuoteData(cotizacion);
-    const enrichedQuote = QuoteHelper.enrichQuoteWithClient(normalizedQuote, clientes);
-
-    const fechaParaMostrar =
-      normalizedQuote.fechaEvento ||
-      normalizedQuote.fecha_evento ||
-      normalizedQuote.created_at ||
-      normalizedQuote.createdAt;
-
-    const esEventoDate = !!(normalizedQuote.fechaEvento || normalizedQuote.fecha_evento);
-
-    // Normalize estado defensively
-    const estadoNorm = QuoteHelper.normalizeQuoteStatus(cotizacion.estado);
-
-    return {
-      ...enrichedQuote,
-      estado: estadoNorm,
-      numero_display: QuoteHelper.generateQuoteNumber(
-        { ...normalizedQuote, id: cotizacion.id },
-        clientes.find(
-          (c) => c.id === normalizedQuote.cliente_id || c.id === normalizedQuote.clienteId
-        )
-      ),
-      fecha_display: safeFormatDate(fechaParaMostrar),
-      fecha_tipo: esEventoDate ? "evento" : "creacion",
-    };
-  });
-
-  // Apply search filter if present
-  if (search) {
-    const searchTerm = search.toLowerCase();
-    cotizaciones = cotizaciones.filter(
-      (c) =>
-        c.numero_display.toLowerCase().includes(searchTerm) ||
-        (c.cliente_nombre && c.cliente_nombre.toLowerCase().includes(searchTerm)) ||
-        (c.titulo && c.titulo.toLowerCase().includes(searchTerm)) ||
-        (c.lugar_evento && c.lugar_evento.toLowerCase().includes(searchTerm))
-    );
-  }
-
-  // ── Tasa de conversión real: (aprobadas + facturadas) / total ──────────
-  const exitosas = cotizaciones.filter(q => q.estado === "aprobada" || q.estado === "convertida").length;
-  tasaConversionReal = cotizaciones.length > 0 ? (exitosas / cotizaciones.length) * 100 : 0;
-
-  // ── Total facturado de cotizaciones aprobadas y facturadas ─────────────────────────────
-  totalFacturadoAprobadas = cotizaciones
-    .filter(q => q.estado === "aprobada" || q.estado === "convertida")
-    .reduce((sum, q) => sum + Number(q.total || 0), 0);
-
-  // ── Top clientes por cotizaciones exitosas ───────────────────────────────
-  const clienteMap = new Map<string, { nombre: string; empresa?: string; count: number; total: number }>();
-  cotizaciones
-    .filter(q => q.estado === "aprobada" || q.estado === "convertida")
-    .forEach(q => {
-      const clienteId = q.cliente_id || q.clienteId;
-      const cliente = clientes.find(c => c.id === clienteId);
-      if (!clienteId) return;
-      if (!clienteMap.has(clienteId)) {
-        clienteMap.set(clienteId, {
-          nombre: cliente?.nombre || q.cliente_nombre || "Sin nombre",
-          empresa: cliente?.empresa,
-          count: 0,
-          total: 0,
-        });
-      }
-      const entry = clienteMap.get(clienteId)!;
-      entry.count++;
-      entry.total += Number(q.total || 0);
-    });
-  topClientes = Array.from(clienteMap.values())
-    .sort((a, b) => b.count - a.count || b.total - a.total)
-    .slice(0, 5);
-
-  console.log("Cotizaciones cargadas:", cotizaciones.length);
+  console.log("Cotizaciones cargadas (primera página):", initialQuotes.length);
 } catch (e) {
   error = "Error al cargar las cotizaciones";
   console.error("Error loading quotes:", e);
 }
+
+// U4: stats from AnalyticsService (not inline computed from page slice)
+const tasaConversionReal = analyticsStats
+  ? (() => {
+      const aprobadas = analyticsStats.quotesByStatus?.find((s: any) => s.status === "aprobada")?.count ?? 0;
+      const convertidas = analyticsStats.quotesByStatus?.find((s: any) => s.status === "convertida")?.count ?? 0;
+      const total = analyticsStats.totalQuotes ?? 0;
+      return total > 0 ? ((aprobadas + convertidas) / total) * 100 : 0;
+    })()
+  : 0;
+
+const totalFacturadoAprobadas = analyticsStats?.totalQuoteValue ?? 0;
 
 // ── Helpers para el estado visual ─────────────────────────────────────────────
 function getStatusStyle(estado: string) {
@@ -141,10 +120,22 @@ function getEstadoBarStyle(estado: string) {
     default:          return "bg-slate-500";
   }
 }
+
+// Inject SSR data for client-side hydration
+const ssrData = JSON.stringify({
+  items: initialQuotes,
+  nextCursor: initialNextCursor,
+  hasMore: initialHasMore,
+  pageSize: initialPageSize,
+});
 ---
 
 <Dashboard title="Cotizaciones - BLS Cotizador" activeSection="quotes">
   <ScrollbarStyles />
+
+  <!-- SSR data for client-side state machine -->
+  <script id="quotes-initial" type="application/json" set:html={ssrData}></script>
+
   <div class="space-y-6 pb-12">
 
     <!-- ── Header ─────────────────────────────────────────────────────────── -->
@@ -202,21 +193,21 @@ function getEstadoBarStyle(estado: string) {
       <div class="bg-[var(--color-surface-container-low)] p-5 sm:p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
         <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Total Cotizaciones</p>
         <h4 class="text-3xl font-black text-[var(--color-on-surface)] flex items-baseline gap-2">
-          <span>{cotizaciones.length}</span>
+          <span id="stat-total">{analyticsStats?.totalQuotes ?? initialQuotes.length}</span>
           <span class="text-sm font-medium text-[var(--color-on-surface-variant)]">Propuestas</span>
         </h4>
       </div>
       <div class="bg-[var(--color-surface-container-low)] p-5 sm:p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
         <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Tasa de Conversión</p>
         <h4 class="text-3xl font-black text-emerald-400 flex items-baseline gap-2">
-          <span>{tasaConversionReal.toFixed(1)}%</span>
+          <span id="stat-conversion">{tasaConversionReal.toFixed(1)}%</span>
           <span class="text-sm font-medium text-[var(--color-on-surface-variant)]">Aprobadas</span>
         </h4>
       </div>
       <div class="bg-[var(--color-surface-container-low)] p-5 sm:p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
         <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Total Facturado</p>
         <h4 class="text-2xl font-black text-amber-400 leading-tight">
-          <span class="text-base font-medium mr-0.5">$</span>{totalFacturadoAprobadas.toLocaleString("es-AR")}
+          <span class="text-base font-medium mr-0.5">$</span><span id="stat-facturado">{totalFacturadoAprobadas.toLocaleString("es-AR")}</span>
         </h4>
         <p class="text-[9px] text-[var(--color-on-surface-variant)] mt-0.5 uppercase tracking-widest">Solo aprobadas</p>
       </div>
@@ -260,29 +251,13 @@ function getEstadoBarStyle(estado: string) {
           </div>
         )}
 
-        <!-- Top Clientes aprobados -->
-        {topClientes.length > 0 && (
-          <div class="bg-[var(--color-surface-container-low)] p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
-            <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-5">Top Clientes · Aprobadas</p>
-            <div class="space-y-3">
-              {topClientes.map((c, i) => (
-                <div class="flex items-center gap-3">
-                  <span class={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 ${i === 0 ? 'bg-amber-500/20 text-amber-400' : i === 1 ? 'bg-slate-500/20 text-slate-300' : 'bg-[var(--color-surface-container)] text-[var(--color-on-surface-variant)]'}`}>
-                    {i + 1}
-                  </span>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-[var(--color-on-surface)] truncate">{c.nombre}</p>
-                    {c.empresa && <p class="text-[10px] text-[var(--color-primary)] truncate">{c.empresa}</p>}
-                  </div>
-                  <div class="text-right shrink-0">
-                    <p class="text-xs font-black text-emerald-400">{c.count} cot.</p>
-                    <p class="text-[10px] text-[var(--color-on-surface-variant)]">${c.total.toLocaleString("es-AR")}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+        <!-- Top Clientes — loaded client-side from analytics -->
+        <div id="top-clientes-container" class="bg-[var(--color-surface-container-low)] p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
+          <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-5">Top Clientes · Aprobadas</p>
+          <div id="top-clientes-list" class="space-y-3">
+            <p class="text-xs text-[var(--color-on-surface-variant)]">Cargando...</p>
           </div>
-        )}
+        </div>
 
         <!-- Próximos Vencimientos -->
         {trackingStats.proximosVencimientos.length > 0 && (
@@ -307,114 +282,459 @@ function getEstadoBarStyle(estado: string) {
       </div>
     )}
 
-    <!-- ── Quote List ─────────────────────────────────────────────────────── -->
-    {cotizaciones.length === 0 ? (
-      <div class="text-center py-28 border border-dashed border-[var(--color-outline-variant)] rounded-2xl bg-[var(--color-surface-container-low)]">
-        <span class="material-symbols-outlined text-6xl opacity-30 block mb-4 text-[var(--color-on-surface-variant)]">
-          {search ? "search_off" : "description"}
-        </span>
-        <h3 class="text-2xl font-black text-[var(--color-on-surface)] mb-2">
-          {search ? `No encontramos resultados para "${search}"` : "Sin cotizaciones aún"}
-        </h3>
-        <p class="text-[var(--color-on-surface-variant)] mb-8 max-w-sm mx-auto">
-          {search 
-            ? "Probá con otros términos o verificá que esté bien escrito." 
-            : "Creá tu primera propuesta comercial para empezar a gestionar tu negocio."}
-        </p>
-        {!search && (
-          <a
-            href="/quotes/wizard"
-            class="inline-flex items-center gap-2 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-[0_8px_16px_rgba(59,130,246,0.3)] hover:scale-[1.02] transition-all"
+    <!-- ── Filters ─────────────────────────────────────────────────────────── -->
+    <div class="bg-[var(--color-surface-container-low)]/50 p-5 rounded-xl border border-[var(--color-outline-variant)]/30 backdrop-blur-md mb-6 shadow-[0_8px_16px_rgba(0,0,0,0.2)]">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+        <div class="sm:col-span-2">
+          <label class="block text-[10px] font-bold uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-2">Buscar cotización</label>
+          <input
+            id="quotes-search"
+            type="text"
+            placeholder="Buscar por número, título, cliente o lugar..."
+            class="w-full bg-[var(--color-surface-container)] border border-[var(--color-outline-variant)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-on-surface)] placeholder:text-[var(--color-on-surface-variant)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50 focus:border-[var(--color-primary)]"
+          />
+          <p class="text-[10px] text-[var(--color-on-surface-variant)] mt-1 ml-1">Búsqueda en memoria — no reinicia la paginación</p>
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-2">Estado</label>
+          <select
+            id="quotes-estado"
+            class="w-full bg-[var(--color-surface-container)] border border-[var(--color-outline-variant)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50 focus:border-[var(--color-primary)]"
           >
-            <span class="material-symbols-outlined">add_circle</span>
-            Crear Primera Cotización
-          </a>
-        )}
+            <option value="">Todos los estados</option>
+            <option value="borrador">Borrador</option>
+            <option value="enviada">Enviada</option>
+            <option value="aprobada">Aprobada</option>
+            <option value="rechazada">Rechazada</option>
+            <option value="vencida">Vencida</option>
+          </select>
+        </div>
       </div>
-    ) : (
-      <div class="space-y-3">
-        {cotizaciones.map((cotizacion) => {
-          const style = getStatusStyle(cotizacion.estado);
-          return (
-            <article class="group bg-[var(--color-surface-container-low)] rounded-xl border border-[var(--color-outline-variant)] shadow-[0_8px_24px_rgba(0,0,0,0.25)] hover:bg-[var(--color-surface-container)] hover:-translate-y-0.5 transition-all duration-300 overflow-hidden flex">
+    </div>
 
-              <!-- Color stripe -->
-              <div class={`w-1 shrink-0 ${style.dot}`}></div>
-
-              <div class="flex-1 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-
-                <!-- Left: Info -->
-                <div class="flex-1 min-w-0">
-                  <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                    <span class="text-[10px] font-mono font-bold text-[var(--color-primary)] bg-[var(--color-primary)]/10 px-2 py-0.5 rounded border border-[var(--color-primary)]/20">
-                      {cotizacion.numero_display}
-                    </span>
-                    <span class={`px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest rounded-full border ${style.badge}`}>
-                      {style.label}
-                    </span>
-                    {cotizacion.fecha_tipo === "evento" && (
-                      <span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/20">Evento</span>
-                    )}
-                  </div>
-
-                  <h3 class="text-base font-black text-[var(--color-on-surface)] mb-1.5 truncate group-hover:text-[var(--color-primary)] transition-colors">
-                    {cotizacion.titulo || "Sin título"}
-                  </h3>
-
-                  <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
-                    <div class="flex items-center gap-1.5 text-xs text-[var(--color-on-surface-variant)]">
-                      <span class="material-symbols-outlined text-sm opacity-70">person</span>
-                      <span class="font-bold text-[var(--color-on-surface)]">{cotizacion.cliente_nombre}</span>
-                    </div>
-                    <div class="flex items-center gap-1.5 text-xs text-[var(--color-on-surface-variant)]">
-                      <span class="material-symbols-outlined text-sm opacity-70">calendar_today</span>
-                      <span>{cotizacion.fecha_display}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Right: Amount + Actions -->
-                <div class="flex items-center justify-between sm:justify-end gap-6 shrink-0">
-                  <div class="text-right">
-                    <p class="text-[10px] font-black text-[var(--color-on-surface-variant)] uppercase tracking-widest mb-0.5">Total</p>
-                    <p class="text-xl font-black text-[var(--color-on-surface)]">
-                      <span class="text-[var(--color-primary)] text-sm font-medium mr-0.5">$</span>
-                      {Number(cotizacion.total || 0).toLocaleString("es-AR")}
-                    </p>
-                  </div>
-
-                  <div class="flex items-center gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
-                    <a href={`/quotes/view/${cotizacion.id}`} class="p-2 rounded-xl text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all" title="Ver detalle">
-                      <span class="material-symbols-outlined text-xl">visibility</span>
-                    </a>
-                    <a href={`/quotes/edit/${cotizacion.id}`} class="p-2 rounded-xl text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all" title="Editar">
-                      <span class="material-symbols-outlined text-xl">edit_document</span>
-                    </a>
-                    <a href={`/quotes/tracking/${cotizacion.id}`} class="p-2 rounded-xl text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all" title="Seguimiento">
-                      <span class="material-symbols-outlined text-xl">timeline</span>
-                    </a>
-                    <button
-                      onclick={`deleteQuote('${cotizacion.id}', '${(cotizacion.titulo || cotizacion.numero_display || "").replace(/'/g, "\\'")}')`}
-                      class="p-2 rounded-xl text-[var(--color-on-surface-variant)] hover:text-red-400 hover:bg-red-500/10 transition-all"
-                      title="Eliminar"
-                    >
-                      <span class="material-symbols-outlined text-xl">delete</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </article>
-          );
-        })}
+    <!-- ── Quote List ─────────────────────────────────────────────────────── -->
+    <div id="quotes-list-container">
+      <!-- Skeleton shown while client hydrates -->
+      <div id="quotes-skeleton" class="text-center py-20 text-[var(--color-on-surface-variant)]">
+        <svg class="animate-spin h-10 w-10 mx-auto mb-4 text-[var(--color-primary)] opacity-80" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="text-sm font-bold uppercase tracking-widest text-slate-500">Cargando cotizaciones...</p>
       </div>
-    )}
+
+      <div id="quotes-list" class="space-y-3 hidden"></div>
+
+      <!-- Error state -->
+      <div id="quotes-error" class="hidden text-center py-20 border border-dashed border-red-500/30 rounded-2xl bg-[var(--color-surface-container-low)]">
+        <span class="material-symbols-outlined text-5xl mb-4 text-red-400 block">error</span>
+        <h3 class="text-xl font-bold text-[var(--color-on-surface)] mb-2">Error al cargar cotizaciones</h3>
+        <p id="quotes-error-message" class="text-[var(--color-on-surface-variant)] text-sm mb-4"></p>
+        <button onclick="location.reload()" class="px-6 py-3 rounded-xl font-bold bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all">Reintentar</button>
+      </div>
+    </div>
+
+    <!-- ── "Cargar más" button ────────────────────────────────────────────── -->
+    <div id="load-more-container" class="hidden flex justify-center pb-12">
+      <button
+        id="load-more-btn"
+        class="flex items-center gap-3 px-8 py-4 rounded-xl font-bold border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] bg-[var(--color-surface-container-low)] hover:bg-[var(--color-surface-container-high)] transition-all focus:ring-2 focus:ring-[var(--color-primary)]/50 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <span id="load-more-spinner" class="hidden">
+          <svg class="animate-spin h-5 w-5 text-[var(--color-primary)]" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </span>
+        <span class="material-symbols-outlined text-lg" id="load-more-icon">expand_more</span>
+        <span id="load-more-text">Cargar más cotizaciones</span>
+      </button>
+    </div>
+
   </div>
 </Dashboard>
 
 <script>
   import { notifications } from "../utils/notifications.js";
+  import {
+    initialState,
+    onLoadStart,
+    onPageLoaded,
+    onMoreLoaded,
+    onFilterChange,
+    onMutationSuccess,
+    onFetchError,
+    canLoadMore,
+    type QuotesListState,
+  } from "../utils/quotesListState";
 
-  // ── Dollar widget ─────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────
+  // State
+  // ──────────────────────────────────────────────────────────────
+  let state: QuotesListState = initialState();
+  let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  // In-memory search term (SC-07: does NOT reset pagination)
+  let searchTerm = "";
+
+  // ──────────────────────────────────────────────────────────────
+  // Build API URL for paginated fetch
+  // ──────────────────────────────────────────────────────────────
+  function buildApiUrl(cursor: string | null = null): string {
+    const params = new URLSearchParams();
+    params.set("pageSize", String(state.pageSize));
+    if (state.filters.estado) {
+      params.set("estado", state.filters.estado);
+    }
+    if (cursor) {
+      params.set("cursor", cursor);
+    }
+    return `/api/quotes?${params.toString()}`;
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // Status style helpers (mirrors SSR helpers for client render)
+  // ──────────────────────────────────────────────────────────────
+  function getStatusStyle(estado: string) {
+    switch (estado) {
+      case "aprobada":   return { badge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", dot: "bg-emerald-500", label: "Aprobada" };
+      case "enviada":    return { badge: "bg-blue-500/10 text-blue-400 border-blue-500/20",          dot: "bg-blue-500",    label: "Enviada" };
+      case "pendiente":  return { badge: "bg-amber-500/10 text-amber-400 border-amber-500/20",       dot: "bg-amber-500",   label: "Pendiente" };
+      case "rechazada":  return { badge: "bg-red-500/10 text-red-400 border-red-500/20",             dot: "bg-red-500",     label: "Rechazada" };
+      case "vencida":    return { badge: "bg-orange-500/10 text-orange-400 border-orange-500/20",    dot: "bg-orange-500",  label: "Vencida" };
+      case "revisada":   return { badge: "bg-amber-500/10 text-amber-400 border-amber-500/20",       dot: "bg-amber-500",   label: "Revisada" };
+      case "convertida": return { badge: "bg-violet-500/10 text-violet-400 border-violet-500/20",    dot: "bg-violet-500",  label: "Facturada" };
+      default:           return { badge: "bg-slate-500/10 text-slate-400 border-slate-500/20",       dot: "bg-slate-500",   label: "Borrador" };
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // Skeleton / loading
+  // ──────────────────────────────────────────────────────────────
+  function showSkeleton() {
+    document.getElementById("quotes-skeleton")?.classList.remove("hidden");
+    document.getElementById("quotes-list")?.classList.add("hidden");
+    document.getElementById("quotes-error")?.classList.add("hidden");
+  }
+
+  function hideSkeleton() {
+    document.getElementById("quotes-skeleton")?.classList.add("hidden");
+    document.getElementById("quotes-list")?.classList.remove("hidden");
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // "Cargar más" button sync
+  // ──────────────────────────────────────────────────────────────
+  function syncLoadMoreButton() {
+    const container = document.getElementById("load-more-container");
+    const btn = document.getElementById("load-more-btn") as HTMLButtonElement | null;
+    const spinner = document.getElementById("load-more-spinner");
+    const icon = document.getElementById("load-more-icon");
+    const text = document.getElementById("load-more-text");
+
+    if (!container || !btn) return;
+
+    if (state.hasMore) {
+      container.classList.remove("hidden");
+    } else {
+      container.classList.add("hidden");
+    }
+
+    if (state.isLoading && state.allQuotes.length > 0) {
+      btn.disabled = true;
+      spinner?.classList.remove("hidden");
+      icon?.classList.add("hidden");
+      if (text) text.textContent = "Cargando...";
+    } else {
+      btn.disabled = false;
+      spinner?.classList.add("hidden");
+      icon?.classList.remove("hidden");
+      if (text) text.textContent = "Cargar más cotizaciones";
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // Render quote card HTML
+  // ──────────────────────────────────────────────────────────────
+  function renderQuoteCard(cotizacion: any): string {
+    const style = getStatusStyle(cotizacion.estado);
+    const titulo = (cotizacion.titulo || "Sin título").replace(/'/g, "\\'");
+    const clienteNombre = cotizacion.cliente_nombre || "Sin cliente";
+    const fechaDisplay = cotizacion.fecha_display || "—";
+    const total = Number(cotizacion.total || 0).toLocaleString("es-AR");
+    const numeroDisplay = cotizacion.numero_display || cotizacion.numero || "";
+    const esFechaEvento = cotizacion.fecha_tipo === "evento";
+
+    return `
+      <article class="group bg-[var(--color-surface-container-low)] rounded-xl border border-[var(--color-outline-variant)] shadow-[0_8px_24px_rgba(0,0,0,0.25)] hover:bg-[var(--color-surface-container)] hover:-translate-y-0.5 transition-all duration-300 overflow-hidden flex">
+        <div class="w-1 shrink-0 ${style.dot}"></div>
+        <div class="flex-1 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              <span class="text-[10px] font-mono font-bold text-[var(--color-primary)] bg-[var(--color-primary)]/10 px-2 py-0.5 rounded border border-[var(--color-primary)]/20">
+                ${numeroDisplay}
+              </span>
+              <span class="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest rounded-full border ${style.badge}">
+                ${style.label}
+              </span>
+              ${esFechaEvento ? '<span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/20">Evento</span>' : ""}
+            </div>
+            <h3 class="text-base font-black text-[var(--color-on-surface)] mb-1.5 truncate group-hover:text-[var(--color-primary)] transition-colors">
+              ${cotizacion.titulo || "Sin título"}
+            </h3>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <div class="flex items-center gap-1.5 text-xs text-[var(--color-on-surface-variant)]">
+                <span class="material-symbols-outlined text-sm opacity-70">person</span>
+                <span class="font-bold text-[var(--color-on-surface)]">${clienteNombre}</span>
+              </div>
+              <div class="flex items-center gap-1.5 text-xs text-[var(--color-on-surface-variant)]">
+                <span class="material-symbols-outlined text-sm opacity-70">calendar_today</span>
+                <span>${fechaDisplay}</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between sm:justify-end gap-6 shrink-0">
+            <div class="text-right">
+              <p class="text-[10px] font-black text-[var(--color-on-surface-variant)] uppercase tracking-widest mb-0.5">Total</p>
+              <p class="text-xl font-black text-[var(--color-on-surface)]">
+                <span class="text-[var(--color-primary)] text-sm font-medium mr-0.5">$</span>${total}
+              </p>
+            </div>
+            <div class="flex items-center gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
+              <a href="/quotes/view/${cotizacion.id}" class="p-2 rounded-xl text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all" title="Ver detalle">
+                <span class="material-symbols-outlined text-xl">visibility</span>
+              </a>
+              <a href="/quotes/edit/${cotizacion.id}" class="p-2 rounded-xl text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all" title="Editar">
+                <span class="material-symbols-outlined text-xl">edit_document</span>
+              </a>
+              <a href="/quotes/tracking/${cotizacion.id}" class="p-2 rounded-xl text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all" title="Seguimiento">
+                <span class="material-symbols-outlined text-xl">timeline</span>
+              </a>
+              <button
+                data-delete-id="${cotizacion.id}"
+                data-delete-title="${titulo}"
+                class="delete-quote-btn p-2 rounded-xl text-[var(--color-on-surface-variant)] hover:text-red-400 hover:bg-red-500/10 transition-all"
+                title="Eliminar"
+              >
+                <span class="material-symbols-outlined text-xl pointer-events-none">delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // Render the accumulated quotes list (with in-memory search filter)
+  // ──────────────────────────────────────────────────────────────
+  function renderQuotes() {
+    const list = document.getElementById("quotes-list");
+    if (!list) return;
+
+    // SC-07: in-memory search filter applied on top of accumulated list
+    const term = searchTerm.toLowerCase().trim();
+    const filtered = term
+      ? state.allQuotes.filter((q) =>
+          (q.numero_display && q.numero_display.toLowerCase().includes(term)) ||
+          (q.titulo && q.titulo.toLowerCase().includes(term)) ||
+          (q.cliente_nombre && q.cliente_nombre.toLowerCase().includes(term)) ||
+          (q.lugar_evento && q.lugar_evento.toLowerCase().includes(term))
+        )
+      : state.allQuotes;
+
+    if (filtered.length === 0) {
+      list.innerHTML = `
+        <div class="text-center py-28 border border-dashed border-[var(--color-outline-variant)] rounded-2xl bg-[var(--color-surface-container-low)]">
+          <span class="material-symbols-outlined text-6xl opacity-30 block mb-4 text-[var(--color-on-surface-variant)]">
+            ${term ? "search_off" : "description"}
+          </span>
+          <h3 class="text-2xl font-black text-[var(--color-on-surface)] mb-2">
+            ${term ? `No encontramos resultados para "${term}"` : "Sin cotizaciones"}
+          </h3>
+          <p class="text-[var(--color-on-surface-variant)] mb-8 max-w-sm mx-auto">
+            ${term ? "Probá con otros términos o cargá más cotizaciones." : "Creá tu primera propuesta comercial."}
+          </p>
+          ${!term ? '<a href="/quotes/wizard" class="inline-flex items-center gap-2 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-[0_8px_16px_rgba(59,130,246,0.3)] hover:scale-[1.02] transition-all"><span class="material-symbols-outlined">add_circle</span>Crear Primera Cotización</a>' : ""}
+        </div>
+      `;
+    } else {
+      list.innerHTML = filtered.map(renderQuoteCard).join("");
+    }
+
+    // Re-attach delete listeners after innerHTML replacement
+    list.querySelectorAll(".delete-quote-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const target = e.currentTarget as HTMLElement;
+        const id = target.getAttribute("data-delete-id") ?? "";
+        const title = target.getAttribute("data-delete-title") ?? "";
+        deleteQuote(id, title);
+      });
+    });
+  }
+
+  function showFetchError(message: string) {
+    const errEl = document.getElementById("quotes-error");
+    const msgEl = document.getElementById("quotes-error-message");
+    if (msgEl) msgEl.textContent = message;
+    errEl?.classList.remove("hidden");
+    document.getElementById("quotes-list")?.classList.add("hidden");
+    document.getElementById("quotes-skeleton")?.classList.add("hidden");
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // Fetch helpers
+  // ──────────────────────────────────────────────────────────────
+  async function loadFirstPage() {
+    state = onLoadStart(state);
+    showSkeleton();
+    syncLoadMoreButton();
+
+    try {
+      const response = await fetch(buildApiUrl(null));
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      state = onPageLoaded(state, {
+        items: data.items ?? [],
+        nextCursor: data.nextCursor ?? null,
+        hasMore: data.hasMore ?? false,
+        pageSize: data.pageSize ?? 25,
+      });
+    } catch (err) {
+      state = onFetchError(state, err instanceof Error ? err.message : String(err));
+      showFetchError(state.error!);
+      syncLoadMoreButton();
+      return;
+    }
+
+    hideSkeleton();
+    renderQuotes();
+    syncLoadMoreButton();
+  }
+
+  async function loadMorePage() {
+    if (!canLoadMore(state)) return;
+
+    const cursorToUse = state.nextCursor;
+    state = onLoadStart(state);
+    syncLoadMoreButton();
+
+    try {
+      const response = await fetch(buildApiUrl(cursorToUse));
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      state = onMoreLoaded(state, {
+        items: data.items ?? [],
+        nextCursor: data.nextCursor ?? null,
+        hasMore: data.hasMore ?? false,
+        pageSize: data.pageSize ?? 25,
+      });
+    } catch (err) {
+      state = onFetchError(state, err instanceof Error ? err.message : String(err));
+      notifications.error("Error al cargar más cotizaciones", state.error ?? "");
+    }
+
+    renderQuotes();
+    syncLoadMoreButton();
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // Filter — server-driven (resets pagination)
+  // ──────────────────────────────────────────────────────────────
+  function applyEstadoFilter() {
+    const estado = (document.getElementById("quotes-estado") as HTMLSelectElement)?.value ?? "";
+    // SC-06: filter change resets accumulated list + cursor
+    state = onFilterChange(state, { estado: estado || undefined }, state.search);
+    searchTerm = ""; // clear search when filter resets (SC-04 UI behavior)
+    const searchInput = document.getElementById("quotes-search") as HTMLInputElement;
+    if (searchInput) searchInput.value = "";
+    loadFirstPage();
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // Search — in-memory (SC-07: NO server fetch, NO pagination reset)
+  // ──────────────────────────────────────────────────────────────
+  function applySearch() {
+    searchTerm = (document.getElementById("quotes-search") as HTMLInputElement)?.value ?? "";
+    renderQuotes(); // purely re-render with filter applied — no fetch
+  }
+
+  function debouncedSearch() {
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(applySearch, 300);
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // Delete quote
+  // ──────────────────────────────────────────────────────────────
+  async function deleteQuote(quoteId: string, quoteTitle: string) {
+    try {
+      const result = await notifications.confirmDelete(quoteTitle);
+      if (!result.isConfirmed) return;
+
+      notifications.loading("Eliminando cotización", "Por favor espera...");
+
+      const response = await fetch(`/api/quotes?id=${quoteId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        await notifications.success("¡Eliminada!", "La cotización ha sido eliminada exitosamente");
+        state = onMutationSuccess(state);
+        await loadFirstPage();
+      } else {
+        throw new Error("Error al eliminar la cotización");
+      }
+    } catch (error) {
+      notifications.error(
+        "Error",
+        "No se pudo eliminar la cotización: " +
+          (error instanceof Error ? error.message : String(error))
+      );
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // Analytics: load top clientes from /api/analytics
+  // ──────────────────────────────────────────────────────────────
+  async function loadAnalyticsStats() {
+    try {
+      const res = await fetch("/api/analytics?type=clients");
+      if (!res.ok) return;
+      const data = await res.json();
+      const topClientes: Array<{ clientName: string; quoteCount: number; totalValue: number }> =
+        data.topClientsByQuotes ?? [];
+
+      const listEl = document.getElementById("top-clientes-list");
+      if (!listEl || topClientes.length === 0) {
+        if (listEl) listEl.innerHTML = '<p class="text-xs text-[var(--color-on-surface-variant)]">Sin datos disponibles</p>';
+        return;
+      }
+
+      listEl.innerHTML = topClientes
+        .slice(0, 5)
+        .map((c, i) => `
+          <div class="flex items-center gap-3">
+            <span class="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 ${i === 0 ? "bg-amber-500/20 text-amber-400" : i === 1 ? "bg-slate-500/20 text-slate-300" : "bg-[var(--color-surface-container)] text-[var(--color-on-surface-variant)]"}">
+              ${i + 1}
+            </span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-bold text-[var(--color-on-surface)] truncate">${c.clientName}</p>
+            </div>
+            <div class="text-right shrink-0">
+              <p class="text-xs font-black text-emerald-400">${c.quoteCount} cot.</p>
+              <p class="text-[10px] text-[var(--color-on-surface-variant)]">$${c.totalValue.toLocaleString("es-AR")}</p>
+            </div>
+          </div>
+        `)
+        .join("");
+    } catch {
+      // non-critical
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // Dollar widget
+  // ──────────────────────────────────────────────────────────────
   async function loadDolarRates() {
     try {
       const [oficialRes, mepRes, blueRes] = await Promise.allSettled([
@@ -441,7 +761,6 @@ function getEstadoBarStyle(estado: string) {
         if (el) el.textContent = fmt(d.venta);
       }
 
-      // Show the widget once we have data
       const widget = document.getElementById("dolar-widget");
       if (widget) widget.classList.remove("hidden");
       if (widget) widget.classList.add("flex");
@@ -450,35 +769,46 @@ function getEstadoBarStyle(estado: string) {
     }
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    loadDolarRates();
-  });
-
-  // ── Delete quote ──────────────────────────────────────────────────────────
-  (window as any).deleteQuote = async function (quoteId: string, quoteTitle: string) {
+  // ──────────────────────────────────────────────────────────────
+  // Bootstrap
+  // ──────────────────────────────────────────────────────────────
+  document.addEventListener("DOMContentLoaded", async () => {
+    // Read SSR-injected first page
+    const ssrScript = document.getElementById("quotes-initial");
+    let ssrData: any = null;
     try {
-      const result = await notifications.confirmDelete(quoteTitle);
-
-      if (result.isConfirmed) {
-        notifications.loading("Eliminando cotización", "Por favor espera...");
-
-        const response = await fetch(`/api/quotes?id=${quoteId}`, {
-          method: "DELETE",
-        });
-
-        if (response.ok) {
-          await notifications.success("¡Eliminada!", "La cotización ha sido eliminada exitosamente");
-          window.location.reload();
-        } else {
-          throw new Error("Error al eliminar la cotización");
-        }
-      }
-    } catch (error) {
-      notifications.error(
-        "Error",
-        "No se pudo eliminar la cotización: " +
-          (error instanceof Error ? error.message : String(error))
-      );
+      ssrData = ssrScript ? JSON.parse(ssrScript.textContent || "{}") : null;
+    } catch {
+      ssrData = null;
     }
-  };
+
+    if (ssrData && Array.isArray(ssrData.items) && ssrData.items.length >= 0) {
+      // Hydrate state with SSR data — no client fetch needed for first page
+      state = onPageLoaded(state, {
+        items: ssrData.items,
+        nextCursor: ssrData.nextCursor ?? null,
+        hasMore: ssrData.hasMore ?? false,
+        pageSize: ssrData.pageSize ?? 25,
+      });
+      hideSkeleton();
+      renderQuotes();
+      syncLoadMoreButton();
+    } else {
+      // Fallback: fetch first page from client
+      await loadFirstPage();
+    }
+
+    // Load analytics + dolar in parallel (non-blocking)
+    loadAnalyticsStats();
+    loadDolarRates();
+
+    // Search — debounced 300ms → in-memory filter only (SC-07)
+    document.getElementById("quotes-search")?.addEventListener("input", debouncedSearch);
+
+    // Estado filter → server fetch + pagination reset (SC-06)
+    document.getElementById("quotes-estado")?.addEventListener("change", applyEstadoFilter);
+
+    // "Cargar más"
+    document.getElementById("load-more-btn")?.addEventListener("click", loadMorePage);
+  });
 </script>
