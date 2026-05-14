@@ -219,7 +219,7 @@ export class ClienteService {
 
       let q: FirebaseFirestore.Query = adminDb
         .collection(this.COLLECTION_NAME)
-        .orderBy('nombre', 'asc');
+        .orderBy('nombreLower', 'asc');
       if (filters?.activo !== undefined) {
         q = q.where('activo', '==', filters.activo);
       }

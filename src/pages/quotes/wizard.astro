@@ -730,9 +730,10 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
       console.log("🔄 Iniciando carga de datos...");
 
       // Load clients
-      const clientsResponse = await fetch("/api/clients");
+      const clientsResponse = await fetch("/api/clients?pageSize=200");
       if (clientsResponse.ok) {
-        allClients = await clientsResponse.json();
+        const clientsData = await clientsResponse.json();
+        allClients = clientsData.items ?? clientsData;
         console.log("👥 Clientes cargados:", allClients.length);
         renderClientOptions();
       } else {
