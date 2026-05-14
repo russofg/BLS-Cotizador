@@ -8,15 +8,9 @@ import { FieldPath, FieldValue } from 'firebase-admin/firestore';
 import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { ValidationHelper } from '../utils/validationHelpers';
 import { cache, CacheKeys, CacheTTL, invalidateRelatedCache } from '../utils/cache';
+import { InvalidCursorError } from '../utils/errors';
 
-// ─── Error types ────────────────────────────────────────────────────────────
-
-export class InvalidCursorError extends Error {
-  readonly name = 'InvalidCursorError' as const;
-  constructor(message = 'Invalid or expired cursor') {
-    super(message);
-  }
-}
+export { InvalidCursorError };
 
 // ─── Interfaces ─────────────────────────────────────────────────────────────
 
