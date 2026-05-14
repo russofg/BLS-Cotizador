@@ -29,8 +29,7 @@ export const GET: APIRoute = async ({ url, request }) => {
 
     if (quoteId) {
       // Get specific quote by ID
-      const cotizaciones = await cotizacionService.getAll();
-      const cotizacion = cotizaciones.find((c: any) => c.id === quoteId);
+      const cotizacion = await CotizacionService.getById(quoteId);
 
       if (!cotizacion) {
         return new Response(

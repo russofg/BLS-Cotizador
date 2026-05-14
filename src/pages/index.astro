@@ -5,14 +5,15 @@ let activeItemsCount: number | null = null;
 let totalQuotesCount: number | null = null;
 
 try {
-  const { itemService, cotizacionService } = await import("../utils/database");
-  const [activeItems, quotes] = await Promise.all([
+  const { itemService } = await import("../utils/database");
+  const { adminDb } = await import("../utils/firebaseAdmin");
+  const [activeItems, quotesCount] = await Promise.all([
     itemService.getAll({ activo: true }),
-    cotizacionService.getAll(),
+    adminDb.collection('cotizaciones').count().get(),
   ]);
 
   activeItemsCount = activeItems.length;
-  totalQuotesCount = quotes.length;
+  totalQuotesCount = quotesCount.data().count;
 } catch (error) {
   console.error("Error loading landing stats:", error);
 }

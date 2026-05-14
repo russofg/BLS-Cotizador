@@ -19,8 +19,8 @@ const safeFormatDate = DateHelper.safeFormatDate;
 
 try {
   if (id) {
-    const cotizaciones = await cotizacionService.getAll();
-    cotizacion = cotizaciones.find((c: any) => c.id === id);
+    const { CotizacionService } = await import("../../../services/CotizacionService");
+    cotizacion = await CotizacionService.getById(id);
 
     if (cotizacion) {
       const clientes = await clienteService.getAllForAggregates();

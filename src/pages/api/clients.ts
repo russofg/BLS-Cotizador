@@ -209,18 +209,21 @@ export const DELETE: APIRoute = async ({ request }) => {
       });
     }
 
-    // Check if client has any quotes using Firebase
-    const allQuotes = await cotizacionService.getAll();
-    const clientQuotes = allQuotes.filter(quote => quote.clienteId === id);
+    // Check if client has any quotes — targeted query, not full collection scan
+    const { adminDb } = await import('../../utils/firebaseAdmin');
+    const quotesSnap = await adminDb
+      .collection('cotizaciones')
+      .where('clienteId', '==', id)
+      .get();
 
-    // If client has quotes, return error with details
-    if (clientQuotes.length > 0) {
-      return new Response(JSON.stringify({ 
+    if (quotesSnap.size > 0) {
+      const quoteNumbers = quotesSnap.docs.map((d: any) => d.data().numero).filter(Boolean);
+      return new Response(JSON.stringify({
         error: 'No se puede eliminar el cliente porque tiene cotizaciones asociadas',
-        details: `El cliente tiene ${clientQuotes.length} cotización(es) asociada(s). Debe eliminar primero las cotizaciones: ${clientQuotes.map((q: any) => q.numero).join(', ')}`,
+        details: `El cliente tiene ${quotesSnap.size} cotización(es) asociada(s). Debe eliminar primero las cotizaciones: ${quoteNumbers.join(', ')}`,
         hasQuotes: true,
-        quotesCount: clientQuotes.length,
-        quoteNumbers: clientQuotes.map((q: any) => q.numero)
+        quotesCount: quotesSnap.size,
+        quoteNumbers
       }), {
         status: 409, // Conflict
         headers: {
