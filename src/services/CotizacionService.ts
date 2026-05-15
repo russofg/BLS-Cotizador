@@ -100,14 +100,7 @@ export class CotizacionService {
       .orderBy(FieldPath.documentId(), 'desc');
 
     if (cursor) {
-      let payload: CursorPayload;
-      try {
-        payload = this.decodeCursor(cursor);
-      } catch {
-        // Stale / malformed cursor — silently reset to first page
-        const firstPage = await this.list({ pageSize, estado });
-        return firstPage;
-      }
+      const payload = this.decodeCursor(cursor); // throws InvalidCursorError if malformed
       const t = new Date(payload.t);
       q = q.startAfter(t, payload.id);
     }
