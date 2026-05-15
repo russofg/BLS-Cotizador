@@ -216,12 +216,8 @@ export const POST: APIRoute = async ({ request }) => {
       console.error("Error processing event dates:", e);
     }
 
-    const allExisting = await cotizacionService.getAll();
     const year = new Date().getFullYear();
-    const numeroAsignado = QuoteHelper.computeNextQuoteNumberForYear(
-      allExisting,
-      year,
-    );
+    const numeroAsignado = await CotizacionService.assignQuoteNumber(year);
 
     // Create the new quote with all necessary fields
     const newQuote = await cotizacionService.create({

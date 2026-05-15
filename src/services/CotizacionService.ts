@@ -162,6 +162,46 @@ export class CotizacionService {
     return this.getAllForAggregates();
   }
 
+  // ── assignQuoteNumber() — atomic counter via Firestore transaction ──────
+
+  /**
+   * Assigns the next sequential quote number for the given year atomically.
+   * Uses a dedicated counter document (`counters/quotes_{year}`) so concurrent
+   * requests can never produce the same number.
+   *
+   * On the first call of a year the counter is initialized lazily from the
+   * existing quotes (O(N) once per year); every subsequent call is O(1).
+   */
+  static async assignQuoteNumber(year: number): Promise<string> {
+    const counterRef = adminDb.doc(`counters/quotes_${year}`);
+
+    const seq = await adminDb.runTransaction(async (txn) => {
+      const snap = await txn.get(counterRef);
+
+      if (snap.exists) {
+        const next = (snap.data()!.last as number) + 1;
+        txn.update(counterRef, { last: next });
+        return next;
+      }
+
+      // Counter doesn't exist yet (first quote of the year).
+      // Read existing quotes outside the transaction's conflict set —
+      // safe because this code path runs at most once per year.
+      const existing = await CotizacionService.getAllForAggregates();
+      const re = new RegExp(`^${year}-(\\d+)$`);
+      let max = 0;
+      for (const q of existing) {
+        const m = String(q.numero ?? '').match(re);
+        if (m) max = Math.max(max, parseInt(m[1], 10));
+      }
+      const next = max + 1;
+      txn.set(counterRef, { last: next, year });
+      return next;
+    });
+
+    return `${year}-${String(seq).padStart(4, '0')}`;
+  }
+
   static async getById(id: string): Promise<Cotizacion | null> {
     try {
       const docSnap = await adminDb.collection(this.COLLECTION_NAME).doc(id).get();
