@@ -10,6 +10,8 @@
 </div>
 
 <script>
+  import { apiFetch } from '../utils/apiFetch';
+
   // Sistema global de notificaciones
   class NotificationSystem {
     private container: HTMLElement | null = null;
@@ -145,7 +147,7 @@
      */
     async checkPendingReminders() {
       try {
-        const response = await fetch("/api/quote-tracking?action=stats");
+        const response = await apiFetch("/api/quote-tracking?action=stats");
         if (response.ok) {
           const stats = await response.json();
 
