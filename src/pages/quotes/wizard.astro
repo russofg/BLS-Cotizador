@@ -1101,6 +1101,7 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
         const descripcion = Array.isArray(item.descripcion)
           ? item.descripcion.join("\n")
           : item.descripcion || "";
+        const itemId = item.id;
 
         return `
             <div class="relative bg-surface rounded-[2rem] p-8 shadow-[0_20px_40px_rgba(0,0,0,0.4)] border border-outline-variant/15 anime-fade-in" style="animation-delay: ${index * 0.1}s">
@@ -1111,20 +1112,20 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
                     <span class="text-[10px] font-black text-primary-500 uppercase tracking-[0.2em] mb-1 block">${categoriaNombre}</span>
                     <h5 class="text-2xl font-heading font-black text-gray-900 dark:text-white leading-tight">${item.nombre}</h5>
                   </div>
-                  
+
                   <div class="space-y-2">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Especificaciones de Entrega / Montaje</label>
                     <textarea
-                      id="pricing-descripcion-${index}"
+                      id="pricing-descripcion-${itemId}"
                       rows="3"
                       class="w-full text-sm rounded-2xl border-outline-variant/15 bg-surface-container-lowest focus:border-primary focus:ring-primary resize-none font-medium leading-relaxed p-4 transition-all text-on-surface"
-                      onchange="updateItemDescription('${item.id}', this.value)"
+                      onchange="updateItemDescription('${itemId}', this.value)"
                       placeholder="Detalles específicos para este evento..."
                       style="white-space: pre-wrap;"
                     >${descripcion}</textarea>
                   </div>
                 </div>
-                
+
                 <!-- Pricing Controls -->
                 <div class="lg:col-span-7 bg-surface-container rounded-[1.5rem] p-6 flex flex-col justify-center border border-outline-variant/15">
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
@@ -1132,12 +1133,12 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
                       <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Cantidad</label>
                       <input
                         type="number"
-                        id="pricing-cantidad-${index}"
+                        id="pricing-cantidad-${itemId}"
                         value="${item.cantidad}"
                         min="0.5"
                         step="0.5"
                         class="w-full rounded-xl border border-outline-variant/15 bg-surface-container-lowest focus:border-primary focus:ring-primary text-xl font-heading font-bold py-3 text-center shadow-sm"
-                        onchange="updateItemPricing(${index})"
+                        onchange="updateItemPricing('${itemId}')"
                       />
                     </div>
                     <div class="space-y-2">
@@ -1146,19 +1147,19 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
                         <input
                           type="number"
-                          id="pricing-precio-${index}"
+                          id="pricing-precio-${itemId}"
                           value="${item.precioBase || 0}"
                           min="0"
                           step="0.01"
                           class="w-full rounded-xl border border-outline-variant/15 bg-surface-container-lowest focus:border-primary focus:ring-primary text-xl font-heading font-bold py-3 pl-8 pr-4 shadow-sm"
-                          onchange="updateItemPricing(${index})"
+                          onchange="updateItemPricing('${itemId}')"
                         />
                       </div>
                     </div>
                     <div class="text-right">
                       <span class="block text-[10px] font-black text-primary-500 uppercase tracking-widest mb-2">Subtotal Item</span>
                       <div class="text-3xl font-heading font-black text-gray-900 dark:text-white tracking-tighter">
-                        $<span id="item-total-${index}">${(item.cantidad * (item.precioBase || 0)).toLocaleString("es-AR")}</span>
+                        $<span id="item-total-${itemId}">${(item.cantidad * (item.precioBase || 0)).toLocaleString("es-AR")}</span>
                       </div>
                     </div>
                   </div>
@@ -1178,32 +1179,29 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
     }
   }
 
-  // Update item pricing
-  window.updateItemPricing = function (index: number) {
+  // Update item pricing — uses item ID, not array index
+  window.updateItemPricing = function (itemId: string) {
     const cantidadInput = document.getElementById(
-      `pricing-cantidad-${index}`
+      `pricing-cantidad-${itemId}`
     ) as HTMLInputElement;
     const precioInput = document.getElementById(
-      `pricing-precio-${index}`
+      `pricing-precio-${itemId}`
     ) as HTMLInputElement;
-    const totalSpan = document.getElementById(`item-total-${index}`);
+    const totalSpan = document.getElementById(`item-total-${itemId}`);
 
     if (cantidadInput && precioInput && totalSpan) {
       const cantidad = parseFloat(cantidadInput.value) || 0;
       const precio = parseFloat(precioInput.value) || 0;
       const total = cantidad * precio;
 
-      // Update wizard data
-      if (wizardData.selectedItems[index]) {
-        wizardData.selectedItems[index].cantidad = cantidad;
-        wizardData.selectedItems[index].precioBase = precio;
-        wizardData.selectedItems[index].total = total;
+      const item = wizardData.selectedItems.find((i: any) => i.id === itemId);
+      if (item) {
+        item.cantidad = cantidad;
+        item.precioBase = precio;
+        item.total = total;
       }
 
-      // Update display
       totalSpan.textContent = total.toLocaleString("es-AR");
-
-      // Recalculate totals
       calculateTotals();
     }
   };
@@ -1995,71 +1993,32 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
 
   // Update step progress indicators
   function updateStepProgress(activeStep: number) {
-    console.log(`🔄 Actualizando progreso - Paso activo: ${activeStep}`);
-
-    // Actualizar todos los indicadores de paso
     for (let i = 1; i <= 4; i++) {
       const stepIndicator = document.getElementById(`step-indicator-${i}`);
-      const stepContainer = stepIndicator?.querySelector("div");
-      const stepCircle = stepIndicator?.querySelector(".w-8.h-8");
+      if (!stepIndicator) continue;
 
-      if (stepIndicator && stepContainer && stepCircle) {
-        // Resetear clases
-        stepContainer.className =
-          "flex items-center space-x-3 p-4 rounded-lg transition-all";
-        stepCircle.className =
-          "flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium";
+      // Steps 2-4 use group-[.active]: Tailwind modifiers — just toggle the class.
+      // Step 1 has hardcoded active styles in HTML, so we also toggle them manually.
+      if (i === activeStep) {
+        stepIndicator.classList.add('active');
+      } else {
+        stepIndicator.classList.remove('active');
+      }
 
-        if (i < activeStep) {
-          // Paso completado
-          stepContainer.classList.add(
-            "bg-green-50",
-            "dark:bg-green-900/20",
-            "border-2",
-            "border-green-200",
-            "dark:border-green-700"
-          );
-          stepCircle.classList.add(
-            "bg-green-500",
-            "dark:bg-green-600",
-            "text-white"
-          );
-          stepCircle.innerHTML = `
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-          `;
-        } else if (i === activeStep) {
-          // Paso activo
-          stepContainer.classList.add(
-            "bg-primary-50",
-            "dark:bg-primary-900/20",
-            "border-2",
-            "border-primary-200",
-            "dark:border-primary-700"
-          );
-          stepCircle.classList.add(
-            "bg-primary-500",
-            "dark:bg-primary-600",
-            "text-white"
-          );
-          stepCircle.textContent = i.toString();
+      // Step 1 has no group-[.active]: modifiers — manage its styles explicitly.
+      if (i === 1) {
+        const outerDiv = stepIndicator.querySelector<HTMLElement>('div');
+        const innerFlex = outerDiv?.querySelector<HTMLElement>('.flex.items-center');
+        if (!outerDiv || !innerFlex) continue;
+
+        if (i === activeStep) {
+          outerDiv.classList.remove('bg-surface-container', 'shadow-sm', 'border-transparent');
+          outerDiv.classList.add('bg-surface', 'shadow-[0_20px_40px_rgba(0,0,0,0.4)]', 'border-primary-500');
+          innerFlex.classList.remove('opacity-50');
         } else {
-          // Paso futuro
-          stepContainer.classList.add(
-            "bg-gray-50",
-            "dark:bg-gray-700/30",
-            "border-2",
-            "border-gray-200",
-            "dark:border-gray-700"
-          );
-          stepCircle.classList.add(
-            "bg-gray-300",
-            "dark:bg-gray-600",
-            "text-gray-600",
-            "dark:text-gray-300"
-          );
-          stepCircle.textContent = i.toString();
+          outerDiv.classList.remove('bg-surface', 'shadow-[0_20px_40px_rgba(0,0,0,0.4)]', 'border-primary-500');
+          outerDiv.classList.add('bg-surface-container', 'shadow-sm', 'border-transparent');
+          innerFlex.classList.add('opacity-50');
         }
       }
     }
