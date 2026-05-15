@@ -140,10 +140,7 @@ export const GET: APIRoute = async ({ url, request }) => {
     console.error("Error fetching quotes:", error);
     return new Response(
       JSON.stringify({
-        error:
-          error instanceof Error
-            ? error.message
-            : "Error al obtener cotizaciones",
+        error: "Error al obtener cotizaciones",
       }),
       {
         status: 500,
@@ -280,7 +277,7 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(
       JSON.stringify({
         error:
-          error instanceof Error ? error.message : "Error al crear cotización",
+          "Error al crear cotización",
       }),
       {
         status: 500,
@@ -507,10 +504,7 @@ export const PUT: APIRoute = async ({ request }) => {
     console.error("❌ Error updating quote:", error);
     return new Response(
       JSON.stringify({
-        error:
-          error instanceof Error
-            ? error.message
-            : "Error al actualizar cotización",
+        error: "Error al actualizar cotización",
       }),
       {
         status: 500,
@@ -579,10 +573,7 @@ export const DELETE: APIRoute = async ({ request, url }) => {
     console.error("Error deleting quote:", error);
     return new Response(
       JSON.stringify({
-        error:
-          error instanceof Error
-            ? error.message
-            : "Error al eliminar cotización",
+        error: "Error al eliminar cotización",
       }),
       {
         status: 500,

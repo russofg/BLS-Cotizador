@@ -52,7 +52,7 @@ export const GET: APIRoute = async ({ url, request }) => {
     console.error('Error in quote tracking API:', error);
     
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : 'Error al obtener datos de seguimiento'
+      error: 'Error al obtener datos de seguimiento'
     }), {
       status: 500,
       headers: {
@@ -192,7 +192,7 @@ export const POST: APIRoute = async ({ request }) => {
     console.error('Error in quote tracking POST API:', error);
     
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : 'Error al procesar solicitud'
+      error: 'Error al procesar solicitud'
     }), {
       status: 500,
       headers: {

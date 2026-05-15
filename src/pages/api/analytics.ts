@@ -39,7 +39,7 @@ export const GET: APIRoute = async ({ url, request }) => {
     console.error('Error getting analytics:', error);
     
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : 'Error al obtener estadísticas'
+      error: 'Error al obtener estadísticas'
     }), {
       status: 500,
       headers: {

@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ request }) => {
 
     return new Response(JSON.stringify({
       success: false,
-      error: error instanceof Error ? error.message : 'Error al obtener categorías'
+      error: 'Error al obtener categorías'
     }), {
       status: 500,
       headers: JSON_HEADERS

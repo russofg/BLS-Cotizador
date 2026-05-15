@@ -31,7 +31,7 @@ export const GET: APIRoute = async ({ url, request }) => {
     console.error('Error fetching items:', error);
     return new Response(JSON.stringify({ 
       success: false,
-      error: error instanceof Error ? error.message : 'Error al obtener items'
+      error: 'Error al obtener items'
     }), {
       status: 500,
       headers: {
@@ -82,7 +82,7 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (error) {
     console.error('Error creating item:', error);
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : 'Error al crear item'
+      error: 'Error al crear item'
     }), {
       status: 500,
       headers: {
@@ -132,7 +132,7 @@ export const PUT: APIRoute = async ({ request }) => {
   } catch (error) {
     console.error('Error updating item:', error);
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : 'Error al actualizar item'
+      error: 'Error al actualizar item'
     }), {
       status: 500,
       headers: {
@@ -173,7 +173,7 @@ export const DELETE: APIRoute = async ({ request }) => {
   } catch (error) {
     console.error('Error deleting item:', error);
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : 'Error al eliminar item'
+      error: 'Error al eliminar item'
     }), {
       status: 500,
       headers: {

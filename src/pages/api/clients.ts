@@ -74,7 +74,7 @@ export const GET: APIRoute = async ({ url, request }) => {
     }
     console.error('Error fetching clients:', error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Error al obtener clientes' }),
+      JSON.stringify({ error: 'Error al obtener clientes' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -124,7 +124,7 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (error) {
     console.error('Error creating client:', error);
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : 'Error al crear cliente'
+      error: 'Error al crear cliente'
     }), {
       status: 500,
       headers: {
@@ -183,7 +183,7 @@ export const PUT: APIRoute = async ({ request }) => {
   } catch (error) {
     console.error('Error updating client:', error);
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : 'Error al actualizar cliente'
+      error: 'Error al actualizar cliente'
     }), {
       status: 500,
       headers: {
@@ -251,7 +251,7 @@ export const DELETE: APIRoute = async ({ request }) => {
     console.error('Error deleting client:', error);
     
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : 'Error al eliminar cliente'
+      error: 'Error al eliminar cliente'
     }), {
       status: 500,
       headers: {
