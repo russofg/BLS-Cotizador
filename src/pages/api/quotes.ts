@@ -474,6 +474,16 @@ export const PUT: APIRoute = async ({ request }) => {
 
     }
 
+    // Ajustar quoteCount si el cliente cambió
+    if (quoteData.cliente_id) {
+      const currentQuote = await cotizacionService.getById(quoteData.id);
+      const oldClienteId = currentQuote?.clienteId ?? (currentQuote as any)?.cliente_id;
+      if (oldClienteId && oldClienteId !== quoteData.cliente_id) {
+        ClienteService.incrementQuoteCount(oldClienteId, -1);
+        ClienteService.incrementQuoteCount(quoteData.cliente_id, 1);
+      }
+    }
+
     // Actualizar la cotización
     await cotizacionService.update(quoteData.id, updateData);
 

@@ -196,6 +196,29 @@ export class CotizacionService {
     }
   }
 
+  static async getByClienteId(clienteId: string): Promise<Cotizacion[]> {
+    try {
+      const col = adminDb.collection(this.COLLECTION_NAME);
+      const [snap1, snap2] = await Promise.all([
+        col.where('clienteId', '==', clienteId).get(),
+        col.where('cliente_id', '==', clienteId).get(),
+      ]);
+
+      const seen = new Set<string>();
+      const results: Cotizacion[] = [];
+      for (const doc of [...snap1.docs, ...snap2.docs]) {
+        if (!seen.has(doc.id)) {
+          seen.add(doc.id);
+          results.push(this.mapDocumentToCotizacion(doc));
+        }
+      }
+      return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    } catch (error) {
+      console.error('Error fetching quotes by clienteId:', error);
+      throw error;
+    }
+  }
+
   static async update(id: string, updates: Partial<Cotizacion>): Promise<void> {
     try {
       await adminDb.collection(this.COLLECTION_NAME).doc(id).update({

@@ -81,7 +81,7 @@ describe('/api/categories GET', () => {
     const body = await response.json();
     expect(body).toEqual({
       success: false,
-      error: 'service failed'
+      error: 'Error al obtener categorías'
     });
   });
 });
