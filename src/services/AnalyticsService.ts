@@ -1,6 +1,7 @@
 import { adminDb } from '../utils/firebaseAdmin';
 import { cache, CacheKeys, CacheTTL, invalidateRelatedCache } from '../utils/cache';
 import { QuoteHelper } from '../utils/quoteHelpers';
+import { CotizacionService } from './CotizacionService';
 export interface QuoteAnalytics {
   totalQuotes: number;
   quotesThisMonth: number;
@@ -52,19 +53,13 @@ export class AnalyticsService {
       }
 
       // Fetch all required collections ONCE to avoid redundant mass fetches
-      const [quotesSnapshot, clientsSnapshot, itemsSnapshot, categoriesSnapshot] = await Promise.all([
-        adminDb.collection('cotizaciones').orderBy('createdAt', 'desc').get(),
+      const [quotes, clientsSnapshot, itemsSnapshot, categoriesSnapshot] = await Promise.all([
+        CotizacionService.getAllForAggregates(),
         adminDb.collection('clientes').orderBy('createdAt', 'desc').get(),
         adminDb.collection('items').orderBy('nombre', 'asc').get(),
         adminDb.collection('categorias').get()
       ]);
-      
-      const quotes = quotesSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.() || new Date(doc.data().createdAt)
-      }));
-      
+
       const clients = clientsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
@@ -130,12 +125,7 @@ export class AnalyticsService {
       if (prefetchedQuotes) {
         quotes = prefetchedQuotes;
       } else {
-        const quotesSnapshot = await adminDb.collection('cotizaciones').orderBy('createdAt', 'desc').get();
-        quotes = quotesSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate?.() || new Date(doc.data().createdAt)
-        }));
+        quotes = await CotizacionService.getAllForAggregates();
       }
 
       const now = new Date();
@@ -209,12 +199,7 @@ export class AnalyticsService {
       if (prefetchedQuotes) {
         quotes = prefetchedQuotes;
       } else {
-        const quotesSnapshot = await adminDb.collection('cotizaciones').get();
-        quotes = quotesSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate?.() || new Date(doc.data().createdAt)
-        }));
+        quotes = await CotizacionService.getAllForAggregates();
       }
 
       const now = new Date();
@@ -307,11 +292,7 @@ export class AnalyticsService {
       if (prefetchedQuotes) {
         quotes = prefetchedQuotes;
       } else {
-        const quotesSnapshot = await adminDb.collection('cotizaciones').get();
-        quotes = quotesSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        quotes = await CotizacionService.getAllForAggregates();
       }
 
       // Calcular estadísticas básicas
