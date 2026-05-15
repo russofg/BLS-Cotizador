@@ -296,7 +296,6 @@ export const PUT: APIRoute = async ({ request }) => {
     const limited = checkRateLimit(request, "WRITE", "quotes");
     if (limited) return limited;
     const quoteData = await request.json();
-    console.log("📥 Datos recibidos para actualización:", quoteData);
 
     if (!quoteData.id) {
       return new Response(
@@ -388,9 +387,6 @@ export const PUT: APIRoute = async ({ request }) => {
 
         // If calculated days don't match provided duration, update duration
         if (calculatedDays !== duracionDias) {
-          console.log(
-            `Updating duration from ${duracionDias} to ${calculatedDays} based on dates`,
-          );
           updateData.duracion_dias = calculatedDays;
         }
       }
@@ -400,11 +396,6 @@ export const PUT: APIRoute = async ({ request }) => {
 
         updateData.fechaEventoFin = end;
         updateData.fecha_evento_fin = DateHelper.safeFormatDateForInput(end);
-        console.log(
-          `Set end date to ${DateHelper.safeFormatDateForInput(
-            end,
-          )} based on duration ${duracionDias}`,
-        );
       }
       // If we only have end date and duration, calculate start date using centralized helper
       else if (!startDate && endDate && duracionDias > 1) {
@@ -413,11 +404,6 @@ export const PUT: APIRoute = async ({ request }) => {
 
         updateData.fechaEvento = start;
         updateData.fecha_evento = DateHelper.safeFormatDateForInput(start);
-        console.log(
-          `Set start date to ${DateHelper.safeFormatDateForInput(
-            start,
-          )} based on duration ${duracionDias}`,
-        );
       }
       // If only start date exists, set end date equal to start date
       else if (startDate && !endDate) {
@@ -488,21 +474,13 @@ export const PUT: APIRoute = async ({ request }) => {
       updateData.subtotal = subtotal;
       updateData.total = total;
 
-      console.log("💰 Totales calculados:", { subtotal, descuento, total });
     }
-
-    console.log("📤 Datos preparados para Firebase:", updateData);
 
     // Actualizar la cotización
     await cotizacionService.update(quoteData.id, updateData);
-    console.log("✅ Cotización actualizada en Firebase");
 
     // Obtener la cotización actualizada
     const updatedQuote = await cotizacionService.getById(quoteData.id);
-    console.log(
-      "📄 Cotización obtenida después de actualización:",
-      updatedQuote,
-    );
 
     // Invalidate analytics cache
     AnalyticsService.invalidateCache();
@@ -578,7 +556,6 @@ export const DELETE: APIRoute = async ({ request, url }) => {
       );
     }
 
-    console.log("🗑️ Eliminando cotización con ID:", id);
     const quoteToDelete = await CotizacionService.getById(id);
     await cotizacionService.delete(id);
 
