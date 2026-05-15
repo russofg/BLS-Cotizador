@@ -45,250 +45,206 @@ try {
 
 <DashboardLayout title="Dashboard - BLS Cotizador" activeSection="dashboard">
   <ScrollbarStyles />
-  
-  <div class="p-4 sm:p-12 space-y-10 w-full max-w-full">
-    
-    <!-- Header Section -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 sm:gap-0">
-      <div class="space-y-1">
-        <h2 class="text-3xl sm:text-[2.75rem] font-bold tracking-tight text-white leading-none">Dashboard del Sistema</h2>
-        <p class="text-gray-400 font-medium">Rendimiento de operaciones globales e información en tiempo real.</p>
+
+  <div class="page-enter p-4 sm:p-8 space-y-4 w-full max-w-full">
+
+    <!-- Header -->
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <h1 class="text-[22px] font-semibold tracking-tightest text-ink">Dashboard</h1>
+        <p class="text-[13px] text-ink-mute mt-0.5">
+          Rendimiento de operaciones · {new Date().toLocaleDateString('es-AR', {weekday:'long', day:'numeric', month:'long'})}
+        </p>
       </div>
-      <div class="flex gap-4 w-full sm:w-auto">
-        <button class="px-6 py-2.5 rounded-lg text-sm font-semibold bg-surface-container text-gray-300 hover:bg-surface-container-low transition-colors border border-outline-variant/15 flex-1 sm:flex-none text-center shadow-premium">
-          Exportar Reporte
+      <div class="flex gap-2">
+        <button class="btn btn-ghost btn-sm">
+          <span class="material-symbols-rounded">download</span>
+          Exportar
         </button>
-        <button class="px-6 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-premium flex-1 sm:flex-none text-center hover:scale-[1.02] transition-transform">
-          Actualizar Datos
+        <button class="btn btn-primary btn-sm">
+          <span class="material-symbols-rounded">refresh</span>
+          Actualizar
         </button>
       </div>
     </div>
 
-    <!-- Bento Summary Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-      
-      <!-- Summary Card 1 -->
-      <div class="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] transition-transform hover:scale-[1.01]">
-        <div class="flex justify-between items-start">
-          <p class="text-[0.75rem] uppercase tracking-widest text-gray-400 font-bold">Cotizaciones Totales</p>
-          <span class="material-symbols-outlined text-primary-500 select-none">description</span>
-        </div>
-        <div class="mt-4">
-          <span class="text-4xl font-black text-white tracking-tighter">{stats.totalCotizaciones}</span>
-          <div class="mt-2 flex items-center gap-1 text-[10px] font-bold text-green-400 bg-green-500/10 px-2 py-0.5 rounded w-fit">
-            <span class="material-symbols-outlined text-[12px] select-none">trending_up</span>
-            <span>+0% VS MES ANTERIOR</span>
-          </div>
-        </div>
+    <!-- Bento stats: 4 cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+
+      <div class="surface p-4">
+        <div class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Cotizaciones Totales</div>
+        <div class="mt-3 num text-[28px] font-semibold tracking-tight text-ink">{stats.totalCotizaciones}</div>
+        <div class="mt-2 text-[11.5px] text-ink-mute">propuestas generadas</div>
       </div>
 
-      <!-- Summary Card 2 -->
-      <div class="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] transition-transform hover:scale-[1.01]">
-        <div class="flex justify-between items-start">
-          <p class="text-[0.75rem] uppercase tracking-widest text-gray-400 font-bold">Pendientes</p>
-          <span class="material-symbols-outlined text-amber-500 select-none">pending_actions</span>
-        </div>
-        <div class="mt-4">
-          <span class="text-4xl font-black text-white tracking-tighter">{stats.cotizacionesPendientes}</span>
-          <p class="text-xs text-gray-500 mt-2">Acción requerida pronto</p>
-        </div>
+      <div class="surface p-4">
+        <div class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Pendientes</div>
+        <div class="mt-3 num text-[28px] font-semibold tracking-tight text-warn">{stats.cotizacionesPendientes}</div>
+        <div class="mt-2 text-[11.5px] text-ink-mute">acción requerida</div>
       </div>
 
-      <!-- Summary Card 3 -->
-      <div class="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] transition-transform hover:scale-[1.01]">
-        <div class="flex justify-between items-start">
-          <p class="text-[0.75rem] uppercase tracking-widest text-gray-400 font-bold">Ítems Activos</p>
-          <span class="material-symbols-outlined text-green-500 select-none">inventory</span>
-        </div>
-        <div class="mt-4">
-          <span class="text-4xl font-black text-white tracking-tighter">{stats.itemsActivos}</span>
-          <p class="text-xs text-gray-500 mt-2 font-medium">En catálogo general</p>
-        </div>
+      <div class="surface p-4">
+        <div class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Ítems Activos</div>
+        <div class="mt-3 num text-[28px] font-semibold tracking-tight text-ok">{stats.itemsActivos}</div>
+        <div class="mt-2 text-[11.5px] text-ink-mute">en catálogo general</div>
       </div>
 
-      <!-- Summary Card 4 -->
-      <div class="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] transition-transform hover:scale-[1.01]">
-        <div class="flex justify-between items-start">
-          <p class="text-[0.75rem] uppercase tracking-widest text-gray-400 font-bold">Clientes Totales</p>
-          <span class="material-symbols-outlined text-purple-500 select-none">groups_2</span>
-        </div>
-        <div class="mt-4">
-          <span class="text-4xl font-black text-white tracking-tighter">{stats.totalClientes}</span>
-          <div class="mt-2 flex items-center gap-1 text-[10px] font-bold text-primary-400 bg-primary-500/10 px-2 py-0.5 rounded w-fit">
-            <span class="material-symbols-outlined text-[12px] select-none">trending_up</span>
-            <span>+2 NUEVOS ESTA SEMANA</span>
-          </div>
-        </div>
+      <div class="surface p-4">
+        <div class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Clientes Totales</div>
+        <div class="mt-3 num text-[28px] font-semibold tracking-tight text-ink">{stats.totalClientes}</div>
+        <div class="mt-2 text-[11.5px] text-ink-mute">en el directorio</div>
       </div>
 
     </div>
 
-    <!-- Analysis & Charts Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      
-      <!-- Large Chart: Rendimiento de Cotizaciones -->
-      <div class="lg:col-span-2 bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] p-8 space-y-6">
-        <div class="flex justify-between items-center">
-          <h3 class="text-xl font-bold tracking-tight text-white">Rendimiento de Cotizaciones</h3>
-          <div class="flex gap-2">
-            <span class="inline-flex items-center px-3 py-1 rounded-full bg-surface-container text-[10px] font-bold text-gray-400">6 MESES</span>
-          </div>
+    <!-- Fila principal: gráfico 8 cols + categorías 4 cols -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+
+      <!-- Gráfico de barras mensual -->
+      <div class="surface p-5 lg:col-span-2 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-[13px] font-semibold tracking-tight text-ink">Rendimiento de Cotizaciones</h2>
+          <span class="badge badge-neutral"><span class="dot"></span>6 meses</span>
         </div>
-        
+
         {analytics ? (
-          <div class="space-y-4">
-            <div class="h-64 flex items-end justify-between gap-4 px-4 w-full">
+          <div class="space-y-3">
+            <div class="h-48 flex items-end justify-between gap-2 px-2 w-full">
               {analytics.quotes.quotesByMonth.slice(-6).map((month: any, idx: number) => {
                 const maxCount = Math.max(...analytics.quotes.quotesByMonth.map((m: any) => m.count));
-                const percentage = Math.max(10, Math.floor((month.count / maxCount) * 100));
-                
+                const percentage = Math.max(8, Math.floor((month.count / maxCount) * 100));
+                const isLast = idx === analytics.quotes.quotesByMonth.slice(-6).length - 1;
                 return (
-                  <div class={`w-full ${idx === analytics.quotes.quotesByMonth.slice(-6).length - 1 ? 'bg-primary-500' : 'bg-surface-container hover:bg-primary-600'} rounded-t-sm transition-colors cursor-pointer relative group`} style={`height: ${percentage}%`}>
-                    <div class={`absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-gray-900 text-[10px] px-2 py-1 rounded transition-opacity ${idx === analytics.quotes.quotesByMonth.slice(-6).length - 1 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                      {month.count}
+                  <div class="relative w-full group flex flex-col items-center justify-end h-full">
+                    <div
+                      class={`w-full rounded-t transition-colors cursor-pointer ${isLast ? 'bg-accent' : 'bg-bg-sunken hover:bg-accent/40'}`}
+                      style={`height: ${percentage}%`}
+                    >
+                      <div class={`absolute -top-7 left-1/2 -translate-x-1/2 bg-ink text-bg text-[10px] px-1.5 py-0.5 rounded pointer-events-none transition-opacity ${isLast ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                        {month.count}
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
-            <div class="flex justify-between text-[10px] text-gray-500 font-bold tracking-widest px-4">
+            <div class="flex justify-between text-[10px] text-ink-faint uppercase tracking-[0.08em] px-2">
               {analytics.quotes.quotesByMonth.slice(-6).map((month: any) => (
-                <span class="uppercase">
-                  {new Date(month.month + '-01').toLocaleDateString('es-ES', { month: 'short' }).substring(0, 3)}
-                </span>
+                <span>{new Date(month.month + '-01').toLocaleDateString('es-ES', { month: 'short' }).substring(0, 3)}</span>
               ))}
             </div>
           </div>
         ) : (
-          <div class="h-64 flex items-center justify-center border-2 border-dashed border-outline-variant/20 rounded-xl">
-            <p class="text-gray-500 text-sm">Gargando métricas...</p>
+          <div class="h-48 flex items-center justify-center border border-dashed border-line rounded">
+            <p class="text-[13px] text-ink-faint">Cargando métricas...</p>
           </div>
         )}
       </div>
 
-      <!-- Secondary Analysis: Distribución -->
-      <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] p-8 flex flex-col justify-between">
-        <div class="space-y-8">
-          <h3 class="text-xl font-bold tracking-tight text-white">¿Qué ofrecemos? (por categoría)</h3>
-          <div class="space-y-6">
-            
+      <!-- Categorías -->
+      <div class="surface p-5 flex flex-col justify-between gap-6">
+        <div>
+          <h2 class="text-[13px] font-semibold tracking-tight text-ink mb-4">Por categoría</h2>
+          <div class="space-y-4">
             {analytics ? (() => {
               const totalItemsCount = analytics.items.itemsByCategory.reduce((acc: number, c: any) => acc + c.count, 0);
               const topCategories = analytics.items.itemsByCategory.slice(0, 4);
-              const colors = ['bg-primary-500', 'bg-primary-400', 'bg-gray-500', 'bg-gray-600'];
-              
-              return topCategories.map((category: any, idx: number) => {
+              return topCategories.map((category: any) => {
                 const percentage = totalItemsCount > 0 ? Math.round((category.count / totalItemsCount) * 100) : 0;
-                
                 return (
-                  <div class="space-y-2">
-                    <div class="flex justify-between text-xs font-bold uppercase tracking-wider">
-                      <span class="text-gray-400 truncate pr-4">{category.category}</span>
-                      <span class="text-white">{percentage}%</span>
+                  <div class="space-y-1.5">
+                    <div class="flex justify-between text-[11px]">
+                      <span class="text-ink-mute truncate pr-3">{category.category}</span>
+                      <span class="text-ink num">{percentage}%</span>
                     </div>
-                    <div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
-                      <div class={`h-full ${colors[idx % 4]} rounded-full shadow-premium`} style={`width: ${percentage}%`}></div>
+                    <div class="h-1 w-full bg-bg-sunken rounded-full overflow-hidden">
+                      <div class="h-full bg-accent rounded-full" style={`width: ${percentage}%`}></div>
                     </div>
                   </div>
                 );
               });
             })() : (
-              <p class="text-gray-500 text-xs">Cargando...</p>
+              <p class="text-[12px] text-ink-faint">Cargando...</p>
             )}
-
           </div>
         </div>
-        <a href="/items" class="w-full mt-8 py-3 rounded-lg text-xs font-bold text-primary-400 hover:bg-primary-500/10 transition-colors border border-primary-500/20 text-center block">
-          Reporte Detallado de Ítems
+        <a href="/items" class="btn btn-ghost btn-sm w-full justify-center">
+          Ver reporte de ítems
         </a>
       </div>
 
     </div>
 
-    <!-- Bottom Content Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-      
-      <!-- Recent Quotations List -->
-      <div class="lg:col-span-3 bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] overflow-hidden">
-        <div class="px-8 py-6 border-b border-surface-container flex justify-between items-center">
-          <h3 class="text-xl font-bold tracking-tight text-white">Cotizaciones Recientes</h3>
-          <a class="text-xs font-bold text-primary-400 flex items-center gap-1 hover:underline" href="/quotes">
-            VER TODO <span class="material-symbols-outlined text-sm select-none">chevron_right</span>
+    <!-- Cotizaciones recientes -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-3">
+
+      <div class="surface overflow-hidden lg:col-span-3">
+        <div class="px-5 py-4 border-b border-line flex items-center justify-between">
+          <h2 class="text-[13px] font-semibold tracking-tight text-ink">Cotizaciones Recientes</h2>
+          <a href="/quotes" class="text-[11px] text-accent flex items-center gap-0.5 hover:underline">
+            Ver todo <span class="material-symbols-rounded text-[14px]">chevron_right</span>
           </a>
         </div>
-        
+
         <div class="overflow-x-auto">
-          <table class="w-full">
+          <table class="tbl">
             <thead>
-              <tr class="text-left bg-surface-container/30">
-                <th class="px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.1em]">ID Cotización</th>
-                <th class="px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.1em]">Nombre del Cliente</th>
-                <th class="px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.1em]">Fecha de Creación</th>
-                <th class="px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.1em]">Valor Total</th>
-                <th class="px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.1em]">Estado</th>
-                <th class="px-8 py-4"></th>
+              <tr>
+                <th>ID Cotización</th>
+                <th>Cliente</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th></th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-surface-container">
+            <tbody>
               {stats.cotizacionesRecientes.length > 0 ? stats.cotizacionesRecientes.slice(0, 5).map((cotizacion: any) => {
                 const normStatus = QuoteHelper.normalizeQuoteStatus(cotizacion.estado);
-                let statusBadge = "bg-gray-500/10 text-gray-400 border-gray-500/20";
+                let badgeClass = "badge-neutral";
                 let statusText = "Borrador";
-                
-                if (normStatus === 'aprobada') {
-                  statusBadge = "bg-green-500/10 text-green-400 border-green-500/20";
-                  statusText = "Aprobada";
-                } else if (normStatus === 'enviada') {
-                  statusBadge = "bg-primary-500/10 text-primary-400 border-primary-500/20";
-                  statusText = "Enviada";
-                } else if (normStatus === 'rechazada') {
-                  statusBadge = "bg-red-500/10 text-red-400 border-red-500/20";
-                  statusText = "Rechazada";
-                } else if (normStatus === 'pendiente') {
-                  statusBadge = "bg-amber-500/10 text-amber-400 border-amber-500/20";
-                  statusText = "Pendiente";
-                } else if (normStatus === 'convertida') {
-                  statusBadge = "bg-violet-500/10 text-violet-400 border-violet-500/20";
-                  statusText = "Facturada";
-                }
-                
+                if (normStatus === 'aprobada')   { badgeClass = "badge-ok";     statusText = "Aprobada"; }
+                else if (normStatus === 'enviada')    { badgeClass = "badge-accent"; statusText = "Enviada"; }
+                else if (normStatus === 'rechazada')  { badgeClass = "badge-err";    statusText = "Rechazada"; }
+                else if (normStatus === 'pendiente')  { badgeClass = "badge-warn";   statusText = "Pendiente"; }
+                else if (normStatus === 'convertida') { badgeClass = "badge-accent"; statusText = "Facturada"; }
                 return (
-                  <tr class="hover:bg-surface-container/50 transition-colors">
-                    <td class="px-8 py-5 font-medium text-white">
-                      <a href={`/quotes/view/${cotizacion.id}`} class="hover:text-primary-400 transition-colors">
+                  <tr class="row">
+                    <td>
+                      <a href={`/quotes/view/${cotizacion.id}`} class="num text-[11px] text-accent hover:underline">
                         {QuoteHelper.getDisplayQuoteNumber(cotizacion)}
                       </a>
                     </td>
-                    <td class="px-8 py-5">
-                      <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center text-xs font-bold text-gray-400">
+                    <td>
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded bg-bg-sunken flex items-center justify-center text-[10px] font-semibold text-ink-mute">
                           {cotizacion.cliente?.nombre?.substring(0, 2).toUpperCase() || "CL"}
                         </div>
-                        <span class="font-semibold text-gray-300">{cotizacion.cliente?.nombre || "Cliente General"}</span>
+                        <span class="text-[13px] text-ink">{cotizacion.cliente?.nombre || "Cliente General"}</span>
                       </div>
                     </td>
-                    <td class="px-8 py-5 text-sm text-gray-500">
+                    <td class="text-[12px] text-ink-mute">
                       {new Date(cotizacion.fechaEmision || cotizacion.createdAt).toLocaleDateString("es-AR")}
                     </td>
-                    <td class="px-8 py-5 font-bold text-white">
-                      \${cotizacion.total.toLocaleString("es-AR")}
+                    <td class="num font-semibold text-ink">
+                      ${cotizacion.total.toLocaleString("es-AR")}
                     </td>
-                    <td class="px-8 py-5">
-                      <span class={`px-3 py-1 border rounded-full text-[10px] font-bold uppercase ${statusBadge}`}>
-                        {statusText}
+                    <td>
+                      <span class={`badge ${badgeClass}`}>
+                        <span class="dot"></span>{statusText}
                       </span>
                     </td>
-                    <td class="px-8 py-5">
-                      <a href={`/quotes/view/${cotizacion.id}`} class="text-gray-500 hover:text-primary-400 transition-colors inline-block">
-                        <span class="material-symbols-outlined select-none block">more_vert</span>
+                    <td>
+                      <a href={`/quotes/view/${cotizacion.id}`} class="btn btn-icon btn-quiet">
+                        <span class="material-symbols-rounded">open_in_new</span>
                       </a>
                     </td>
                   </tr>
                 );
               }) : (
-                <tr class="hover:bg-surface-container/50 transition-colors">
-                  <td class="px-8 py-5 font-medium text-gray-500 italic">No hay cotizaciones</td>
-                  <td class="px-8 py-5 text-gray-600 text-sm" colspan="5">Sistema sincronizado, genera tu primera cotización.</td>
+                <tr>
+                  <td class="text-ink-faint italic">No hay cotizaciones</td>
+                  <td class="text-ink-faint text-[12px]" colspan="5">Sistema sincronizado, generá tu primera cotización.</td>
                 </tr>
               )}
             </tbody>
@@ -296,50 +252,29 @@ try {
         </div>
       </div>
 
-      <!-- Quick Actions Pillar -->
-      <div class="space-y-6">
-        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,0,0,0.4)] p-8 space-y-6">
-          <h3 class="text-xl font-bold tracking-tight text-white">Acciones Rápidas</h3>
-          <div class="grid grid-cols-1 gap-4">
-            <a href="/clients" class="flex items-center justify-between p-4 rounded-lg bg-surface-container/50 hover:bg-primary-600 group transition-all duration-300 cursor-pointer border border-transparent hover:border-primary-500/30">
-              <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-primary-500 group-hover:text-white select-none">person_add</span>
-                <span class="text-sm font-semibold text-gray-300 group-hover:text-white">Agregar Cliente</span>
-              </div>
-              <span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity text-white select-none">arrow_forward</span>
-            </a>
-            <a href="/items" class="flex items-center justify-between p-4 rounded-lg bg-surface-container/50 hover:bg-primary-600 group transition-all duration-300 cursor-pointer border border-transparent hover:border-primary-500/30">
-              <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-primary-500 group-hover:text-white select-none">add_box</span>
-                <span class="text-sm font-semibold text-gray-300 group-hover:text-white">Crear Ítem</span>
-              </div>
-              <span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity text-white select-none">arrow_forward</span>
-            </a>
-            <a href="/config" class="flex items-center justify-between p-4 rounded-lg bg-surface-container/50 hover:bg-primary-600 group transition-all duration-300 cursor-pointer border border-transparent hover:border-primary-500/30">
-              <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-primary-500 group-hover:text-white select-none">settings</span>
-                <span class="text-sm font-semibold text-gray-300 group-hover:text-white">Configuración</span>
-              </div>
-              <span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity text-white select-none">arrow_forward</span>
-            </a>
-          </div>
-        </div>
-
-        <div class="relative rounded-xl overflow-hidden h-40 shadow-[0_12px_32px_rgba(0,0,0,0.4)] group border border-outline-variant/10">
-          <div class="absolute inset-0 bg-primary-900 overflow-hidden">
-            <svg class="absolute inset-0 w-full h-full opacity-30" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
-                  <path d="M0 32V0h32" fill="none" stroke="currentColor" stroke-width="1"></path>
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" class="text-primary-500/30"></rect>
-            </svg>
-          </div>
-          <div class="absolute inset-0 bg-gradient-to-t from-primary-600/80 to-transparent flex flex-col justify-end p-6 z-10 hover:from-primary-500/90 transition-colors">
-            <p class="text-[10px] font-black text-white/80 tracking-widest uppercase">Disponibilidad del Sistema</p>
-            <h4 class="text-white text-2xl font-bold">99.98% Fiable</h4>
-          </div>
+      <!-- Acciones rápidas -->
+      <div class="surface p-5 space-y-4">
+        <h2 class="text-[13px] font-semibold tracking-tight text-ink">Acciones Rápidas</h2>
+        <div class="space-y-2">
+          <a href="/clients" class="flex items-center gap-3 p-3 rounded border border-line hover:border-accent/40 hover:bg-accent-wash transition-all group">
+            <span class="material-symbols-rounded text-accent text-[18px]">person_add</span>
+            <span class="text-[13px] text-ink-mute group-hover:text-ink">Agregar Cliente</span>
+            <span class="material-symbols-rounded text-[14px] text-ink-faint ml-auto">arrow_forward</span>
+          </a>
+          <a href="/items" class="flex items-center gap-3 p-3 rounded border border-line hover:border-accent/40 hover:bg-accent-wash transition-all group">
+            <span class="material-symbols-rounded text-accent text-[18px]">add_box</span>
+            <span class="text-[13px] text-ink-mute group-hover:text-ink">Crear Ítem</span>
+            <span class="material-symbols-rounded text-[14px] text-ink-faint ml-auto">arrow_forward</span>
+          </a>
+          <a href="/config" class="flex items-center gap-3 p-3 rounded border border-line hover:border-accent/40 hover:bg-accent-wash transition-all group">
+            <span class="material-symbols-rounded text-accent text-[18px]">settings</span>
+            <span class="text-[13px] text-ink-mute group-hover:text-ink">Configuración</span>
+            <span class="material-symbols-rounded text-[14px] text-ink-faint ml-auto">arrow_forward</span>
+          </a>
+          <a href="/quotes/wizard" class="btn btn-primary w-full justify-center mt-2">
+            <span class="material-symbols-rounded">add_circle</span>
+            Nueva Cotización
+          </a>
         </div>
       </div>
 

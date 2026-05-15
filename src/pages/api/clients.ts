@@ -28,7 +28,8 @@ export const GET: APIRoute = async ({ url, request }) => {
     const includeQuoteCount = url.searchParams.get('includeQuoteCount') === 'true';
     const cursor = url.searchParams.get('cursor') ?? null;
     const rawPageSize = url.searchParams.get('pageSize');
-    const pageSize = rawPageSize ? parseInt(rawPageSize, 10) : 25;
+    const parsedPageSize = rawPageSize ? parseInt(rawPageSize, 10) : 25;
+    const pageSize = isNaN(parsedPageSize) ? 25 : Math.max(1, Math.min(parsedPageSize, 100));
     const search = url.searchParams.get('search') ?? undefined;
 
     // Existing filter params (preserved for backward compat)

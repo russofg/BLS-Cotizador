@@ -74,7 +74,8 @@ export const GET: APIRoute = async ({ url, request }) => {
       // Paginated listing
       const cursor = url.searchParams.get("cursor") ?? null;
       const rawPageSize = url.searchParams.get("pageSize");
-      const pageSize = rawPageSize ? parseInt(rawPageSize, 10) : 25;
+      const parsedPageSize = rawPageSize ? parseInt(rawPageSize, 10) : 25;
+      const pageSize = isNaN(parsedPageSize) ? 25 : Math.max(1, Math.min(parsedPageSize, 100));
       const search = url.searchParams.get("search") ?? null;
       const estadoParam = url.searchParams.get("estado") ?? null;
 

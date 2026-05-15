@@ -12,113 +12,101 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
 
 <Dashboard title="Clientes - BLS Cotizador" activeSection="clients">
   <ScrollbarStyles />
-  <div class="space-y-6">
-    <!-- Screen Header -->
-    <section class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
+  <div class="page-enter p-4 sm:p-8 space-y-4">
+
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
       <div>
-        <nav class="flex items-center gap-2 mb-2">
-          <span class="text-[10px] font-bold tracking-widest text-[var(--color-on-surface-variant)] uppercase">Directorio</span>
-          <span class="material-symbols-outlined text-xs text-[var(--color-outline)]">chevron_right</span>
-          <span class="text-[10px] font-bold tracking-widest text-[var(--color-primary)] uppercase">Clientes Corporativos</span>
-        </nav>
-        <h2 class="text-4xl font-black tracking-tight text-[var(--color-on-surface)]">Portafolio de Clientes</h2>
-        <p class="text-[var(--color-on-surface-variant)] mt-2 text-base">Gestione y rastree sus relaciones a nivel empresarial.</p>
+        <h1 class="text-[22px] font-semibold tracking-tightest text-ink">Clientes</h1>
+        <p class="text-[13px] text-ink-mute mt-0.5">Gestión y seguimiento del directorio de clientes.</p>
       </div>
-      <div class="flex items-center gap-3">
-        <button id="refresh-btn" class="flex items-center gap-2 px-5 py-3 rounded-xl font-bold transition-all border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)] focus:ring-2 focus:ring-[var(--color-primary)]/50">
-          <span class="material-symbols-outlined text-lg">refresh</span>
+      <div class="flex items-center gap-2">
+        <button id="refresh-btn" class="btn btn-ghost">
+          <span class="material-symbols-rounded">refresh</span>
           Actualizar
         </button>
-        <button id="add-client-btn" class="flex items-center gap-2 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-[0_8px_16px_rgba(59,130,246,0.3)] transition-all hover:scale-[1.02] active:scale-[0.98] focus:ring-2 focus:ring-blue-500/50">
-          <span class="material-symbols-outlined text-lg">person_add</span>
+        <button id="add-client-btn" class="btn btn-primary">
+          <span class="material-symbols-rounded">person_add</span>
           Nuevo Cliente
         </button>
       </div>
-    </section>
+    </div>
 
-    <!-- Stats Grid (Stitch Editorial Shadows) -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-      <div class="bg-[var(--color-surface-container-low)] p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
-        <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Total Clientes</p>
-        <h4 class="text-3xl font-black text-[var(--color-on-surface)] flex items-baseline gap-2">
-            <span id="total-clients">0</span> <span class="text-sm font-medium text-[var(--color-on-surface-variant)]">Entidades</span>
-        </h4>
-        <p id="stats-scope-label" class="text-[10px] text-[var(--color-on-surface-variant)] mt-1 hidden">(de los cargados)</p>
+    <!-- Stats -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="surface p-4">
+        <div class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Total Clientes</div>
+        <div class="mt-3 num text-[28px] font-semibold tracking-tight text-ink"><span id="total-clients">0</span></div>
+        <p id="stats-scope-label" class="text-[10px] text-ink-faint mt-1 hidden">(de los cargados)</p>
+        <div class="mt-2 text-[11.5px] text-ink-mute">entidades</div>
       </div>
-      <div class="bg-[var(--color-surface-container-low)] p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
-        <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Clientes Activos</p>
-        <h4 class="text-3xl font-black text-emerald-400 flex items-baseline gap-2">
-            <span id="active-clients">0</span> <span class="text-sm font-medium text-[var(--color-on-surface-variant)]">Validados</span>
-        </h4>
+      <div class="surface p-4">
+        <div class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Clientes Activos</div>
+        <div class="mt-3 num text-[28px] font-semibold tracking-tight text-ok"><span id="active-clients">0</span></div>
+        <div class="mt-2 text-[11.5px] text-ink-mute">validados</div>
       </div>
-      <div class="bg-[var(--color-surface-container-low)] p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
-        <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Con Cotizaciones</p>
-        <h4 class="text-3xl font-black text-blue-400 flex items-baseline gap-2">
-            <span id="clients-with-quotes">0</span> <span class="text-sm font-medium text-[var(--color-on-surface-variant)]">Con historial</span>
-        </h4>
+      <div class="surface p-4">
+        <div class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Con Cotizaciones</div>
+        <div class="mt-3 num text-[28px] font-semibold tracking-tight text-accent"><span id="clients-with-quotes">0</span></div>
+        <div class="mt-2 text-[11.5px] text-ink-mute">con historial</div>
       </div>
-      <div class="bg-[var(--color-surface-container-low)] p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
-        <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Adjudicados (30 días)</p>
-        <h4 class="text-3xl font-black text-amber-400 flex items-baseline gap-2">
-            <span id="recent-clients">0</span> <span class="text-sm font-medium text-[var(--color-on-surface-variant)]">Nuevos</span>
-        </h4>
+      <div class="surface p-4">
+        <div class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Adjudicados (30 días)</div>
+        <div class="mt-3 num text-[28px] font-semibold tracking-tight text-warn"><span id="recent-clients">0</span></div>
+        <div class="mt-2 text-[11.5px] text-ink-mute">nuevos</div>
       </div>
-    </section>
+    </div>
 
     <!-- Filters -->
-    <div class="bg-[var(--color-surface-container-low)]/50 p-6 rounded-xl border border-[var(--color-outline-variant)]/30 backdrop-blur-md mb-8 shadow-[0_8px_16px_rgba(0,0,0,0.2)]">
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 items-end">
-        <div>
-          <Input id="search" placeholder="Buscar por nombre o empresa..." label="Buscar cliente" />
-          <p class="text-[10px] text-[var(--color-on-surface-variant)] mt-1 ml-1">Búsqueda por nombre o empresa</p>
+    <div class="surface p-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-end">
+        <div class="space-y-1">
+          <label class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Buscar cliente</label>
+          <input id="search" type="text" placeholder="Buscar por nombre o empresa..." class="field w-full" />
         </div>
-        <Select
-          id="status"
-          label="Estado Comercial"
-          options={[
-            { value: "", label: "Cualquier estado" },
-            { value: "active", label: "Activos" },
-            { value: "inactive", label: "Inactivos" },
-          ]}
-        />
-        <Input
-          id="company"
-          placeholder="Ej: Globant, Mercado Libre"
-          label="Empresa"
-        />
-        <div class="flex space-x-2">
-          <button id="clear-filters" class="w-full flex-1 py-3 px-4 rounded-xl font-bold bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-highest)] border border-[var(--color-outline-variant)] transition-all focus:ring-2 focus:ring-[var(--color-primary)]/50">
+        <div class="space-y-1">
+          <label class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Estado Comercial</label>
+          <div class="select-arrow">
+            <select id="status" class="field w-full">
+              <option value="">Cualquier estado</option>
+              <option value="active">Activos</option>
+              <option value="inactive">Inactivos</option>
+            </select>
+          </div>
+        </div>
+        <div class="space-y-1">
+          <label class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Empresa</label>
+          <input id="company" type="text" placeholder="Ej: Globant, Mercado Libre" class="field w-full" />
+        </div>
+        <div>
+          <button id="clear-filters" class="btn btn-ghost w-full justify-center">
             Limpiar Filtros
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Client Grid Container -->
-    <section id="clients-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-6 pb-6">
-      <!-- Skeleton initial loading state -->
-      <div id="skeleton-loader" class="xl:col-span-2 text-center py-20 text-[var(--color-on-surface-variant)]">
-        <svg class="animate-spin h-10 w-10 mx-auto mb-4 text-[var(--color-primary)] opacity-80" fill="none" viewBox="0 0 24 24">
+    <!-- Clients grid / table container -->
+    <section id="clients-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-3 pb-4">
+      <div id="skeleton-loader" class="xl:col-span-2 text-center py-16 text-ink-faint">
+        <svg class="animate-spin h-8 w-8 mx-auto mb-3 text-accent opacity-80" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        <p class="text-sm font-bold uppercase tracking-widest text-slate-500">Cargando portafolio...</p>
+        <p class="text-[12px] uppercase tracking-[0.08em] text-ink-faint">Cargando portafolio...</p>
       </div>
     </section>
 
-    <!-- "Cargar más" button — outside the grid, shown only when hasMore === true -->
-    <div id="load-more-container" class="hidden flex justify-center pb-12">
-      <button
-        id="load-more-btn"
-        class="flex items-center gap-3 px-8 py-4 rounded-xl font-bold border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] bg-[var(--color-surface-container-low)] hover:bg-[var(--color-surface-container-high)] transition-all focus:ring-2 focus:ring-[var(--color-primary)]/50 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
+    <!-- "Cargar más" -->
+    <div id="load-more-container" class="hidden flex justify-center pb-6">
+      <button id="load-more-btn" class="btn btn-ghost disabled:opacity-50 disabled:cursor-not-allowed">
         <span id="load-more-spinner" class="hidden">
-          <svg class="animate-spin h-5 w-5 text-[var(--color-primary)]" fill="none" viewBox="0 0 24 24">
+          <svg class="animate-spin h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
         </span>
-        <span class="material-symbols-outlined text-lg" id="load-more-icon">expand_more</span>
+        <span class="material-symbols-rounded" id="load-more-icon">expand_more</span>
         <span id="load-more-text">Cargar más clientes</span>
       </button>
     </div>
@@ -126,140 +114,102 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
     <!-- Client Modal -->
     <div
       id="client-modal"
-      class="fixed inset-0 bg-slate-950/80 backdrop-blur-xl hidden overflow-y-auto h-full w-full z-50 transition-all duration-500"
+      class="fixed inset-0 bg-bg-sunken/80 backdrop-blur-xl hidden overflow-y-auto h-full w-full z-50"
     >
-      <div class="relative top-5 sm:top-20 mx-auto p-0 border border-[var(--color-outline-variant)] w-11/12 sm:w-[450px] shadow-[0_24px_48px_rgba(0,0,0,0.6)] rounded-3xl bg-[var(--color-surface-container-low)] overflow-hidden anime-fade-in">
-        <div class="px-8 py-6 bg-[var(--color-surface-container)] border-b border-[var(--color-outline-variant)] flex justify-between items-center">
-          <h3
-            class="text-2xl font-black text-white"
-            id="modal-title"
-          >
-            Nuevo Cliente
-          </h3>
-          <button
-            type="button"
-            id="modal-close-btn"
-            class="text-slate-400 hover:text-blue-400 transition-colors bg-slate-900/50 p-2 rounded-full"
-            aria-label="Cerrar"
-          >
-            <span class="material-symbols-outlined text-lg block">close</span>
+      <div class="relative top-5 sm:top-16 mx-auto w-11/12 sm:w-[440px] surface shadow-[0_24px_48px_rgba(0,0,0,0.6)] overflow-hidden anime-fade-in">
+        <div class="px-6 py-4 border-b border-line flex justify-between items-center">
+          <h3 class="text-[16px] font-semibold text-ink" id="modal-title">Nuevo Cliente</h3>
+          <button type="button" id="modal-close-btn" class="btn btn-icon btn-quiet" aria-label="Cerrar">
+            <span class="material-symbols-rounded">close</span>
           </button>
         </div>
 
-        <div class="p-8">
-          <form id="client-form" class="space-y-5">
+        <div class="p-6">
+          <form id="client-form" class="space-y-4">
 
             <!-- Avatar Upload -->
-            <div class="flex flex-col items-center gap-4">
+            <div class="flex flex-col items-center gap-3">
               <div class="relative">
                 <div
                   id="photo-preview-container"
-                  class="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-dashed border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] flex items-center justify-center cursor-pointer group hover:border-[var(--color-primary)] transition-all"
+                  class="relative w-20 h-20 rounded-xl overflow-hidden border border-dashed border-line bg-bg-sunken flex items-center justify-center cursor-pointer group hover:border-accent transition-all"
                 >
-                  <img
-                    id="photo-preview"
-                    src=""
-                    alt="Preview"
-                    class="absolute inset-0 w-full h-full object-cover hidden"
-                  />
-                  <div id="photo-placeholder" class="flex flex-col items-center gap-1 text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)] transition-colors">
-                    <span class="material-symbols-outlined text-3xl">add_a_photo</span>
-                    <span class="text-[10px] font-bold uppercase tracking-widest">Foto</span>
+                  <img id="photo-preview" src="" alt="Preview" class="absolute inset-0 w-full h-full object-cover hidden" />
+                  <div id="photo-placeholder" class="flex flex-col items-center gap-1 text-ink-faint group-hover:text-accent transition-colors">
+                    <span class="material-symbols-rounded text-[28px]">add_a_photo</span>
+                    <span class="text-[10px] uppercase tracking-[0.06em]">Foto</span>
                   </div>
-                  <input
-                    id="client-foto"
-                    type="file"
-                    accept="image/*"
-                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
+                  <input id="client-foto" type="file" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                 </div>
-                <!-- Remove photo button: only visible when there's a photo -->
-                <button
-                  type="button"
-                  id="remove-photo-btn"
-                  title="Quitar foto"
-                  class="hidden absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors z-10"
+                <button type="button" id="remove-photo-btn" title="Quitar foto"
+                  class="hidden absolute -top-2 -right-2 w-5 h-5 rounded-full bg-err text-bg flex items-center justify-center shadow z-10 hover:opacity-80 transition-opacity"
                 >
-                  <span class="material-symbols-outlined text-sm leading-none">close</span>
+                  <span class="material-symbols-rounded text-[12px] leading-none">close</span>
                 </button>
               </div>
-              <p class="text-[10px] text-[var(--color-on-surface-variant)] text-center">Foto de perfil (opcional)<br/>Se comprime automáticamente</p>
+              <p class="text-[10px] text-ink-faint text-center">Foto de perfil opcional · Se comprime automáticamente</p>
             </div>
 
-            <Input id="client-nombre" required label="Nombre completo" placeholder="Ej: Juan Pérez" />
-            <Input id="client-empresa" label="Empresa / Organización" placeholder="Opcional" />
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input id="client-email" type="email" label="Email" placeholder="juan@ejemplo.com" />
-              <Input id="client-telefono" type="tel" label="Teléfono" placeholder="+54..." />
+            <div class="space-y-1">
+              <label class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Nombre completo *</label>
+              <input id="client-nombre" type="text" required placeholder="Ej: Juan Pérez" class="field w-full" />
             </div>
-            <Textarea id="client-direccion" rows={2} label="Dirección física" placeholder="Opcional" />
+            <div class="space-y-1">
+              <label class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Empresa / Organización</label>
+              <input id="client-empresa" type="text" placeholder="Opcional" class="field w-full" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <label class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Email</label>
+                <input id="client-email" type="email" placeholder="juan@ejemplo.com" class="field w-full" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Teléfono</label>
+                <input id="client-telefono" type="tel" placeholder="+54..." class="field w-full" />
+              </div>
+            </div>
+            <div class="space-y-1">
+              <label class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Dirección física</label>
+              <textarea id="client-direccion" rows="2" placeholder="Opcional" class="field w-full resize-none"></textarea>
+            </div>
 
-            <div class="flex items-center p-4 bg-surface-container-lowest rounded-xl border border-outline-variant/15 transition-all hover:bg-surface-container">
-              <input
-                id="client-activo"
-                type="checkbox"
-                checked
-                class="h-5 w-5 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded-lg transition-all"
-              />
-              <label
-                for="client-activo"
-                class="ml-3 block text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider"
-                >Cliente activo comercialmente</label
-              >
+            <div class="flex items-center gap-3 p-3 rounded border border-line hover:border-accent/40 transition-all">
+              <input id="client-activo" type="checkbox" checked class="w-4 h-4 accent-accent" />
+              <label for="client-activo" class="text-[13px] text-ink cursor-pointer">Cliente activo comercialmente</label>
             </div>
           </form>
 
-          <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 gap-3 sm:gap-0 mt-8">
-            <Button id="cancel-client-btn" variant="secondary" class="w-full sm:w-auto">
-              Cancelar
-            </Button>
-            <Button id="save-client-btn" variant="primary" type="submit" class="w-full sm:w-auto">
-              Guardar Cliente
-            </Button>
+          <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-5">
+            <button id="cancel-client-btn" class="btn btn-ghost w-full sm:w-auto">Cancelar</button>
+            <button id="save-client-btn" class="btn btn-primary w-full sm:w-auto">Guardar Cliente</button>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Loading Overlay -->
-    <div
-      id="loading-overlay"
-      class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50"
-    >
-      <div
-        class="bg-white dark:bg-gray-800 rounded-lg p-6 sm:p-8 max-w-sm w-full mx-4"
-      >
-        <div class="text-center">
-          <svg
-            class="animate-spin h-12 w-12 mx-auto mb-4 text-primary-600"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"></circle>
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            ></path>
-          </svg>
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            Procesando...
-          </h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400">
-            Conectando con Firebase
-          </p>
-        </div>
+    <div id="loading-overlay" class="fixed inset-0 bg-bg/70 backdrop-blur-sm hidden items-center justify-center z-50">
+      <div class="surface p-8 text-center space-y-3">
+        <svg class="animate-spin h-10 w-10 mx-auto text-accent" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="text-[14px] font-semibold text-ink">Procesando...</p>
+        <p class="text-[12px] text-ink-mute">Conectando con Firebase</p>
       </div>
     </div>
   </div>
 
   <script>
+    function escapeHtml(str: string): string {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
     import { notifications } from "../utils/notifications.js";
     import {
       initialState,
@@ -391,12 +341,12 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       const grid = document.getElementById("clients-grid");
       if (!grid) return;
       grid.innerHTML = `
-        <div class="xl:col-span-2 text-center py-20 text-[var(--color-on-surface-variant)]">
-          <svg class="animate-spin h-10 w-10 mx-auto mb-4 text-[var(--color-primary)] opacity-80" fill="none" viewBox="0 0 24 24">
+        <div class="xl:col-span-2 text-center py-16 text-ink-faint">
+          <svg class="animate-spin h-8 w-8 mx-auto mb-3 text-accent opacity-80" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <p class="text-sm font-bold uppercase tracking-widest text-slate-500">Cargando portafolio...</p>
+          <p class="text-[12px] uppercase tracking-[0.08em] text-ink-faint">Cargando portafolio...</p>
         </div>
       `;
     }
@@ -472,10 +422,10 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
 
       if (clients.length === 0) {
         clientsGrid.innerHTML = `
-          <div class="xl:col-span-2 text-center py-20 text-[var(--color-on-surface-variant)] border border-dashed border-[var(--color-outline-variant)] rounded-2xl bg-[var(--color-surface-container-low)]">
-            <span class="material-symbols-outlined text-5xl mb-4 opacity-50 block">sentiment_neutral</span>
-            <h3 class="text-xl font-bold text-[var(--color-on-surface)] mb-2">Sin clientes encontrados</h3>
-            <p class="text-[var(--color-on-surface-variant)] text-sm">Comienza agregando un cliente o cambia tus filtros de búsqueda.</p>
+          <div class="xl:col-span-2 text-center py-16 surface">
+            <span class="material-symbols-rounded text-[48px] text-ink-faint opacity-40 block mb-3">sentiment_neutral</span>
+            <h3 class="text-[15px] font-semibold text-ink mb-1">Sin clientes encontrados</h3>
+            <p class="text-[13px] text-ink-mute">Comenzá agregando un cliente o cambiá tus filtros.</p>
           </div>
         `;
         return;
@@ -492,51 +442,47 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
                 .toUpperCase()
             : "CL";
 
-          const activeBadgeClass = client.activo
-            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-            : "bg-slate-500/10 text-slate-400 border-slate-500/20";
-          const activeBadgeText = client.activo ? "Activo" : "Inactivo";
+          const badgeClass = client.activo ? "badge-ok" : "badge-neutral";
+          const badgeText = client.activo ? "Activo" : "Inactivo";
 
           const avatarHtml = client.imagenBase64
-            ? `<img src="${client.imagenBase64}" alt="${client.nombre}" class="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-2xl object-cover group-hover:scale-105 transition-transform border border-[var(--color-outline-variant)] shadow-[0_4px_12px_rgba(0,0,0,0.3)] grayscale-[20%] group-hover:grayscale-0 transition-all duration-500" />`
-            : `<div class="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-2xl bg-gradient-to-br from-[var(--color-surface-container-highest)] to-[var(--color-surface-container)] flex items-center justify-center text-[var(--color-primary)] font-black text-2xl group-hover:scale-105 transition-transform border border-[var(--color-outline-variant)] shadow-inner">${initials}</div>`;
+            ? `<img src="${client.imagenBase64}" alt="${client.nombre}" class="w-16 h-16 shrink-0 rounded-xl object-cover border border-line" />`
+            : `<div class="w-16 h-16 shrink-0 rounded-xl bg-bg-sunken flex items-center justify-center text-accent font-semibold text-[18px] border border-line">${initials}</div>`;
 
           return `
-            <div class="bg-[var(--color-surface-container-low)] p-6 sm:p-8 rounded-xl border border-[var(--color-outline-variant)] shadow-[0_12px_32px_rgba(0,0,0,0.3)] hover:bg-[var(--color-surface-container)] transition-all group relative overflow-hidden">
-              <a href="/clients/${client.id}" class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            <div class="surface p-5 group transition-colors hover:border-line-strong">
+              <a href="/clients/${client.id}" class="flex items-start gap-4">
                 ${avatarHtml}
-                <div class="flex-1 w-full text-center sm:text-left">
-                  <div class="flex flex-col sm:flex-row justify-between items-center sm:items-start gap-3 sm:gap-0">
-                    <div>
-                      <h3 class="text-xl font-black text-[var(--color-on-surface)] group-hover:text-[var(--color-primary)] transition-colors">${client.nombre || "Sin nombre"}</h3>
-                      <p class="text-[var(--color-primary)] font-bold text-sm tracking-wide opacity-80">${client.empresa || "Sin empresa"}</p>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                      <h3 class="text-[14px] font-semibold text-ink group-hover:text-accent transition-colors truncate">${escapeHtml(client.nombre || "Sin nombre")}</h3>
+                      <p class="text-[12px] text-ink-mute truncate">${escapeHtml(client.empresa || "Sin empresa")}</p>
                     </div>
-                    <span class="px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border ${activeBadgeClass}">
-                      ${activeBadgeText}
-                    </span>
+                    <span class="badge ${badgeClass} shrink-0"><span class="dot"></span>${badgeText}</span>
                   </div>
-                  <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="flex items-center gap-3 text-[var(--color-on-surface-variant)] justify-center sm:justify-start">
-                      <span class="material-symbols-outlined text-sm opacity-70">mail</span>
-                      <span class="text-xs truncate max-w-[140px]" title="${client.email || ''}">${client.email || "—"}</span>
+                  <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    <div class="flex items-center gap-2 text-ink-mute">
+                      <span class="material-symbols-rounded text-[14px]">mail</span>
+                      <span class="text-[11px] truncate" title="${escapeHtml(client.email || '')}">${escapeHtml(client.email || "—")}</span>
                     </div>
-                    <div class="flex items-center gap-3 text-[var(--color-on-surface-variant)] justify-center sm:justify-start">
-                      <span class="material-symbols-outlined text-sm opacity-70">phone</span>
-                      <span class="text-xs">${client.telefono || "—"}</span>
+                    <div class="flex items-center gap-2 text-ink-mute">
+                      <span class="material-symbols-rounded text-[14px]">phone</span>
+                      <span class="text-[11px]">${client.telefono || "—"}</span>
                     </div>
                   </div>
                 </div>
               </a>
-              <div class="mt-6 pt-5 border-t border-[var(--color-outline-variant)]/50 flex justify-between items-center w-full">
-                <p class="text-[10px] font-black text-[var(--color-on-surface-variant)] uppercase tracking-widest">
-                  ${client.cotizaciones || 0} Cotizaciones
-                </p>
-                <div class="flex items-center gap-4 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button class="edit-client flex items-center text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors" data-id="${client.id}" title="Editar Cliente">
-                    <span class="material-symbols-outlined text-xl pointer-events-none">edit_document</span>
+              <div class="mt-4 pt-3 border-t border-line flex items-center justify-between">
+                <span class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">
+                  ${client.cotizaciones || 0} cotizaciones
+                </span>
+                <div class="row-actions flex items-center gap-1">
+                  <button class="edit-client btn btn-icon btn-quiet" data-id="${client.id}" title="Editar Cliente">
+                    <span class="material-symbols-rounded pointer-events-none">edit_document</span>
                   </button>
-                  <button class="delete-client flex items-center text-[var(--color-on-surface-variant)] hover:text-red-500 transition-colors" data-id="${client.id}" title="Borrar Cliente">
-                    <span class="material-symbols-outlined text-xl pointer-events-none">delete</span>
+                  <button class="delete-client btn btn-icon btn-quiet hover:text-err" data-id="${client.id}" title="Borrar Cliente">
+                    <span class="material-symbols-rounded pointer-events-none">delete</span>
                   </button>
                 </div>
               </div>
@@ -676,13 +622,11 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       const grid = document.getElementById("clients-grid");
       if (!grid) return;
       grid.innerHTML = `
-        <div class="xl:col-span-2 text-center py-20 border border-dashed border-red-500/30 rounded-2xl bg-[var(--color-surface-container-low)]">
-          <span class="material-symbols-outlined text-5xl mb-4 text-red-400 block">error</span>
-          <h3 class="text-xl font-bold text-[var(--color-on-surface)] mb-2">Error al cargar clientes</h3>
-          <p class="text-[var(--color-on-surface-variant)] text-sm mb-4">${message}</p>
-          <button onclick="location.reload()" class="px-6 py-3 rounded-xl font-bold bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all">
-            Reintentar
-          </button>
+        <div class="xl:col-span-2 text-center py-16 surface">
+          <span class="material-symbols-rounded text-[48px] text-err block mb-3">error</span>
+          <h3 class="text-[15px] font-semibold text-ink mb-1">Error al cargar clientes</h3>
+          <p class="text-[13px] text-ink-mute mb-4">${message}</p>
+          <button onclick="location.reload()" class="btn btn-ghost">Reintentar</button>
         </div>
       `;
     }

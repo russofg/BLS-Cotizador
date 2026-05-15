@@ -136,112 +136,101 @@ const ssrData = JSON.stringify({
   <!-- SSR data for client-side state machine -->
   <script id="quotes-initial" type="application/json" set:html={ssrData}></script>
 
-  <div class="space-y-6 pb-12">
+  <div class="page-enter space-y-4 pb-12 p-4 sm:p-8">
 
-    <!-- ── Header ─────────────────────────────────────────────────────────── -->
-    <section class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
       <div>
-        <nav class="flex items-center gap-2 mb-2">
-          <span class="text-[10px] font-bold tracking-widest text-[var(--color-on-surface-variant)] uppercase">Centro de Negocio</span>
-          <span class="material-symbols-outlined text-xs text-[var(--color-outline)]">chevron_right</span>
-          <span class="text-[10px] font-bold tracking-widest text-[var(--color-primary)] uppercase">Historial de Cotizaciones</span>
-        </nav>
-        <h2 class="text-4xl font-black tracking-tight text-[var(--color-on-surface)]">Cotizaciones</h2>
-        <p class="text-[var(--color-on-surface-variant)] mt-2 text-base">Gestión y seguimiento de todas tus propuestas comerciales.</p>
+        <h1 class="text-[22px] font-semibold tracking-tightest text-ink">Cotizaciones</h1>
+        <p class="text-[13px] text-ink-mute mt-0.5">Gestión y seguimiento de todas tus propuestas comerciales.</p>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
         <!-- Dollar widget: fetched client-side to avoid SSR delays -->
-        <div id="dolar-widget" class="hidden sm:flex items-center gap-3 bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)]/50 rounded-xl px-4 py-2.5 text-xs">
-          <span class="material-symbols-outlined text-base text-amber-400">monetization_on</span>
-          <div class="flex gap-3">
+        <div id="dolar-widget" class="hidden sm:flex items-center gap-3 surface px-4 py-2 text-[11px]">
+          <span class="material-symbols-rounded text-[16px] text-warn">monetization_on</span>
+          <div class="flex gap-3 divide-x divide-line">
             <div class="flex flex-col items-center">
-              <span class="text-[9px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">Oficial</span>
-              <span id="dolar-oficial" class="font-black text-[var(--color-on-surface)]">—</span>
+              <span class="text-[9px] uppercase tracking-[0.08em] text-ink-faint">Oficial</span>
+              <span id="dolar-oficial" class="num font-semibold text-ink">—</span>
             </div>
-            <div class="w-px bg-[var(--color-outline-variant)]"></div>
-            <div class="flex flex-col items-center">
-              <span class="text-[9px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">MEP</span>
-              <span id="dolar-mep" class="font-black text-[var(--color-on-surface)]">—</span>
+            <div class="flex flex-col items-center pl-3">
+              <span class="text-[9px] uppercase tracking-[0.08em] text-ink-faint">MEP</span>
+              <span id="dolar-mep" class="num font-semibold text-ink">—</span>
             </div>
-            <div class="w-px bg-[var(--color-outline-variant)]"></div>
-            <div class="flex flex-col items-center">
-              <span class="text-[9px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)]">Blue</span>
-              <span id="dolar-blue" class="font-black text-blue-400">—</span>
+            <div class="flex flex-col items-center pl-3">
+              <span class="text-[9px] uppercase tracking-[0.08em] text-ink-faint">Blue</span>
+              <span id="dolar-blue" class="num font-semibold text-accent">—</span>
             </div>
           </div>
         </div>
-        <a
-          href="/quotes/wizard"
-          class="flex items-center gap-2 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-[0_8px_16px_rgba(59,130,246,0.3)] transition-all hover:scale-[1.02] active:scale-[0.98] focus:ring-2 focus:ring-blue-500/50 whitespace-nowrap"
-        >
-          <span class="material-symbols-outlined text-lg">add_circle</span>
+        <a href="/quotes/wizard" class="btn btn-primary">
+          <span class="material-symbols-rounded">add_circle</span>
           Nueva Cotización
         </a>
       </div>
-    </section>
+    </div>
 
-    <!-- ── Error banner ───────────────────────────────────────────────────── -->
+    <!-- Error banner -->
     {error && (
-      <div class="flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 px-5 py-4 rounded-xl">
-        <span class="material-symbols-outlined">error</span>
+      <div class="flex items-center gap-3 surface border-err/40 text-err px-4 py-3 text-[13px]">
+        <span class="material-symbols-rounded text-[18px]">error</span>
         {error}
       </div>
     )}
 
-    <!-- ── Stats Bento ─────────────────────────────────────────────────────── -->
-    <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10">
-      <div class="bg-[var(--color-surface-container-low)] p-5 sm:p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
-        <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Total Cotizaciones</p>
-        <h4 class="text-3xl font-black text-[var(--color-on-surface)] flex items-baseline gap-2">
+    <!-- Stats Bento -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="surface p-4">
+        <div class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Total Cotizaciones</div>
+        <div class="mt-3 num text-[28px] font-semibold tracking-tight text-ink">
           <span id="stat-total">{analyticsStats?.totalQuotes ?? initialQuotes.length}</span>
-          <span class="text-sm font-medium text-[var(--color-on-surface-variant)]">Propuestas</span>
-        </h4>
+        </div>
+        <div class="mt-2 text-[11.5px] text-ink-mute">propuestas</div>
       </div>
-      <div class="bg-[var(--color-surface-container-low)] p-5 sm:p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
-        <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Tasa de Conversión</p>
-        <h4 class="text-3xl font-black text-emerald-400 flex items-baseline gap-2">
+      <div class="surface p-4">
+        <div class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Tasa de Conversión</div>
+        <div class="mt-3 num text-[28px] font-semibold tracking-tight text-ok">
           <span id="stat-conversion">{tasaConversionReal.toFixed(1)}%</span>
-          <span class="text-sm font-medium text-[var(--color-on-surface-variant)]">Aprobadas</span>
-        </h4>
+        </div>
+        <div class="mt-2 text-[11.5px] text-ink-mute">aprobadas</div>
       </div>
-      <div class="bg-[var(--color-surface-container-low)] p-5 sm:p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
-        <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Total Facturado</p>
-        <h4 class="text-2xl font-black text-amber-400 leading-tight">
-          <span class="text-base font-medium mr-0.5">$</span><span id="stat-facturado">{totalFacturadoAprobadas.toLocaleString("es-AR")}</span>
-        </h4>
-        <p class="text-[9px] text-[var(--color-on-surface-variant)] mt-0.5 uppercase tracking-widest">Solo aprobadas</p>
+      <div class="surface p-4">
+        <div class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Total Facturado</div>
+        <div class="mt-3 num text-[28px] font-semibold tracking-tight text-warn">
+          $<span id="stat-facturado">{totalFacturadoAprobadas.toLocaleString("es-AR")}</span>
+        </div>
+        <div class="mt-2 text-[11.5px] text-ink-mute">solo aprobadas</div>
       </div>
-      <div class="bg-[var(--color-surface-container-low)] p-5 sm:p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
-        <p class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface-variant)] mb-1">Vencidas</p>
-        <h4 class="text-3xl font-black text-red-400 flex items-baseline gap-2">
-          <span>{trackingStats?.cotizacionesVencidas ?? 0}</span>
-          <span class="text-sm font-medium text-[var(--color-on-surface-variant)]">Caducadas</span>
-        </h4>
+      <div class="surface p-4">
+        <div class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Vencidas</div>
+        <div class="mt-3 num text-[28px] font-semibold tracking-tight text-err">
+          {trackingStats?.cotizacionesVencidas ?? 0}
+        </div>
+        <div class="mt-2 text-[11.5px] text-ink-mute">caducadas</div>
       </div>
-    </section>
+    </div>
 
-    <!-- ── Analytics Row ─────────────────────────────────────────────────── -->
+    <!-- Analytics Row -->
     {trackingStats && (
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
 
-        <!-- Distribución por Estado -->
         {trackingStats.porEstado.length > 0 && (
-          <div class="bg-[var(--color-surface-container-low)] p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
-            <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-5">Distribución por Estado</p>
-            <div class="space-y-4">
+          <div class="surface p-5">
+            <div class="text-[10px] uppercase tracking-[0.08em] text-ink-faint mb-4">Distribución por Estado</div>
+            <div class="space-y-3">
               {trackingStats.porEstado.map((item: any) => {
                 const estadoKey = QuoteHelper.normalizeQuoteStatus(item.estado);
                 const style = getStatusStyle(estadoKey);
                 return (
                   <div>
-                    <div class="flex items-center justify-between mb-1.5">
+                    <div class="flex items-center justify-between mb-1">
                       <div class="flex items-center gap-2">
-                        <span class={`w-2 h-2 rounded-full ${style.dot}`}></span>
-                        <span class="text-xs font-bold text-[var(--color-on-surface)] uppercase tracking-widest">{style.label}</span>
+                        <span class={`w-1.5 h-1.5 rounded-full ${style.dot}`}></span>
+                        <span class="text-[11px] text-ink uppercase tracking-[0.04em]">{style.label}</span>
                       </div>
-                      <span class="text-xs font-black text-[var(--color-on-surface)]">{item.count} <span class="text-[var(--color-on-surface-variant)] font-medium">({item.porcentaje.toFixed(0)}%)</span></span>
+                      <span class="num text-[11px] text-ink">{item.count} <span class="text-ink-faint">({item.porcentaje.toFixed(0)}%)</span></span>
                     </div>
-                    <div class="w-full bg-[var(--color-surface-container-high)] rounded-full h-1.5 overflow-hidden">
+                    <div class="w-full bg-bg-sunken rounded-full h-1 overflow-hidden">
                       <div class={`h-full rounded-full ${getEstadoBarStyle(estadoKey)}`} style={`width: ${item.porcentaje}%`}></div>
                     </div>
                   </div>
@@ -251,28 +240,26 @@ const ssrData = JSON.stringify({
           </div>
         )}
 
-        <!-- Top Clientes — loaded client-side from analytics -->
-        <div id="top-clientes-container" class="bg-[var(--color-surface-container-low)] p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
-          <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-5">Top Clientes · Aprobadas</p>
+        <div id="top-clientes-container" class="surface p-5">
+          <div class="text-[10px] uppercase tracking-[0.08em] text-ink-faint mb-4">Top Clientes · Aprobadas</div>
           <div id="top-clientes-list" class="space-y-3">
-            <p class="text-xs text-[var(--color-on-surface-variant)]">Cargando...</p>
+            <p class="text-[12px] text-ink-faint">Cargando...</p>
           </div>
         </div>
 
-        <!-- Próximos Vencimientos -->
         {trackingStats.proximosVencimientos.length > 0 && (
-          <div class="bg-[var(--color-surface-container-low)] p-6 rounded-xl border border-[var(--color-outline-variant)]/50 shadow-[0_12px_32px_rgba(0,0,0,0.4)]">
-            <p class="text-[10px] font-black uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-5">Próximos Vencimientos</p>
-            <div class="space-y-3">
+          <div class="surface p-5">
+            <div class="text-[10px] uppercase tracking-[0.08em] text-ink-faint mb-4">Próximos Vencimientos</div>
+            <div class="space-y-2">
               {trackingStats.proximosVencimientos.slice(0, 5).map((cotizacion: any) => (
-                <a href={`/quotes/view/${cotizacion.id}`} class="flex items-center justify-between p-3 bg-[var(--color-surface-container)] rounded-xl border border-[var(--color-outline-variant)] hover:border-orange-500/40 transition-all group">
-                  <div class="flex-1 truncate mr-4">
-                    <div class="font-bold text-[var(--color-on-surface)] group-hover:text-orange-400 transition-colors truncate text-sm">{cotizacion.numero}</div>
-                    <div class="text-[10px] text-[var(--color-on-surface-variant)] uppercase tracking-widest mt-0.5 truncate">{cotizacion.clienteNombre}</div>
+                <a href={`/quotes/view/${cotizacion.id}`} class="flex items-center justify-between p-3 rounded border border-line hover:border-warn/40 transition-all group">
+                  <div class="flex-1 truncate mr-3">
+                    <div class="text-[13px] text-ink group-hover:text-warn transition-colors truncate">{cotizacion.numero}</div>
+                    <div class="text-[10px] text-ink-faint uppercase tracking-[0.04em] mt-0.5 truncate">{cotizacion.clienteNombre}</div>
                   </div>
                   <div class="flex flex-col items-end shrink-0">
-                    <span class="text-lg font-black text-orange-400">{cotizacion.diasVencimiento}</span>
-                    <span class="text-[9px] font-bold text-[var(--color-on-surface-variant)] uppercase tracking-widest">Días</span>
+                    <span class="num text-[18px] font-semibold text-warn">{cotizacion.diasVencimiento}</span>
+                    <span class="text-[9px] text-ink-faint uppercase tracking-[0.06em]">días</span>
                   </div>
                 </a>
               ))}
@@ -282,71 +269,68 @@ const ssrData = JSON.stringify({
       </div>
     )}
 
-    <!-- ── Filters ─────────────────────────────────────────────────────────── -->
-    <div class="bg-[var(--color-surface-container-low)]/50 p-5 rounded-xl border border-[var(--color-outline-variant)]/30 backdrop-blur-md mb-6 shadow-[0_8px_16px_rgba(0,0,0,0.2)]">
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
-        <div class="sm:col-span-2">
-          <label class="block text-[10px] font-bold uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-2">Buscar cotización</label>
+    <!-- Filters -->
+    <div class="surface p-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+        <div class="sm:col-span-2 space-y-1">
+          <label class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Buscar cotización</label>
           <input
             id="quotes-search"
             type="text"
             placeholder="Buscar por número, título, cliente o lugar..."
-            class="w-full bg-[var(--color-surface-container)] border border-[var(--color-outline-variant)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-on-surface)] placeholder:text-[var(--color-on-surface-variant)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50 focus:border-[var(--color-primary)]"
+            class="field w-full"
           />
-          <p class="text-[10px] text-[var(--color-on-surface-variant)] mt-1 ml-1">Búsqueda en memoria — no reinicia la paginación</p>
+          <p class="text-[10px] text-ink-faint">Búsqueda en memoria — no reinicia la paginación</p>
         </div>
-        <div>
-          <label class="block text-[10px] font-bold uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-2">Estado</label>
-          <select
-            id="quotes-estado"
-            class="w-full bg-[var(--color-surface-container)] border border-[var(--color-outline-variant)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50 focus:border-[var(--color-primary)]"
-          >
-            <option value="">Todos los estados</option>
-            <option value="borrador">Borrador</option>
-            <option value="enviada">Enviada</option>
-            <option value="aprobada">Aprobada</option>
-            <option value="rechazada">Rechazada</option>
-            <option value="vencida">Vencida</option>
-          </select>
+        <div class="space-y-1">
+          <label class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Estado</label>
+          <div class="select-arrow">
+            <select id="quotes-estado" class="field w-full">
+              <option value="">Todos los estados</option>
+              <option value="borrador">Borrador</option>
+              <option value="enviada">Enviada</option>
+              <option value="aprobada">Aprobada</option>
+              <option value="rechazada">Rechazada</option>
+              <option value="vencida">Vencida</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- ── Quote List ─────────────────────────────────────────────────────── -->
+    <!-- Quote List -->
     <div id="quotes-list-container">
-      <!-- Skeleton shown while client hydrates -->
-      <div id="quotes-skeleton" class="text-center py-20 text-[var(--color-on-surface-variant)]">
-        <svg class="animate-spin h-10 w-10 mx-auto mb-4 text-[var(--color-primary)] opacity-80" fill="none" viewBox="0 0 24 24">
+      <div id="quotes-skeleton" class="text-center py-16 text-ink-faint">
+        <svg class="animate-spin h-8 w-8 mx-auto mb-3 text-accent opacity-80" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        <p class="text-sm font-bold uppercase tracking-widest text-slate-500">Cargando cotizaciones...</p>
+        <p class="text-[12px] uppercase tracking-[0.08em] text-ink-faint">Cargando cotizaciones...</p>
       </div>
 
-      <div id="quotes-list" class="space-y-3 hidden"></div>
+      <div id="quotes-list" class="space-y-2 hidden"></div>
 
-      <!-- Error state -->
-      <div id="quotes-error" class="hidden text-center py-20 border border-dashed border-red-500/30 rounded-2xl bg-[var(--color-surface-container-low)]">
-        <span class="material-symbols-outlined text-5xl mb-4 text-red-400 block">error</span>
-        <h3 class="text-xl font-bold text-[var(--color-on-surface)] mb-2">Error al cargar cotizaciones</h3>
-        <p id="quotes-error-message" class="text-[var(--color-on-surface-variant)] text-sm mb-4"></p>
-        <button onclick="location.reload()" class="px-6 py-3 rounded-xl font-bold bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all">Reintentar</button>
+      <div id="quotes-error" class="hidden text-center py-16 surface">
+        <span class="material-symbols-rounded text-[48px] mb-3 text-err block">error</span>
+        <h3 class="text-[15px] font-semibold text-ink mb-1">Error al cargar cotizaciones</h3>
+        <p id="quotes-error-message" class="text-[13px] text-ink-mute mb-4"></p>
+        <button onclick="location.reload()" class="btn btn-ghost">Reintentar</button>
       </div>
     </div>
 
-    <!-- ── "Cargar más" button ────────────────────────────────────────────── -->
-    <div id="load-more-container" class="hidden flex justify-center pb-12">
+    <!-- "Cargar más" button -->
+    <div id="load-more-container" class="hidden flex justify-center pb-6">
       <button
         id="load-more-btn"
-        class="flex items-center gap-3 px-8 py-4 rounded-xl font-bold border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] bg-[var(--color-surface-container-low)] hover:bg-[var(--color-surface-container-high)] transition-all focus:ring-2 focus:ring-[var(--color-primary)]/50 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="btn btn-ghost disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span id="load-more-spinner" class="hidden">
-          <svg class="animate-spin h-5 w-5 text-[var(--color-primary)]" fill="none" viewBox="0 0 24 24">
+          <svg class="animate-spin h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
         </span>
-        <span class="material-symbols-outlined text-lg" id="load-more-icon">expand_more</span>
+        <span class="material-symbols-rounded" id="load-more-icon">expand_more</span>
         <span id="load-more-text">Cargar más cotizaciones</span>
       </button>
     </div>
@@ -355,6 +339,15 @@ const ssrData = JSON.stringify({
 </Dashboard>
 
 <script>
+  function escapeHtml(str: string): string {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   import { notifications } from "../utils/notifications.js";
   import {
     initialState,
@@ -457,65 +450,72 @@ const ssrData = JSON.stringify({
   // ──────────────────────────────────────────────────────────────
   function renderQuoteCard(cotizacion: any): string {
     const style = getStatusStyle(cotizacion.estado);
-    const titulo = (cotizacion.titulo || "Sin título").replace(/'/g, "\\'");
-    const clienteNombre = cotizacion.cliente_nombre || "Sin cliente";
+    const titulo = escapeHtml(cotizacion.titulo || "Sin título");
+    const clienteNombre = escapeHtml(cotizacion.cliente_nombre || "Sin cliente");
     const fechaDisplay = cotizacion.fecha_display || "—";
     const total = Number(cotizacion.total || 0).toLocaleString("es-AR");
     const numeroDisplay = cotizacion.numero_display || cotizacion.numero || "";
     const esFechaEvento = cotizacion.fecha_tipo === "evento";
 
+    // Map old style classes to new design system badges
+    let badgeClass = "badge-neutral";
+    if (style.label === "Aprobada")  badgeClass = "badge-ok";
+    else if (style.label === "Enviada")   badgeClass = "badge-accent";
+    else if (style.label === "Rechazada") badgeClass = "badge-err";
+    else if (style.label === "Pendiente") badgeClass = "badge-warn";
+    else if (style.label === "Vencida")   badgeClass = "badge-warn";
+    else if (style.label === "Facturada") badgeClass = "badge-accent";
+
     return `
-      <article class="group bg-[var(--color-surface-container-low)] rounded-xl border border-[var(--color-outline-variant)] shadow-[0_8px_24px_rgba(0,0,0,0.25)] hover:bg-[var(--color-surface-container)] hover:-translate-y-0.5 transition-all duration-300 overflow-hidden flex">
+      <article class="surface group overflow-hidden flex hover:-translate-y-px transition-transform duration-200">
         <div class="w-1 shrink-0 ${style.dot}"></div>
         <div class="flex-1 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div class="flex-1 min-w-0">
             <div class="flex flex-wrap items-center gap-2 mb-1.5">
-              <span class="text-[10px] font-mono font-bold text-[var(--color-primary)] bg-[var(--color-primary)]/10 px-2 py-0.5 rounded border border-[var(--color-primary)]/20">
+              <span class="num text-[11px] text-accent bg-accent-wash px-2 py-0.5 rounded border border-accent/20">
                 ${numeroDisplay}
               </span>
-              <span class="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest rounded-full border ${style.badge}">
-                ${style.label}
+              <span class="badge ${badgeClass}">
+                <span class="dot"></span>${style.label}
               </span>
-              ${esFechaEvento ? '<span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/20">Evento</span>' : ""}
+              ${esFechaEvento ? '<span class="badge badge-accent"><span class="dot"></span>Evento</span>' : ""}
             </div>
-            <h3 class="text-base font-black text-[var(--color-on-surface)] mb-1.5 truncate group-hover:text-[var(--color-primary)] transition-colors">
-              ${cotizacion.titulo || "Sin título"}
+            <h3 class="text-[14px] font-semibold text-ink mb-1 truncate group-hover:text-accent transition-colors">
+              ${titulo}
             </h3>
             <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
-              <div class="flex items-center gap-1.5 text-xs text-[var(--color-on-surface-variant)]">
-                <span class="material-symbols-outlined text-sm opacity-70">person</span>
-                <span class="font-bold text-[var(--color-on-surface)]">${clienteNombre}</span>
+              <div class="flex items-center gap-1.5 text-[12px] text-ink-mute">
+                <span class="material-symbols-rounded text-[14px]">person</span>
+                <span class="text-ink">${clienteNombre}</span>
               </div>
-              <div class="flex items-center gap-1.5 text-xs text-[var(--color-on-surface-variant)]">
-                <span class="material-symbols-outlined text-sm opacity-70">calendar_today</span>
+              <div class="flex items-center gap-1.5 text-[12px] text-ink-mute">
+                <span class="material-symbols-rounded text-[14px]">calendar_today</span>
                 <span>${fechaDisplay}</span>
               </div>
             </div>
           </div>
-          <div class="flex items-center justify-between sm:justify-end gap-6 shrink-0">
+          <div class="flex items-center justify-between sm:justify-end gap-5 shrink-0">
             <div class="text-right">
-              <p class="text-[10px] font-black text-[var(--color-on-surface-variant)] uppercase tracking-widest mb-0.5">Total</p>
-              <p class="text-xl font-black text-[var(--color-on-surface)]">
-                <span class="text-[var(--color-primary)] text-sm font-medium mr-0.5">$</span>${total}
-              </p>
+              <p class="text-[10px] uppercase tracking-[0.08em] text-ink-faint mb-0.5">Total</p>
+              <p class="num font-semibold text-[18px] text-ink">$${total}</p>
             </div>
-            <div class="flex items-center gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
-              <a href="/quotes/view/${cotizacion.id}" class="p-2 rounded-xl text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all" title="Ver detalle">
-                <span class="material-symbols-outlined text-xl">visibility</span>
+            <div class="row-actions flex items-center gap-1">
+              <a href="/quotes/view/${cotizacion.id}" class="btn btn-icon btn-quiet" title="Ver detalle">
+                <span class="material-symbols-rounded">visibility</span>
               </a>
-              <a href="/quotes/edit/${cotizacion.id}" class="p-2 rounded-xl text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all" title="Editar">
-                <span class="material-symbols-outlined text-xl">edit_document</span>
+              <a href="/quotes/edit/${cotizacion.id}" class="btn btn-icon btn-quiet" title="Editar">
+                <span class="material-symbols-rounded">edit_document</span>
               </a>
-              <a href="/quotes/tracking/${cotizacion.id}" class="p-2 rounded-xl text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all" title="Seguimiento">
-                <span class="material-symbols-outlined text-xl">timeline</span>
+              <a href="/quotes/tracking/${cotizacion.id}" class="btn btn-icon btn-quiet" title="Seguimiento">
+                <span class="material-symbols-rounded">timeline</span>
               </a>
               <button
                 data-delete-id="${cotizacion.id}"
                 data-delete-title="${titulo}"
-                class="delete-quote-btn p-2 rounded-xl text-[var(--color-on-surface-variant)] hover:text-red-400 hover:bg-red-500/10 transition-all"
+                class="delete-quote-btn btn btn-icon btn-quiet hover:text-err"
                 title="Eliminar"
               >
-                <span class="material-symbols-outlined text-xl pointer-events-none">delete</span>
+                <span class="material-symbols-rounded pointer-events-none">delete</span>
               </button>
             </div>
           </div>
@@ -544,17 +544,17 @@ const ssrData = JSON.stringify({
 
     if (filtered.length === 0) {
       list.innerHTML = `
-        <div class="text-center py-28 border border-dashed border-[var(--color-outline-variant)] rounded-2xl bg-[var(--color-surface-container-low)]">
-          <span class="material-symbols-outlined text-6xl opacity-30 block mb-4 text-[var(--color-on-surface-variant)]">
+        <div class="text-center py-20 surface">
+          <span class="material-symbols-rounded text-[48px] text-ink-faint opacity-40 block mb-3">
             ${term ? "search_off" : "description"}
           </span>
-          <h3 class="text-2xl font-black text-[var(--color-on-surface)] mb-2">
-            ${term ? `No encontramos resultados para "${term}"` : "Sin cotizaciones"}
+          <h3 class="text-[16px] font-semibold text-ink mb-1">
+            ${term ? `Sin resultados para "${escapeHtml(term)}"` : "Sin cotizaciones"}
           </h3>
-          <p class="text-[var(--color-on-surface-variant)] mb-8 max-w-sm mx-auto">
+          <p class="text-[13px] text-ink-mute mb-6 max-w-xs mx-auto">
             ${term ? "Probá con otros términos o cargá más cotizaciones." : "Creá tu primera propuesta comercial."}
           </p>
-          ${!term ? '<a href="/quotes/wizard" class="inline-flex items-center gap-2 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-[0_8px_16px_rgba(59,130,246,0.3)] hover:scale-[1.02] transition-all"><span class="material-symbols-outlined">add_circle</span>Crear Primera Cotización</a>' : ""}
+          ${!term ? '<a href="/quotes/wizard" class="btn btn-primary inline-flex"><span class="material-symbols-rounded">add_circle</span>Crear Primera Cotización</a>' : ""}
         </div>
       `;
     } else {
@@ -714,15 +714,15 @@ const ssrData = JSON.stringify({
         .slice(0, 5)
         .map((c, i) => `
           <div class="flex items-center gap-3">
-            <span class="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 ${i === 0 ? "bg-amber-500/20 text-amber-400" : i === 1 ? "bg-slate-500/20 text-slate-300" : "bg-[var(--color-surface-container)] text-[var(--color-on-surface-variant)]"}">
+            <span class="w-6 h-6 rounded flex items-center justify-center text-[10px] num font-semibold shrink-0 ${i === 0 ? "bg-warn/20 text-warn" : i === 1 ? "bg-line-strong text-ink-mute" : "bg-bg-sunken text-ink-faint"}">
               ${i + 1}
             </span>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-bold text-[var(--color-on-surface)] truncate">${c.clientName}</p>
+              <p class="text-[13px] text-ink truncate">${c.clientName}</p>
             </div>
             <div class="text-right shrink-0">
-              <p class="text-xs font-black text-emerald-400">${c.quoteCount} cot.</p>
-              <p class="text-[10px] text-[var(--color-on-surface-variant)]">$${c.totalValue.toLocaleString("es-AR")}</p>
+              <p class="num text-[11px] text-ok">${c.quoteCount} cot.</p>
+              <p class="num text-[10px] text-ink-faint">$${c.totalValue.toLocaleString("es-AR")}</p>
             </div>
           </div>
         `)
