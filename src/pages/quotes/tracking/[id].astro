@@ -506,7 +506,9 @@ const diasVenc       = quoteTracking?.diasVencimiento ?? 0;
   </div>
 </Dashboard>
 
-<script is:inline>
+<script>
+  import { apiFetch } from "../../../utils/apiFetch";
+
   let currentStatus = '';
   let currentQuoteId = '';
   let currentUserEmail = 'russofg@gmail.com';
@@ -538,6 +540,12 @@ const diasVenc       = quoteTracking?.diasVencimiento ?? 0;
     if (form) form.reset();
   }
 
+  // Expose functions called from HTML onclick attributes
+  (window as any).changeStatus = changeStatus;
+  (window as any).hideStatusModal = hideStatusModal;
+  (window as any).showReminderModal = showReminderModal;
+  (window as any).hideReminderModal = hideReminderModal;
+
   function testNotification() {
     const mensaje = `Seguimiento pendiente: COT-1759102172719 (Candela) - ¡Ya es hora!`;
     if (window.showNotification) {
@@ -555,7 +563,7 @@ const diasVenc       = quoteTracking?.diasVencimiento ?? 0;
       if (window.notificationSystem) {
         await window.notificationSystem.checkPendingReminders();
       } else {
-        const response = await fetch('/api/quote-tracking?action=stats');
+        const response = await apiFetch('/api/quote-tracking?action=stats');
         if (response.ok) {
           const stats = await response.json();
           if (stats.seguimientosPendientes && stats.seguimientosPendientes.length > 0) {
@@ -579,10 +587,12 @@ const diasVenc       = quoteTracking?.diasVencimiento ?? 0;
     }
   }
 
+  (window as any).checkRemindersNow = checkRemindersNow;
+
   async function deleteReminder(quoteId) {
     if (!confirm('¿Estás seguro de que querés eliminar este recordatorio?')) return;
     try {
-      const response = await fetch('/api/quote-tracking', {
+      const response = await apiFetch('/api/quote-tracking', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'delete-reminder', quoteId })
@@ -608,7 +618,7 @@ const diasVenc       = quoteTracking?.diasVencimiento ?? 0;
       const testDate = new Date();
       testDate.setMinutes(testDate.getMinutes() + 5);
       const currentQuoteId = window.location.pathname.split('/').pop();
-      const response = await fetch('/api/quote-tracking', {
+      const response = await apiFetch('/api/quote-tracking', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -626,7 +636,7 @@ const diasVenc       = quoteTracking?.diasVencimiento ?? 0;
         if (window.showNotification) window.showNotification('✅ Paso 1: Recordatorio programado', 'success');
         setTimeout(async () => {
           try {
-            const checkResponse = await fetch('/api/quote-tracking?action=stats');
+            const checkResponse = await apiFetch('/api/quote-tracking?action=stats');
             if (checkResponse.ok) {
               const stats = await checkResponse.json();
               if (stats.seguimientosPendientes && stats.seguimientosPendientes.length > 0) {
@@ -658,7 +668,7 @@ const diasVenc       = quoteTracking?.diasVencimiento ?? 0;
         const comment = document.getElementById('status-comment');
         const commentValue = comment ? comment.value : '';
         try {
-          const response = await fetch('/api/quote-tracking', {
+          const response = await apiFetch('/api/quote-tracking', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -702,7 +712,7 @@ const diasVenc       = quoteTracking?.diasVencimiento ?? 0;
         if (sendEmailValue) { selectedRecipients = getSelectedRecipients(); }
         const currentQuoteId = window.location.pathname.split('/').pop();
         try {
-          const response = await fetch('/api/quote-tracking', {
+          const response = await apiFetch('/api/quote-tracking', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -756,7 +766,7 @@ const diasVenc       = quoteTracking?.diasVencimiento ?? 0;
 
     async function loadAvailableUsers() {
       try {
-        const response = await fetch('/api/users');
+        const response = await apiFetch('/api/users');
         const data = await response.json();
         if (data.success) { availableUsers = data.usuarios; renderRecipientsList(); }
         else { availableUsers = []; }

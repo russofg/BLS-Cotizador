@@ -572,6 +572,7 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
 </Dashboard>
 
 <script>
+  import { apiFetch } from "../../utils/apiFetch";
   import { notifications } from "../../utils/notifications.js";
   import { DateHelper } from "../../utils/dateHelpers";
   import { QuoteHelper } from "../../utils/quoteHelpers";
@@ -730,7 +731,7 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
       console.log("🔄 Iniciando carga de datos...");
 
       // Load clients
-      const clientsResponse = await fetch("/api/clients?pageSize=200");
+      const clientsResponse = await apiFetch("/api/clients?pageSize=200");
       if (clientsResponse.ok) {
         const clientsData = await clientsResponse.json();
         allClients = clientsData.items ?? clientsData;
@@ -741,7 +742,7 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
       }
 
       // Load items
-      const itemsResponse = await fetch("/api/items");
+      const itemsResponse = await apiFetch("/api/items");
       if (itemsResponse.ok) {
         const itemsData = await itemsResponse.json();
         console.log("📦 Respuesta de items API:", itemsData);
@@ -762,7 +763,7 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
       // Load categories from API boundary
       try {
         console.log("🏷️ Cargando categorías desde /api/categories...");
-        const categoriesResponse = await fetch("/api/categories");
+        const categoriesResponse = await apiFetch("/api/categories");
         if (!categoriesResponse.ok) {
           throw new Error(`HTTP ${categoriesResponse.status}`);
         }
@@ -1941,7 +1942,7 @@ const defaultCondiciones = DEFAULT_QUOTE_TEXTS.condiciones;
         createButton.textContent = "Creando...";
       }
 
-      const response = await fetch("/api/quotes", {
+      const response = await apiFetch("/api/quotes", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

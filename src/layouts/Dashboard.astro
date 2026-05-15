@@ -182,6 +182,7 @@ const secondaryItems = [
 <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"></div>
 
 <script>
+  import { apiFetch } from "../utils/apiFetch";
   import { authService } from "../utils/auth";
   import { notifications } from "../utils/notifications.js";
 
@@ -313,7 +314,7 @@ const secondaryItems = [
   // ── Reminder checks ──
   async function checkReminders() {
     try {
-      const res = await fetch("/api/quote-tracking?action=stats");
+      const res = await apiFetch("/api/quote-tracking?action=stats");
       if (!res.ok) return;
       const stats = await res.json();
       const badge     = document.getElementById("notification-badge");

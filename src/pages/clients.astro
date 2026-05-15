@@ -210,6 +210,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
         .replace(/'/g, "&#39;");
     }
 
+    import { apiFetch } from "../utils/apiFetch";
     import { notifications } from "../utils/notifications.js";
     import {
       initialState,
@@ -514,7 +515,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
     // ──────────────────────────────────────────────────────────────
     async function loadServerStats() {
       try {
-        const res = await fetch("/api/clients?stats=true");
+        const res = await apiFetch("/api/clients?stats=true");
         if (!res.ok) return;
         const stats = await res.json();
         document.getElementById("total-clients")!.textContent = stats.total.toString();
@@ -567,7 +568,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       syncLoadMoreButton();
 
       try {
-        const response = await fetch(buildApiUrl(null));
+        const response = await apiFetch(buildApiUrl(null));
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         state = onPageLoaded(state, {
@@ -598,7 +599,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       syncLoadMoreButton();
 
       try {
-        const response = await fetch(buildApiUrl(cursorToUse));
+        const response = await apiFetch(buildApiUrl(cursorToUse));
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         state = onMoreLoaded(state, {
@@ -681,14 +682,14 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
         }
 
         if (editingClient) {
-          const response = await fetch(`/api/clients`, {
+          const response = await apiFetch(`/api/clients`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: editingClient.id, ...clientData }),
           });
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         } else {
-          const response = await fetch("/api/clients", {
+          const response = await apiFetch("/api/clients", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(clientData),
@@ -761,7 +762,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
       try {
         notifications.loading("Eliminando cliente", "Por favor espera...");
 
-        const response = await fetch("/api/clients", {
+        const response = await apiFetch("/api/clients", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: clientId }),

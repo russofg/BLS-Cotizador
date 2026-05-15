@@ -573,6 +573,7 @@ function safeFormatDate(dateValue: any): string {
   </div>
 
   <script>
+    import { apiFetch } from "../../../utils/apiFetch";
     import { QuoteHelper } from "../../../utils/quoteHelpers";
     
     document.addEventListener("DOMContentLoaded", function() {
@@ -1220,7 +1221,7 @@ function safeFormatDate(dateValue: any): string {
 
             console.log('📤 Enviando datos:', quoteData);
 
-            const response = await fetch('/api/quotes', {
+            const response = await apiFetch('/api/quotes', {
               method: 'PUT',
               headers: {
                 'Content-Type': 'application/json',

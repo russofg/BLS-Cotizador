@@ -348,6 +348,7 @@ const ssrData = JSON.stringify({
       .replace(/'/g, "&#39;");
   }
 
+  import { apiFetch } from "../utils/apiFetch";
   import { notifications } from "../utils/notifications.js";
   import {
     initialState,
@@ -590,7 +591,7 @@ const ssrData = JSON.stringify({
     syncLoadMoreButton();
 
     try {
-      const response = await fetch(buildApiUrl(null));
+      const response = await apiFetch(buildApiUrl(null));
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       state = onPageLoaded(state, {
@@ -619,7 +620,7 @@ const ssrData = JSON.stringify({
     syncLoadMoreButton();
 
     try {
-      const response = await fetch(buildApiUrl(cursorToUse));
+      const response = await apiFetch(buildApiUrl(cursorToUse));
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       state = onMoreLoaded(state, {
@@ -673,7 +674,7 @@ const ssrData = JSON.stringify({
 
       notifications.loading("Eliminando cotización", "Por favor espera...");
 
-      const response = await fetch(`/api/quotes?id=${quoteId}`, {
+      const response = await apiFetch(`/api/quotes?id=${quoteId}`, {
         method: "DELETE",
       });
 
@@ -698,7 +699,7 @@ const ssrData = JSON.stringify({
   // ──────────────────────────────────────────────────────────────
   async function loadAnalyticsStats() {
     try {
-      const res = await fetch("/api/analytics?type=clients");
+      const res = await apiFetch("/api/analytics?type=clients");
       if (!res.ok) return;
       const data = await res.json();
       const topClientes: Array<{ clientName: string; quoteCount: number; totalValue: number }> =

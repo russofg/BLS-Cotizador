@@ -206,6 +206,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
   </div>
 
   <script>
+    import { apiFetch } from "../utils/apiFetch";
     import { notifications } from "../utils/notifications.js";
     import { initializeApp } from "firebase/app";
     import {
@@ -255,7 +256,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
     // Load categories from API boundary
     async function loadCategories() {
       try {
-        const categoriesResponse = await fetch("/api/categories");
+        const categoriesResponse = await apiFetch("/api/categories");
         if (!categoriesResponse.ok) {
           throw new Error(`HTTP ${categoriesResponse.status}`);
         }
