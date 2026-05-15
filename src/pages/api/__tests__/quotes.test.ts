@@ -27,7 +27,10 @@ vi.mock('../../../utils/database', () => ({
 }));
 
 vi.mock('../../../services/ClienteService', () => ({
-  ClienteService: { getAllForAggregates: vi.fn(), incrementQuoteCount: vi.fn() },
+  ClienteService: {
+    getAllForAggregates: vi.fn().mockResolvedValue([]),
+    incrementQuoteCount: vi.fn(),
+  },
 }));
 
 vi.mock('../../../utils/rateLimit', () => ({

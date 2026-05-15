@@ -175,14 +175,14 @@ export class ClienteService {
 
         if (filters?.empresa) {
           const emp_lower = filters.empresa.toLowerCase();
-          matched = matched.filter(c => c.empresa?.toLowerCase().startsWith(emp_lower));
+          matched = matched.filter(c => c.empresa?.toLowerCase().includes(emp_lower));
         }
 
         if (search) {
           const q_lower = search.toLowerCase();
           matched = matched.filter(c =>
-            c.nombre.toLowerCase().startsWith(q_lower) ||
-            c.empresa?.toLowerCase().startsWith(q_lower)
+            c.nombre.toLowerCase().includes(q_lower) ||
+            c.empresa?.toLowerCase().includes(q_lower)
           );
         }
 

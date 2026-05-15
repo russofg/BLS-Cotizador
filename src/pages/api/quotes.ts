@@ -104,15 +104,22 @@ export const GET: APIRoute = async ({ url, request }) => {
 
       let items = listResult.items as any[];
 
-      // In-memory search over { numero, titulo, lugar_evento }
-      // clienteNombre is not denormalized — omitted from search for now
+      // In-memory search over { numero, titulo, lugar_evento, clienteNombre }
+      // clientes loaded from cache (getAllForAggregates TTL 60s) — no extra Firestore read on repeat searches
       if (search) {
         const term = search.toLowerCase();
-        items = items.filter(q =>
-          (q.numero && String(q.numero).toLowerCase().includes(term)) ||
-          (q.titulo && String(q.titulo).toLowerCase().includes(term)) ||
-          (q.lugar_evento && String(q.lugar_evento).toLowerCase().includes(term))
-        );
+        const clientes = await ClienteService.getAllForAggregates();
+        const clienteMap = new Map(clientes.map(c => [c.id, c]));
+        items = items.filter(q => {
+          const cliente = clienteMap.get(q.clienteId ?? (q as any).cliente_id);
+          const clienteNombre = cliente ? `${cliente.nombre} ${cliente.empresa ?? ''}`.toLowerCase() : '';
+          return (
+            (q.numero && String(q.numero).toLowerCase().includes(term)) ||
+            (q.titulo && String(q.titulo).toLowerCase().includes(term)) ||
+            (q.lugar_evento && String(q.lugar_evento).toLowerCase().includes(term)) ||
+            clienteNombre.includes(term)
+          );
+        });
       }
 
       const responseBody: Record<string, unknown> = {
