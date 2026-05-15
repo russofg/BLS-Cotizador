@@ -4,14 +4,6 @@
       "collectionGroup": "cotizaciones",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "createdAt", "order": "DESCENDING" },
-        { "fieldPath": "__name__", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "cotizaciones",
-      "queryScope": "COLLECTION",
-      "fields": [
         { "fieldPath": "estado", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" },
         { "fieldPath": "__name__", "order": "DESCENDING" }
