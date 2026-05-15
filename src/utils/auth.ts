@@ -211,6 +211,14 @@ export const authService = {
   }
 }
 
+// Returns the current user's Firebase ID token, or null if not signed in.
+// Pass forceRefresh=true to mint a fresh token (use after a 401 response).
+export async function getIdToken(forceRefresh = false): Promise<string | null> {
+  const u = auth.currentUser;
+  if (!u) return null;
+  return u.getIdToken(forceRefresh);
+}
+
 // Auth context for client-side components
 export class AuthContext {
   private static instance: AuthContext
