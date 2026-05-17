@@ -96,15 +96,15 @@ describe('authMiddlewareHandler', () => {
     expect(body).toEqual({ error: 'unauthorized', reason: 'invalid_token' });
   });
 
-  it('passes through non-API paths without touching locals.user', async () => {
-    const ctx = makeContext('/dashboard'); // not /api/*
+  it('redirects non-API protected paths to /login when no session cookie is present', async () => {
+    const ctx = makeContext('/dashboard'); // not /api/*, no cookie
     const response = await authMiddlewareHandler(ctx, mockNext);
 
-    expect(response.status).toBe(200);
-    expect(mockNext).toHaveBeenCalledOnce();
-    // locals.user must NOT be set by the middleware for non-API paths.
-    expect(ctx.locals.user).toBeNull();
-    // verifyIdToken must never be called.
+    // Now that page auth is active, /dashboard without a cookie → 302.
+    expect(response.status).toBe(302);
+    expect(response.headers.get('location')).toBe('/login?next=%2Fdashboard');
+    expect(mockNext).not.toHaveBeenCalled();
+    // verifyIdToken (Bearer) must never be called for page routes.
     expect(mockVerifyIdToken).not.toHaveBeenCalled();
   });
 });
