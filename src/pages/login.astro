@@ -138,7 +138,7 @@ const isDev = import.meta.env.DEV;
 </Base>
 
 <script>
-  import { authService } from "../utils/auth";
+  import { authService, getIdToken, establishServerSession } from "../utils/auth";
   import { notifications } from "../utils/notifications.js";
   import { ValidationHelper } from "../utils/validationHelpers";
 
@@ -180,6 +180,15 @@ const isDev = import.meta.env.DEV;
       const { user, error } = await authService.signIn(email, password);
       if (error) throw new Error(error.message);
       if (user) {
+        const idToken = await getIdToken();
+        if (idToken) {
+          try {
+            await establishServerSession(idToken);
+          } catch {
+            showError("No se pudo iniciar sesión. Intentá de nuevo.");
+            return;
+          }
+        }
         notifications.success("¡Bienvenido!", "Redirigiendo…");
         setTimeout(() => window.location.href = "/dashboard", 900);
       }

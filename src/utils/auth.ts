@@ -219,6 +219,29 @@ export async function getIdToken(forceRefresh = false): Promise<string | null> {
   return u.getIdToken(forceRefresh);
 }
 
+/**
+ * Establishes a server-side session cookie by posting the Firebase ID token
+ * to /api/session. Throws if the endpoint returns a non-ok response.
+ */
+export async function establishServerSession(idToken: string): Promise<void> {
+  const response = await fetch('/api/session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken }),
+  });
+  if (!response.ok) {
+    throw new Error(`Session endpoint returned ${response.status}`);
+  }
+}
+
+/**
+ * Clears the server-side session cookie by calling DELETE /api/session.
+ * Best-effort: does not throw on failure.
+ */
+export async function clearServerSession(): Promise<void> {
+  await fetch('/api/session', { method: 'DELETE' });
+}
+
 // Auth context for client-side components
 export class AuthContext {
   private static instance: AuthContext
