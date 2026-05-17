@@ -183,7 +183,7 @@ const secondaryItems = [
 
 <script>
   import { apiFetch } from "../utils/apiFetch";
-  import { authService } from "../utils/auth";
+  import { authService, clearServerSession } from "../utils/auth";
   import { notifications } from "../utils/notifications.js";
 
   // ── Drawer (mobile) ──
@@ -290,6 +290,11 @@ const secondaryItems = [
     );
     if (result.isConfirmed) {
       notifications.loading("Cerrando sesión", "Por favor espera...");
+      try {
+        await clearServerSession();
+      } catch {
+        // best-effort: continue with client signOut even if cookie clear fails
+      }
       await authService.signOut();
       notifications.success("¡Hasta luego!", "Sesión cerrada exitosamente");
       setTimeout(() => { window.location.href = "/login"; }, 1000);
