@@ -181,13 +181,15 @@ const isDev = import.meta.env.DEV;
       if (error) throw new Error(error.message);
       if (user) {
         const idToken = await getIdToken();
-        if (idToken) {
-          try {
-            await establishServerSession(idToken);
-          } catch {
-            showError("No se pudo iniciar sesión. Intentá de nuevo.");
-            return;
-          }
+        if (!idToken) {
+          showError("No se pudo obtener el token de sesión. Intentá de nuevo.");
+          return;
+        }
+        try {
+          await establishServerSession(idToken);
+        } catch {
+          showError("No se pudo iniciar sesión. Intentá de nuevo.");
+          return;
         }
         notifications.success("¡Bienvenido!", "Redirigiendo…");
         setTimeout(() => window.location.href = "/dashboard", 900);
