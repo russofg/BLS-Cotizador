@@ -49,21 +49,21 @@ try {
   <div class="page-enter p-4 sm:p-8 space-y-4 w-full max-w-full">
 
     <!-- Header -->
-    <div class="flex items-start justify-between gap-4">
-      <div>
+    <div class="flex items-start justify-between gap-3 flex-wrap">
+      <div class="min-w-0">
         <h1 class="text-[22px] font-semibold tracking-tightest text-ink">Dashboard</h1>
-        <p class="text-[13px] text-ink-mute mt-0.5">
+        <p class="text-[13px] text-ink-mute mt-0.5 truncate">
           Rendimiento de operaciones · {new Date().toLocaleDateString('es-AR', {weekday:'long', day:'numeric', month:'long'})}
         </p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-2 shrink-0">
         <button class="btn btn-ghost btn-sm">
           <span class="material-symbols-rounded">download</span>
-          Exportar
+          <span class="hidden sm:inline">Exportar</span>
         </button>
         <button class="btn btn-primary btn-sm">
           <span class="material-symbols-rounded">refresh</span>
-          Actualizar
+          <span class="hidden sm:inline">Actualizar</span>
         </button>
       </div>
     </div>
@@ -107,34 +107,51 @@ try {
           <span class="badge badge-neutral"><span class="dot"></span>6 meses</span>
         </div>
 
-        {analytics ? (
-          <div class="space-y-3">
-            <div class="h-48 flex items-end justify-between gap-2 px-2 w-full">
-              {analytics.quotes.quotesByMonth.slice(-6).map((month: any, idx: number) => {
-                const maxCount = Math.max(...analytics.quotes.quotesByMonth.map((m: any) => m.count));
-                const percentage = Math.max(8, Math.floor((month.count / maxCount) * 100));
-                const isLast = idx === analytics.quotes.quotesByMonth.slice(-6).length - 1;
-                return (
-                  <div class="relative w-full group flex flex-col items-center justify-end h-full">
-                    <div
-                      class={`w-full rounded-t transition-colors cursor-pointer ${isLast ? 'bg-accent' : 'bg-bg-sunken hover:bg-accent/40'}`}
-                      style={`height: ${percentage}%`}
-                    >
-                      <div class={`absolute -top-7 left-1/2 -translate-x-1/2 bg-ink text-bg text-[10px] px-1.5 py-0.5 rounded pointer-events-none transition-opacity ${isLast ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+        {analytics ? (() => {
+          const months = analytics.quotes.quotesByMonth.slice(-6);
+          const maxCount = Math.max(...months.map((m: any) => m.count), 1);
+          return months.length < 2 ? (
+            <div class="h-48 flex flex-col items-center justify-center gap-2 border border-dashed border-line rounded">
+              <span class="material-symbols-rounded text-ink-faint text-[28px]">bar_chart</span>
+              <p class="text-[12px] text-ink-faint">Sin suficientes datos para mostrar el gráfico</p>
+            </div>
+          ) : (
+          <div class="space-y-2">
+            <div class="relative h-44 w-full">
+              <!-- Grid lines -->
+              <div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                {[0,1,2,3].map(() => (
+                  <div class="w-full border-t border-line/40"></div>
+                ))}
+              </div>
+              <!-- Bars -->
+              <div class="absolute inset-0 flex items-end justify-around gap-1.5 px-2 pb-0">
+                {months.map((month: any, idx: number) => {
+                  const percentage = Math.max(6, Math.floor((month.count / maxCount) * 100));
+                  const isLast = idx === months.length - 1;
+                  return (
+                    <div class="relative flex flex-col items-center justify-end h-full flex-1 group">
+                      {/* Tooltip — inside chart bounds, above bar */}
+                      <div class={`absolute bottom-[calc(${percentage}%+6px)] left-1/2 -translate-x-1/2 bg-ink text-bg text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap pointer-events-none transition-opacity z-10 ${isLast ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                         {month.count}
                       </div>
+                      <div
+                        class={`w-full max-w-[40px] rounded-t-sm transition-colors cursor-default ${isLast ? 'bg-accent' : 'bg-line hover:bg-accent/50'}`}
+                        style={`height: ${percentage}%`}
+                      ></div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-            <div class="flex justify-between text-[10px] text-ink-faint uppercase tracking-[0.08em] px-2">
-              {analytics.quotes.quotesByMonth.slice(-6).map((month: any) => (
-                <span>{new Date(month.month + '-01').toLocaleDateString('es-ES', { month: 'short' }).substring(0, 3)}</span>
+            <div class="flex justify-around text-[10px] text-ink-faint uppercase tracking-[0.08em] px-2">
+              {months.map((month: any) => (
+                <span class="flex-1 text-center">{new Date(month.month + '-01').toLocaleDateString('es-ES', { month: 'short' }).substring(0, 3)}</span>
               ))}
             </div>
           </div>
-        ) : (
+          );
+        })() : (
           <div class="h-48 flex items-center justify-center border border-dashed border-line rounded">
             <p class="text-[13px] text-ink-faint">Cargando métricas...</p>
           </div>
@@ -187,12 +204,12 @@ try {
         </div>
 
         <div class="overflow-x-auto">
-          <table class="tbl">
+          <table class="tbl min-w-[480px]">
             <thead>
               <tr>
-                <th>ID Cotización</th>
+                <th>ID</th>
                 <th>Cliente</th>
-                <th>Fecha</th>
+                <th class="hidden sm:table-cell">Fecha</th>
                 <th>Total</th>
                 <th>Estado</th>
                 <th></th>
@@ -223,7 +240,7 @@ try {
                         <span class="text-[13px] text-ink">{cotizacion.cliente?.nombre || "Cliente General"}</span>
                       </div>
                     </td>
-                    <td class="text-[12px] text-ink-mute">
+                    <td class="hidden sm:table-cell text-[12px] text-ink-mute">
                       {new Date(cotizacion.fechaEmision || cotizacion.createdAt).toLocaleDateString("es-AR")}
                     </td>
                     <td class="num font-semibold text-ink">
