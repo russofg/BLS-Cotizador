@@ -141,9 +141,13 @@ export class CotizacionService {
       const cached = cache.get<Cotizacion[]>(cacheKey);
       if (cached) return cached;
 
+      // Safety cap: prevents runaway Firestore reads at scale.
+      // Raise this limit (or implement cursor pagination) if the business
+      // grows past ~5 000 active quotes.
       const snapshot = await adminDb
         .collection(this.COLLECTION_NAME)
         .orderBy('createdAt', 'desc')
+        .limit(5000)
         .get();
 
       const cotizaciones = snapshot.docs.map(doc => this.mapDocumentToCotizacion(doc));

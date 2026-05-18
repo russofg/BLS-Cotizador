@@ -179,6 +179,7 @@ export interface ReminderProcessingSummary {
   startedAt: string;
   finishedAt: string;
   reason?: string;
+  budgetExceeded?: boolean;
   smtp?: ReturnType<typeof getSmtpRuntimeLogContext>;
 }
 
@@ -187,6 +188,13 @@ export class ReminderAutomationService {
    * Procesa recordatorios vencidos una sola vez.
    * Diseñado para invocaciones puntuales desde runtimes serverless.
    */
+  /**
+   * Wall-clock budget per invocation. Netlify Functions have a 26 s hard limit;
+   * we stop processing at 22 s so the function always returns a response.
+   * Items not reached will be picked up on the next scheduled run.
+   */
+  private static readonly BUDGET_MS = 22_000;
+
   static async processDueRemindersOnce(
     now: Date = new Date(),
   ): Promise<ReminderProcessingSummary> {
@@ -239,7 +247,18 @@ export class ReminderAutomationService {
       let skippedCount = 0;
       let failedCount = 0;
 
+      let budgetExceeded = false;
+
       for (const docSnapshot of snapshot.docs) {
+        if (Date.now() - startTime.getTime() > ReminderAutomationService.BUDGET_MS) {
+          budgetExceeded = true;
+          console.warn(
+            `⏱️ [AUTO] Presupuesto de tiempo alcanzado (${ReminderAutomationService.BUDGET_MS}ms). ` +
+            `Los recordatorios restantes se procesarán en la próxima ejecución.`,
+          );
+          break;
+        }
+
         const data = docSnapshot.data() || {};
         const reminderDate = normalizeReminderDate(data.proximoSeguimiento);
         const quoteNumber = QuoteHelper.getDisplayQuoteNumber({
@@ -356,6 +375,7 @@ export class ReminderAutomationService {
         dueCount,
         processedCount,
         skippedCount,
+        budgetExceeded,
         failedCount,
         startedAt: startTime.toISOString(),
         finishedAt: endTime.toISOString(),

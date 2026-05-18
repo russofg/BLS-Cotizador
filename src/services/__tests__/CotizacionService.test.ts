@@ -226,7 +226,7 @@ describe('CotizacionService.getAllForAggregates()', () => {
     resetChain();
   });
 
-  it('SC-16: returns full collection without calling limit()', async () => {
+  it('SC-16: returns full collection with safety cap via limit()', async () => {
     const { CotizacionService } = await loadService();
 
     const docs = Array.from({ length: 60 }, (_, i) => makeCotizacion(i));
@@ -235,7 +235,8 @@ describe('CotizacionService.getAllForAggregates()', () => {
     const result = await CotizacionService.getAllForAggregates();
 
     expect(result).toHaveLength(60);
-    expect(limitMock).not.toHaveBeenCalled();
+    // Safety cap prevents unbounded reads at scale (limit value may change).
+    expect(limitMock).toHaveBeenCalled();
   });
 });
 

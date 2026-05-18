@@ -254,7 +254,8 @@ export class ClienteService {
       if (filters?.empresa) {
         q = q.where('empresa', '==', filters.empresa);
       }
-      const snapshot = await q.get();
+      // Safety cap: prevents runaway reads at scale.
+      const snapshot = await q.limit(2000).get();
       const clientes = snapshot.docs.map(doc => this.mapDocumentToCliente(doc));
 
       cache.set(cacheKey, clientes, CacheTTL.MEDIUM);

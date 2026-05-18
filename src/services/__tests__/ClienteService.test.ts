@@ -210,7 +210,7 @@ describe('ClienteService.getAllForAggregates()', () => {
     resetChain();
   });
 
-  it('returns full collection without calling limit()', async () => {
+  it('returns full collection with safety cap via limit()', async () => {
     const { ClienteService } = await loadService();
 
     const docs = Array.from({ length: 60 }, (_, i) => makeCliente(i));
@@ -219,7 +219,8 @@ describe('ClienteService.getAllForAggregates()', () => {
     const result = await ClienteService.getAllForAggregates();
 
     expect(result).toHaveLength(60);
-    expect(limitMock).not.toHaveBeenCalled();
+    // Safety cap prevents unbounded reads at scale (limit value may change).
+    expect(limitMock).toHaveBeenCalled();
   });
 
   it('applies activo filter when provided', async () => {

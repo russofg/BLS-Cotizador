@@ -10,7 +10,10 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://dolarapi.com wss://*.firebaseio.com; frame-ancestors 'none'; object-src 'none'"
+    # script-src 'unsafe-inline' is required by Astro's SSR hydration model (inline scripts
+    # for component state). Nonce-based CSP is tracked as a future improvement once
+    # Astro's experimental.contentSecurityPolicy feature stabilises.
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://dolarapi.com wss://*.firebaseio.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
 
 # Force HTTPS on all requests
 [[redirects]]
