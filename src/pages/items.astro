@@ -207,6 +207,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
 
   <script>
     import { apiFetch } from "../utils/apiFetch";
+    import { authService } from "../utils/auth";
     import { notifications } from "../utils/notifications.js";
     import { initializeApp } from "firebase/app";
     import {
@@ -748,6 +749,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
 
     // Event listeners
     document.addEventListener("DOMContentLoaded", async () => {
+      await authService.isAuthenticated();
       await loadCategories();
       await loadItems();
 

@@ -349,6 +349,7 @@ const ssrData = JSON.stringify({
   }
 
   import { apiFetch } from "../utils/apiFetch";
+  import { authService } from "../utils/auth";
   import { notifications } from "../utils/notifications.js";
   import {
     initialState,
@@ -798,6 +799,9 @@ const ssrData = JSON.stringify({
       // Fallback: fetch first page from client
       await loadFirstPage();
     }
+
+    // Wait for Firebase auth before hitting authenticated endpoints
+    await authService.isAuthenticated();
 
     // Load analytics + dolar in parallel (non-blocking)
     loadAnalyticsStats();
