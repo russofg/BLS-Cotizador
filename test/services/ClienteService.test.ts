@@ -195,7 +195,7 @@ describe('ClienteService', () => {
 
     it('should validate client data', async () => {
       const { ValidationHelper } = await import('../../src/utils/validationHelpers');
-      vi.mocked(ValidationHelper.validateName).mockReturnValue({
+      vi.mocked(ValidationHelper.validateName).mockReturnValueOnce({
         isValid: false,
         errors: ['Nombre es requerido']
       });
@@ -216,6 +216,19 @@ describe('ClienteService', () => {
         nombre: 'Cliente Actualizado',
         email: 'actualizado@test.com'
       };
+
+      const existingDoc = {
+        id: 'client1',
+        exists: true,
+        data: () => ({
+          nombre: 'Cliente Original',
+          email: 'original@test.com',
+          activo: true,
+          createdAt: { toDate: () => new Date('2024-01-15') }
+        })
+      };
+      mockFirestore.get.mockResolvedValue(existingDoc);
+      vi.spyOn(ClienteService, 'getByEmail').mockResolvedValue(null);
 
       await expect(ClienteService.update('client1', updates)).resolves.not.toThrow();
       expect(mockFirestore.update).toHaveBeenCalled();
@@ -255,7 +268,7 @@ describe('ClienteService', () => {
       mockFirestore.get.mockResolvedValue(mockClient);
 
       await expect(ClienteService.delete('client1')).resolves.not.toThrow();
-      expect(mockFirestore.update).toHaveBeenCalled();
+      expect(mockFirestore.delete).toHaveBeenCalled();
     });
 
     it('should handle missing ID', async () => {

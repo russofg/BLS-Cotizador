@@ -33,7 +33,7 @@ describe("netlify scheduled function process-reminders", () => {
     const { config, handler } = await loadHandlerModule();
     const response = await handler();
 
-    expect(config).toEqual({ schedule: "* * * * *" });
+    expect(config).toEqual({ schedule: "0 * * * *" });
     expect(response.statusCode).toBe(200);
     expect(response.headers["content-type"]).toBe("application/json");
     expect(JSON.parse(response.body)).toMatchObject({

@@ -35,7 +35,7 @@ describe('DateHelper', () => {
     it('should parse Firebase Timestamp objects', () => {
       const timestamp = {
         seconds: 1705320000, // 2024-01-15
-        toDate: () => new Date(1705320000 ! 1000)
+        toDate: () => new Date(1705320000 * 1000)
       };
       
       const result = DateHelper.safeParseDate(timestamp);

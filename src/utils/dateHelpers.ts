@@ -130,25 +130,37 @@ export class DateHelper {
    */
   static safeParseDate(dateStr: any): Date | null {
     if (!dateStr) return null;
-    
+
     try {
       // Si ya es un objeto Date, devolverlo
       if (dateStr instanceof Date) {
         return dateStr;
       }
-      
+
+      // Manejar objetos Timestamp de Firebase (con método toDate)
+      if (typeof dateStr === 'object' && typeof dateStr.toDate === 'function') {
+        return dateStr.toDate();
+      }
+
+      // Manejar objetos Timestamp de Firebase (con propiedad seconds)
+      if (typeof dateStr === 'object' && typeof dateStr.seconds === 'number') {
+        return new Date(dateStr.seconds * 1000);
+      }
+
       // Para formato YYYY-MM-DD, agregar tiempo para evitar conversión de timezone
       if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-        return new Date(dateStr + 'T12:00:00');
+        const date = new Date(dateStr + 'T12:00:00');
+        if (isNaN(date.getTime())) return null;
+        return date;
       }
-      
+
       // Para otros formatos, intentar parsing normal con fallback
       const date = new Date(dateStr);
       if (isNaN(date.getTime())) {
         console.warn('Could not parse date:', dateStr);
         return null;
       }
-      
+
       return date;
     } catch (e) {
       console.warn('Error parsing date:', dateStr, e);
@@ -162,18 +174,20 @@ export class DateHelper {
    */
   static calculateDurationInDays(startDate: Date, endDate: Date): number {
     try {
-      // Resetear horas para contar solo días
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      start.setHours(0, 0, 0, 0);
-      end.setHours(0, 0, 0, 0);
-      
+      if (!startDate || !endDate) return 0;
+
+      // Use UTC date components to avoid timezone offsets affecting the day count
+      const startUTC = Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate());
+      const endUTC = Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate());
+
+      if (isNaN(startUTC) || isNaN(endUTC)) return 0;
+
       // Calcular diferencia en días (inclusivo - ambas fechas incluidas)
-      const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-      return diffDays > 0 ? diffDays : 1; // Mínimo 1 día
+      const diffDays = Math.round((endUTC - startUTC) / (1000 * 60 * 60 * 24)) + 1;
+      return diffDays > 0 ? diffDays : 1;
     } catch (error) {
       console.error('Error calculating duration:', error);
-      return 1;
+      return 0;
     }
   }
 

@@ -4,8 +4,11 @@ import {
   buildCookieHeader,
   clearCookieHeader,
 } from '../../utils/sessionCookie';
+import { checkRateLimit } from '../../utils/rateLimit';
 
 export const POST: APIRoute = async ({ request }) => {
+  const limited = checkRateLimit(request, 'AUTH', 'session');
+  if (limited) return limited;
   let body: unknown;
   try {
     body = await request.json();
