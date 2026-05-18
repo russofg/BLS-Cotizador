@@ -144,9 +144,9 @@ const ssrData = JSON.stringify({
         <h1 class="text-[22px] font-semibold tracking-tightest text-ink">Cotizaciones</h1>
         <p class="text-[13px] text-ink-mute mt-0.5">Gestión y seguimiento de todas tus propuestas comerciales.</p>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2">
         <!-- Dollar widget: fetched client-side to avoid SSR delays -->
-        <div id="dolar-widget" class="hidden sm:flex items-center gap-3 surface px-4 py-2 text-[11px]">
+        <div id="dolar-widget" class="hidden md:flex items-center gap-3 surface px-4 py-2 text-[11px]">
           <span class="material-symbols-rounded text-[16px] text-warn">monetization_on</span>
           <div class="flex gap-3 divide-x divide-line">
             <div class="flex flex-col items-center">
@@ -194,9 +194,9 @@ const ssrData = JSON.stringify({
         </div>
         <div class="mt-2 text-[11.5px] text-ink-mute">aprobadas</div>
       </div>
-      <div class="surface p-4">
+      <div class="surface p-4 min-w-0">
         <div class="text-[10px] uppercase tracking-[0.08em] text-ink-faint">Total Facturado</div>
-        <div class="mt-3 num text-[28px] font-semibold tracking-tight text-warn">
+        <div class="mt-3 num text-[22px] sm:text-[28px] font-semibold tracking-tight text-warn truncate">
           $<span id="stat-facturado">{totalFacturadoAprobadas.toLocaleString("es-AR")}</span>
         </div>
         <div class="mt-2 text-[11.5px] text-ink-mute">solo aprobadas</div>

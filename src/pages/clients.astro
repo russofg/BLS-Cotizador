@@ -211,6 +211,7 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
     }
 
     import { apiFetch } from "../utils/apiFetch";
+    import { authService } from "../utils/auth";
     import { notifications } from "../utils/notifications.js";
     import {
       initialState,
@@ -820,7 +821,8 @@ import ScrollbarStyles from "../components/ScrollbarStyles.astro";
         resetPhotoUI();
       });
 
-      // Initial load
+      // Wait for Firebase auth to initialize before first load
+      await authService.isAuthenticated();
       await loadFirstPage();
 
       // Search — debounced 300ms → server fetch with reset
