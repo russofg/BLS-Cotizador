@@ -136,6 +136,15 @@ service cloud.firestore {
     }
     
     // ========================
+    // RATE LIMIT COUNTERS (server-only)
+    // ========================
+    // _rateLimit is written exclusively by Firebase Admin SDK (server-side).
+    // Client apps must never read or write it directly.
+    match /_rateLimit/{docId} {
+      allow read, write: if false;
+    }
+
+    // ========================
     // DENY ALL OTHER COLLECTIONS
     // ========================
     match /{document=**} {

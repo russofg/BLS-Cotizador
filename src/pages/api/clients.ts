@@ -88,7 +88,7 @@ export const POST: APIRoute = async ({ request }) => {
     
     // Validate required fields
     if (!clientData.nombre) {
-      return new Response(JSON.stringify({ 
+      return new Response(JSON.stringify({
         error: 'El nombre es obligatorio'
       }), {
         status: 400,
@@ -96,6 +96,14 @@ export const POST: APIRoute = async ({ request }) => {
           'Content-Type': 'application/json'
         }
       });
+    }
+
+    // Firestore documents are limited to 1 MB — reject oversized images early.
+    if (clientData.imagenBase64 && clientData.imagenBase64.length > 512 * 1024) {
+      return new Response(
+        JSON.stringify({ error: 'La imagen es demasiado grande (máximo 384 KB)' }),
+        { status: 413, headers: { 'Content-Type': 'application/json' } },
+      );
     }
 
     const newClient = await clienteService.create({
@@ -141,7 +149,7 @@ export const PUT: APIRoute = async ({ request }) => {
     const clientData = await request.json();
     
     if (!clientData.id) {
-      return new Response(JSON.stringify({ 
+      return new Response(JSON.stringify({
         error: 'ID del cliente es obligatorio'
       }), {
         status: 400,
@@ -149,6 +157,13 @@ export const PUT: APIRoute = async ({ request }) => {
           'Content-Type': 'application/json'
         }
       });
+    }
+
+    if (clientData.imagenBase64 && clientData.imagenBase64.length > 512 * 1024) {
+      return new Response(
+        JSON.stringify({ error: 'La imagen es demasiado grande (máximo 384 KB)' }),
+        { status: 413, headers: { 'Content-Type': 'application/json' } },
+      );
     }
 
     await clienteService.update(clientData.id, {
@@ -218,13 +233,11 @@ export const DELETE: APIRoute = async ({ request }) => {
       .get();
 
     if (quotesSnap.size > 0) {
-      const quoteNumbers = quotesSnap.docs.map((d: any) => d.data().numero).filter(Boolean);
       return new Response(JSON.stringify({
         error: 'No se puede eliminar el cliente porque tiene cotizaciones asociadas',
-        details: `El cliente tiene ${quotesSnap.size} cotización(es) asociada(s). Debe eliminar primero las cotizaciones: ${quoteNumbers.join(', ')}`,
+        details: `El cliente tiene ${quotesSnap.size} cotización(es) asociada(s). Debe eliminarlas antes de continuar.`,
         hasQuotes: true,
         quotesCount: quotesSnap.size,
-        quoteNumbers
       }), {
         status: 409, // Conflict
         headers: {

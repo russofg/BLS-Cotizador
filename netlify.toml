@@ -12,6 +12,13 @@
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
     Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://dolarapi.com wss://*.firebaseio.com; frame-ancestors 'none'; object-src 'none'"
 
+# Force HTTPS on all requests
+[[redirects]]
+  from = "http://bls-cotizador.netlify.app/*"
+  to = "https://bls-cotizador.netlify.app/:splat"
+  status = 301
+  force = true
+
 [functions]
   node_bundler = "esbuild"
   external_node_modules = ["pdfmake"]

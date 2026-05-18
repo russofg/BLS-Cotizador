@@ -4,10 +4,10 @@ import {
   buildCookieHeader,
   clearCookieHeader,
 } from '../../utils/sessionCookie';
-import { checkRateLimit } from '../../utils/rateLimit';
+import { checkRateLimitPersistent } from '../../utils/rateLimitFirestore';
 
 export const POST: APIRoute = async ({ request }) => {
-  const limited = checkRateLimit(request, 'AUTH', 'session');
+  const limited = await checkRateLimitPersistent(request, 'AUTH', 'session');
   if (limited) return limited;
   let body: unknown;
   try {

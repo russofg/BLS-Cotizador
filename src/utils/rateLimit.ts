@@ -1,7 +1,10 @@
 /**
- * API Rate Limiting Utility
- * Simple in-memory rate limiter for Astro API routes
- * Protects against abuse by limiting requests per IP/key
+ * API Rate Limiting Utility — in-memory, best-effort.
+ *
+ * ⚠️  SERVERLESS LIMITATION: Netlify Functions are stateless. Each cold start
+ * gets a fresh Map, so this limiter provides per-instance defence only.
+ * For endpoints where rate limiting MUST be enforced across all instances
+ * (e.g. auth brute-force), use rateLimitFirestore.ts instead.
  */
 
 interface RateLimitEntry {

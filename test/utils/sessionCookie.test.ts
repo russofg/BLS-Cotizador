@@ -101,8 +101,13 @@ describe('sessionCookie', () => {
       expect(buildCookieHeader('val')).toContain('HttpOnly');
     });
 
-    it('includes SameSite=Lax flag', () => {
+    it('includes SameSite=Lax in development and SameSite=Strict in production', () => {
+      const original = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development';
       expect(buildCookieHeader('val')).toContain('SameSite=Lax');
+      process.env.NODE_ENV = 'production';
+      expect(buildCookieHeader('val')).toContain('SameSite=Strict');
+      process.env.NODE_ENV = original;
     });
 
     it('includes Max-Age equal to SESSION_TTL_MS / 1000', () => {

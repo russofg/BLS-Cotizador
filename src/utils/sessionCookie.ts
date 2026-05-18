@@ -32,7 +32,8 @@ export function buildCookieHeader(value: string): string {
   const maxAgeSec = SESSION_TTL_MS / 1000;
   const isProduction = process.env.NODE_ENV !== 'development';
   const secure = isProduction ? '; Secure' : '';
-  return `${COOKIE_NAME}=${value}; HttpOnly${secure}; SameSite=Lax; Max-Age=${maxAgeSec}; Path=/`;
+  const sameSite = isProduction ? 'Strict' : 'Lax';
+  return `${COOKIE_NAME}=${value}; HttpOnly${secure}; SameSite=${sameSite}; Max-Age=${maxAgeSec}; Path=/`;
 }
 
 /**
